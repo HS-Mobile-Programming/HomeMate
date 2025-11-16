@@ -54,11 +54,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             Container(
               height: 250,
               color: Colors.grey[300],
-              child: const Icon(Icons.rice_bowl, size: 100, color: Colors.white),
+              //child: const Icon(Icons.rice_bowl, size: 100, color: Colors.white),
               // 실제 이미지가 있다면 아래 코드 사용
-              // child: widget.recipe.imageUrl.isNotEmpty
-              //    ? Image.network(widget.recipe.imageUrl, fit: BoxFit.cover)
-              //    : const Icon(Icons.rice_bowl, size: 100, color: Colors.white),
+               child: widget.recipe.imageUrl.isNotEmpty
+                  ? Image.network(widget.recipe.imageUrl, fit: BoxFit.cover)
+                  : const Icon(Icons.rice_bowl, size: 100, color: Colors.white),
             ),
 
             // 2. 제목 및 즐겨찾기 버튼

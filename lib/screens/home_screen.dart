@@ -27,16 +27,16 @@ class HomeScreen extends StatelessWidget {
               side: const BorderSide(color: Color(0xFFB2DFDB), width: 2),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(30.0),
               child: Column(
                 children: [
                   const Text(
                     "오늘의 레시피",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 16),
-                  const Icon(Icons.image, size: 100, color: Colors.grey),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 16,),
+                  const Icon(Icons.image, size: 120, color: Colors.grey),
+                  const SizedBox(height: 16,),
                   const Text(
                     "레시피 이름",
                     style: TextStyle(fontSize: 18),

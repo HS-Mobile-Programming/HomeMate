@@ -3,12 +3,12 @@ import '../models/ingredient.dart';
 
 class IngredientItem extends StatelessWidget {
   final Ingredient ingredient;
-  final VoidCallback? onEdit; // [변경] 물음표(?)를 붙여서 '없을 수도 있음'을 표시
+  final VoidCallback? onEdit;
 
   const IngredientItem({
     super.key,
     required this.ingredient,
-    this.onEdit, // [변경] required 제거 (선택 사항으로 변경)
+    this.onEdit,
   });
 
   @override
@@ -30,6 +30,11 @@ class IngredientItem extends StatelessWidget {
                     ingredient.name,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                  // [추가됨] 수량 표시
+                  Text(
+                    "수량: ${ingredient.quantity}",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
@@ -38,7 +43,6 @@ class IngredientItem extends StatelessWidget {
               style: const TextStyle(fontSize: 14, color: Color(0xFFC90000)),
             ),
 
-            // [핵심 변경] onEdit이 null이 아닐 때만 버튼을 그린다!
             if (onEdit != null) ...[
               const SizedBox(width: 8),
               IconButton(
