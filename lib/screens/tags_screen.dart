@@ -22,26 +22,40 @@ class _TagsScreenState extends State<TagsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 0.8,
+    // [추가] "선호도 설정" 화면으로 보이도록 Scaffold 추가
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("선호도 설정 (태그)", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
-        itemCount: tags.length,
-        itemBuilder: (context, index) {
-          return TagItem(
-            tag: tags[index],
-            onTap: () {
-              setState(() {
-                tags[index].isSelected = !tags[index].isSelected;
-              });
-            },
-          );
-        },
+      ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder( // 기존 로직은 그대로 유지
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: tags.length,
+          itemBuilder: (context, index) {
+            return TagItem(
+              tag: tags[index],
+              onTap: () {
+                setState(() {
+                  tags[index].isSelected = !tags[index].isSelected;
+                });
+              },
+            );
+          },
+        ),
       ),
     );
   }
