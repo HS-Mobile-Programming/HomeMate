@@ -1,10 +1,8 @@
-// lib/screens/favorites_screen.dart
-
 import 'package:flutter/material.dart';
-import '../data/recipe_data.dart'; // 공용 데이터
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
+import '../services/recipe_service.dart'; // [추가] 1. 서비스 import
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -14,18 +12,21 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  // [추가] 2. 서비스 객체
+  final RecipeService _service = RecipeService();
   List<Recipe> _favoriteRecipes = [];
 
   @override
   void initState() {
     super.initState();
-    _updateFavoritesList();
+    _refreshList(); // [추가] 3. 초기 로드
   }
 
-  // 리스트 갱신 함수
-  void _updateFavoritesList() {
+  // [추가] 4. 중앙 갱신 함수
+  void _refreshList() {
     setState(() {
-      _favoriteRecipes = allRecipes.where((r) => r.isFavorite).toList();
+      // [수정] 5. 로직을 서비스에 위임
+      _favoriteRecipes = _service.getFavoriteRecipes();
     });
   }
 
@@ -64,9 +65,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   builder: (context) => RecipeDetailScreen(recipe: recipe),
                 ),
               ).then((_) {
-                // [핵심] 상세 화면에서 즐겨찾기를 해제하고 돌아왔을 때
-                // 이 화면의 리스트를 갱신
-                _updateFavoritesList();
+                // [수정] 6. 돌아왔을 때 갱신
+                _refreshList();
               });
             },
             child: RecipeCard(recipe: recipe),

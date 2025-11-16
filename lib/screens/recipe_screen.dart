@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
-import '../data/recipe_data.dart'; // [추가] 공용 데이터 import
-
-enum RecipeSortMode { nameAsc, nameDesc }
+import '../services/recipe_service.dart'; // [수정] 1. 서비스 import
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -14,55 +12,57 @@ class RecipeScreen extends StatefulWidget {
 }
 
 class _RecipeScreenState extends State<RecipeScreen> {
-  // [제거] final List<Recipe> _allRecipes = [...] (기존 데이터 삭제)
+  // [추가] 2. 서비스 객체 생성
+  final RecipeService _service = RecipeService();
 
+  // [유지] 3. UI 상태 변수
   List<Recipe> _foundRecipes = [];
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
+  String _searchKeyword = ""; // 검색어 상태
+
+  // [제거] 4. 로직 및 데이터 삭제
+  // final List<Recipe> _allRecipes = [...] (삭제)
+  // _runFilter() (삭제)
+  // _sortList() (삭제)
 
   @override
   void initState() {
-    _foundRecipes = allRecipes; // [수정] 공용 데이터로 초기화
-    _sortList();
     super.initState();
+    _refreshList(); // [추가] 5. 초기 로드
   }
 
-  void _runFilter(String keyword) {
-    List<Recipe> results = [];
-    if (keyword.isEmpty) {
-      results = allRecipes; // [수정] 공용 데이터
-    } else {
-      results = allRecipes.where((recipe) => recipe.title.contains(keyword)).toList();
-    }
+  // [추가] 6. UI 갱신을 위한 중앙 함수
+  void _refreshList() {
     setState(() {
-      _foundRecipes = results;
-      _sortList();
+      // 서비스에서 데이터를 가져오고
+      var recipes = _service.getRecipes(keyword: _searchKeyword);
+      // 서비스에서 데이터를 정렬함
+      _foundRecipes = _service.sortRecipes(recipes, _sortMode);
     });
   }
 
-  void _sortList() {
-    setState(() {
-      switch (_sortMode) {
-        case RecipeSortMode.nameAsc:
-          _foundRecipes.sort((a, b) => a.title.compareTo(b.title));
-          break;
-        case RecipeSortMode.nameDesc:
-          _foundRecipes.sort((a, b) => b.title.compareTo(a.title));
-          break;
-      }
-    });
+  // [추가] 7. UI 이벤트 핸들러 (로직 X, 오직 호출)
+  void _onSearchChanged(String keyword) {
+    _searchKeyword = keyword;
+    _refreshList();
   }
 
+  void _onSortPressed() {
+    setState(() {
+      _sortMode = _sortMode == RecipeSortMode.nameAsc
+          ? RecipeSortMode.nameDesc
+          : RecipeSortMode.nameAsc;
+    });
+    _refreshList(); // 정렬 모드 변경 후 갱신
+  }
+
+  // (정렬 버튼 UI는 기존과 동일)
   Widget _buildSortButtonChild() {
     IconData icon = Icons.swap_vert;
     String label;
-
     switch (_sortMode) {
-      case RecipeSortMode.nameAsc:
-        label = "이름 (가-힣)";
-        break;
-      case RecipeSortMode.nameDesc:
-        label = "이름 (힣-가)";
-        break;
+      case RecipeSortMode.nameAsc: label = "이름 (가-힣)"; break;
+      case RecipeSortMode.nameDesc: label = "이름 (힣-가)"; break;
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -82,7 +82,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         child: Column(
           children: [
             TextField(
-              onChanged: (value) => _runFilter(value),
+              onChanged: _onSearchChanged, // [수정] 8. 이벤트 핸들러 연결
               decoration: InputDecoration(
                 labelText: '검색할 재료',
                 suffixIcon: const Icon(Icons.search),
@@ -97,14 +97,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _sortMode = _sortMode == RecipeSortMode.nameAsc
-                            ? RecipeSortMode.nameDesc
-                            : RecipeSortMode.nameAsc;
-                        _sortList();
-                      });
-                    },
+                    onPressed: _onSortPressed, // [수정] 9. 이벤트 핸들러 연결
                     child: _buildSortButtonChild(),
                   ),
                 ],
@@ -123,8 +116,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           builder: (context) => RecipeDetailScreen(recipe: _foundRecipes[index]),
                         ),
                       )
-                      // [추가] 상세 화면에서 돌아왔을 때 화면 갱신
-                          .then((_) => setState(() { _runFilter(""); }));
+                      // [수정] 10. 돌아왔을 때 갱신 (즐겨찾기 상태 반영)
+                          .then((_) => _refreshList());
                     },
                     child: RecipeCard(recipe: _foundRecipes[index]),
                   );

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
+import '../services/recipe_service.dart'; // [추가] 1. 서비스 import
 
-// [수정] StatelessWidget -> StatefulWidget
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
-
   const RecipeDetailScreen({super.key, required this.recipe});
 
   @override
@@ -12,20 +11,23 @@ class RecipeDetailScreen extends StatefulWidget {
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
-  late bool _isFavorite; // 화면 내부에서 쓸 상태 변수
+  // [추가] 2. 서비스 객체
+  final RecipeService _service = RecipeService();
+  late bool _isFavorite;
 
   @override
   void initState() {
     super.initState();
-    _isFavorite = widget.recipe.isFavorite; // 공용 데이터의 상태로 초기화
+    _isFavorite = widget.recipe.isFavorite;
   }
 
-  // 별 버튼 토글 함수
   void _toggleFavorite() {
+    // [수정] 3. 로직을 서비스에 위임
+    _service.toggleFavorite(widget.recipe);
+
+    // [유지] 4. UI 갱신
     setState(() {
-      _isFavorite = !_isFavorite;
-      // [핵심] 공용 데이터(원본)의 상태를 직접 변경
-      widget.recipe.isFavorite = _isFavorite;
+      _isFavorite = widget.recipe.isFavorite;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -65,9 +67,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  // [수정] 즐겨찾기 버튼
                   IconButton(
-                    onPressed: _toggleFavorite,
+                    onPressed: _toggleFavorite, // [수정] 5. 핸들러 연결
                     iconSize: 40,
                     icon: Icon(
                       _isFavorite ? Icons.star : Icons.star_border,

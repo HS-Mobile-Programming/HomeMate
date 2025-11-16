@@ -3,9 +3,8 @@ import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import 'tags_screen.dart';
-import '../data/recipe_data.dart'; // [추가] 공용 데이터 import
-
-enum RecommendSortMode { nameAsc, nameDesc }
+import '../services/recommendation_service.dart'; // [수정] 1. 추천 서비스
+import '../services/recipe_service.dart'; // (정렬 enum 재사용)
 
 class RecommendationScreen extends StatefulWidget {
   const RecommendationScreen({super.key});
@@ -15,52 +14,58 @@ class RecommendationScreen extends StatefulWidget {
 }
 
 class _RecommendationScreenState extends State<RecommendationScreen> {
+  // [추가] 2. 서비스 객체
+  final RecommendationService _service = RecommendationService();
 
-
+  // [유지] 3. UI 상태 변수
   List<Recipe> _recommendedRecipes = [];
-  RecommendSortMode _sortMode = RecommendSortMode.nameAsc;
+  RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
+
+  // [제거] 4. 데이터/로직 삭제
+  // final List<Recipe> _allRecipes = [...] (삭제)
+  // _updateRecommendations(), _sortList() (삭제)
 
   @override
   void initState() {
     super.initState();
-    _updateRecommendations(); // 추천 목록 갱신
+    _refreshList(); // [추가] 5. 초기 로드
   }
 
-  void _updateRecommendations() {
+  // [추가] 6. 중앙 갱신 함수
+  void _refreshList() {
     setState(() {
-      // [수정] 공용 데이터로 추천 로직 실행
-      _recommendedRecipes = allRecipes.where((r) => r.difficulty == "쉬움").toList();
-
-      // --- [미래에 할 일] ---
-      // 1. TagsScreen에서 고른 선호도 태그 가져오기
-      // 2. RefrigeratorScreen의 allIngredients (보유 재료) 가져오기
-      // 3. 이 두 정보를 AI 모델에 전달
-      // 4. AI가 추천해준 '진짜 추천 목록'을 받음
-      // _recommendedRecipes = ai_결과_리스트;
-      // -----------------------
-      _sortList();
+      var recipes = _service.getRecommendations();
+      _recommendedRecipes = _service.sortRecipes(recipes, _sortMode);
     });
   }
 
-  void _sortList() {
+  // [추가] 7. 이벤트 핸들러
+  void _onSortPressed() {
     setState(() {
-      switch (_sortMode) {
-        case RecommendSortMode.nameAsc:
-          _recommendedRecipes.sort((a, b) => a.title.compareTo(b.title));
-          break;
-        case RecommendSortMode.nameDesc:
-          _recommendedRecipes.sort((a, b) => b.title.compareTo(a.title));
-          break;
-      }
+      _sortMode = _sortMode == RecipeSortMode.nameAsc
+          ? RecipeSortMode.nameDesc
+          : RecipeSortMode.nameAsc;
+    });
+    _refreshList();
+  }
+
+  void _onPreferencesPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TagsScreen()),
+    ).then((_) {
+      // (선호도 설정값 기반으로 갱신)
+      _refreshList();
     });
   }
 
+  // (정렬 버튼 UI는 기존과 동일)
   Widget _buildSortButtonChild() {
     IconData icon = Icons.swap_vert;
     String label;
     switch (_sortMode) {
-      case RecommendSortMode.nameAsc: label = "이름 (가-힣)"; break;
-      case RecommendSortMode.nameDesc: label = "이름 (힣-가)"; break;
+      case RecipeSortMode.nameAsc: label = "이름 (가-힣)"; break;
+      case RecipeSortMode.nameDesc: label = "이름 (힣-가)"; break;
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -86,28 +91,14 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                   children: [
                     _buildTopButton(
                       text: "선호도 설정",
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const TagsScreen()),
-                        ).then((_) {
-                          _updateRecommendations();
-                        });
-                      },
+                      onPressed: _onPreferencesPressed, // [수정] 8. 핸들러 연결
                     ),
                     const SizedBox(width: 8),
-                    _buildTopButton(text: "추천", onPressed: () {}),
+                    _buildTopButton(text: "추천", onPressed: _refreshList),
                   ],
                 ),
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _sortMode = _sortMode == RecommendSortMode.nameAsc
-                          ? RecommendSortMode.nameDesc
-                          : RecommendSortMode.nameAsc;
-                      _sortList();
-                    });
-                  },
+                  onPressed: _onSortPressed, // [수정] 9. 핸들러 연결
                   child: _buildSortButtonChild(),
                 ),
               ],
@@ -129,7 +120,8 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                           ),
                         ),
                       )
-                          .then((_) => setState(() { _updateRecommendations(); }));
+                      // [수정] 10. 돌아왔을 때 갱신 (즐겨찾기 상태 반영)
+                          .then((_) => _refreshList());
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),

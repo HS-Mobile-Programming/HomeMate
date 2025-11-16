@@ -40,7 +40,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
         return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
-                backgroundColor: const Color(0xFFE0F7FA),
+                backgroundColor: Colors.green.shade50,
                 title: const Center(child: Text("알림설정", style: TextStyle(fontSize: 18))),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -141,7 +141,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE0F7FA),
+          backgroundColor: Colors.green.shade50,
           padding: const EdgeInsets.symmetric(vertical: 16),
           alignment: Alignment.centerLeft,
         ),
