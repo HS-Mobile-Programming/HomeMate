@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
-import 'tags_screen.dart'; // 1. 기존 'tags_screen.dart'를 import
+import 'tags_screen.dart';
+import '../data/recipe_data.dart'; // [추가] 공용 데이터 import
 
-// 정렬 상태
 enum RecommendSortMode { nameAsc, nameDesc }
 
 class RecommendationScreen extends StatefulWidget {
@@ -15,18 +15,7 @@ class RecommendationScreen extends StatefulWidget {
 }
 
 class _RecommendationScreenState extends State<RecommendationScreen> {
-  // 2. 자체적으로 임시 데이터 관리 (recipe_data.dart X)
-  final List<Recipe> _allRecipes = [
-    Recipe(
-        title: "레시피 A (추천)", description: "AI가 추천한 볶음요리", imageUrl: "",
-        difficulty: "쉬움"),
-    Recipe(
-        title: "레시피 B (추천)", description: "달콤하고 매콤한 국물요리", imageUrl: "",
-        difficulty: "보통"),
-    Recipe(
-        title: "레시피 C (추천)", description: "빠르고 간단한 볶음요리", imageUrl: "",
-        difficulty: "쉬움"),
-  ];
+
 
   List<Recipe> _recommendedRecipes = [];
   RecommendSortMode _sortMode = RecommendSortMode.nameAsc;
@@ -34,12 +23,25 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   @override
   void initState() {
     super.initState();
-    // (지금은 그냥 모든 레시피를 다 보여줌)
-    _recommendedRecipes = _allRecipes;
-    _sortList();
+    _updateRecommendations(); // 추천 목록 갱신
   }
 
-  // 정렬 로직
+  void _updateRecommendations() {
+    setState(() {
+      // [수정] 공용 데이터로 추천 로직 실행
+      _recommendedRecipes = allRecipes.where((r) => r.difficulty == "쉬움").toList();
+
+      // --- [미래에 할 일] ---
+      // 1. TagsScreen에서 고른 선호도 태그 가져오기
+      // 2. RefrigeratorScreen의 allIngredients (보유 재료) 가져오기
+      // 3. 이 두 정보를 AI 모델에 전달
+      // 4. AI가 추천해준 '진짜 추천 목록'을 받음
+      // _recommendedRecipes = ai_결과_리스트;
+      // -----------------------
+      _sortList();
+    });
+  }
+
   void _sortList() {
     setState(() {
       switch (_sortMode) {
@@ -53,7 +55,6 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     });
   }
 
-  // 정렬 버튼 UI
   Widget _buildSortButtonChild() {
     IconData icon = Icons.swap_vert;
     String label;
@@ -71,13 +72,6 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     );
   }
 
-  // (나중에 AI 로직 추가 시 사용할 함수)
-  void _updateRecommendations() {
-    // 예: final selectedTags = await Navigator.push(...);
-    //     _recommendedRecipes = getAIRecipes(selectedTags, myIngredients);
-    _sortList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +79,6 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 3. 상단 버튼 영역 (이미지 참고)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -94,20 +87,16 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                     _buildTopButton(
                       text: "선호도 설정",
                       onPressed: () {
-                        // 4. 'TagsScreen'으로 이동
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const TagsScreen()),
                         ).then((_) {
-                          // (선호도 설정 후 돌아왔을 때)
                           _updateRecommendations();
                         });
                       },
                     ),
                     const SizedBox(width: 8),
-                    _buildTopButton(text: "추천", onPressed: () {
-                      // (나중에 AI 추천 로직 실행)
-                    }),
+                    _buildTopButton(text: "추천", onPressed: () {}),
                   ],
                 ),
                 TextButton(
@@ -124,11 +113,9 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // 5. 추천 레시피 리스트
             Expanded(
               child: _recommendedRecipes.isEmpty
-                  ? const Center(child: Text("추천 레시피가 없습니다."))
+                  ? const Center(child: Text("선호도에 맞는 추천 레시피가 없습니다."))
                   : ListView.builder(
                 itemCount: _recommendedRecipes.length,
                 itemBuilder: (context, index) {
@@ -141,13 +128,13 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                               recipe: _recommendedRecipes[index]
                           ),
                         ),
-                      );
+                      )
+                          .then((_) => setState(() { _updateRecommendations(); }));
                     },
-                    // 이미지처럼 민트색 배경 적용
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F7FA), // 민트색
+                        color: const Color(0xFFE0F7FA),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: RecipeCard(recipe: _recommendedRecipes[index]),
@@ -162,7 +149,6 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     );
   }
 
-  // 상단 버튼 스타일 (연보라색)
   Widget _buildTopButton({required String text, required VoidCallback onPressed}) {
     return ElevatedButton(
       onPressed: onPressed,

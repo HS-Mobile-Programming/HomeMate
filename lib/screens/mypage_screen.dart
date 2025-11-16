@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'favorites_screen.dart'; // [추가] 즐겨찾기 화면 import
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -9,7 +10,6 @@ class MyPageScreen extends StatefulWidget {
 
 class _MyPageScreenState extends State<MyPageScreen> {
 
-  // 공통 다이얼로그 (로그아웃/탈퇴용)
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
     showDialog(
       context: context,
@@ -30,7 +30,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // 알림 설정 다이얼로그
   void _showNotificationDialog() {
     bool isPushOn = true;
     int days = 3;
@@ -98,7 +97,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
             const Text("마이페이지", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
 
-            // [추가됨] 프로필 정보 카드
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -107,7 +105,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: const [
-                    // 프로필 아이콘
                     Icon(Icons.account_circle, size: 64, color: Colors.green),
                     SizedBox(width: 16),
                     Text(
@@ -119,18 +116,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
             ),
 
-            const SizedBox(height: 24), // 카드와 버튼 사이 간격
+            const SizedBox(height: 24),
 
-            // 메뉴 버튼들
-            _buildMenuButton("    즐겨찾기", () {
-              // (즐겨찾기 기능이 없으므로 비워둠)
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("즐겨찾기 화면이 연결되지 않았습니다."))
+            // [수정] 즐겨찾기 버튼
+            _buildMenuButton("   즐겨찾기", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FavoritesScreen()),
               );
             }),
-            _buildMenuButton("    알림설정", _showNotificationDialog),
-            _buildMenuButton("    로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", Colors.red)),
-            _buildMenuButton("    계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", Colors.red)),
+            _buildMenuButton("   알림설정", _showNotificationDialog),
+            _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", Colors.red)),
+            _buildMenuButton("   계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", Colors.red)),
           ],
         ),
       ),
@@ -144,11 +141,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE0F7FA), // 민트색 배경
-          padding: const EdgeInsets.symmetric(vertical: 16), // 세로 패딩
-          alignment: Alignment.centerLeft, // 왼쪽 정렬
+          backgroundColor: const Color(0xFFE0F7FA),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          alignment: Alignment.centerLeft,
         ),
-        child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
     );
   }

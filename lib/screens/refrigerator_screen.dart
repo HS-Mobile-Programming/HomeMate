@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_item.dart';
-
-enum SortMode { nameAsc, nameDesc, expiryAsc }
+// [추가] 1. 서비스와 정렬 모드를 import
+import '../services/refrigerator_service.dart';
 
 class RefrigeratorScreen extends StatefulWidget {
   const RefrigeratorScreen({super.key});
@@ -14,70 +14,54 @@ class RefrigeratorScreen extends StatefulWidget {
 }
 
 class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
+  // [추가] 2. 서비스(로직) 객체 생성
+  final RefrigeratorService _service = RefrigeratorService();
+
+  // [유지] 3. UI 상태 변수들
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.month;
   SortMode _sortMode = SortMode.nameAsc;
 
-  List<Ingredient> allIngredients = [
-    Ingredient(id: '1', name: '계란', quantity: '10', expiryTime: '2025.11.20'),
-    Ingredient(id: '2', name: '우유', quantity: '1', expiryTime: '2025.11.25'),
-    Ingredient(id: '3', name: '사과', quantity: '5', expiryTime: '2025.11.18'),
-  ];
+  // [제거] 4. 데이터 리스트 (allIngredients) 삭제
+  // List<Ingredient> allIngredients = [...]
+
+  // [유지] 5. 화면에 보여질 리스트
   List<Ingredient> filteredIngredients = [];
 
-  // (날짜 파싱, _getEventsForDay, _filterIngredients, _sortList 함수... 기존과 동일)
-  DateTime? _parseDate(String dateStr) {
-    try { return DateTime.parse(dateStr.replaceAll('.', '-')); } catch (e) { return null; }
-  }
-  List<Ingredient> _getEventsForDay(DateTime day) {
-    return allIngredients.where((ingredient) {
-      DateTime? expiryDate = _parseDate(ingredient.expiryTime);
-      return expiryDate != null && isSameDay(expiryDate, day);
-    }).toList();
-  }
-  void _filterIngredients(DateTime selectedDay) {
-    setState(() {
-      filteredIngredients = _getEventsForDay(selectedDay);
-      _sortList();
-    });
-  }
-  void _sortList() {
-    setState(() {
-      List<Ingredient> listToSort = (_selectedDay == null) ? allIngredients : filteredIngredients;
-      switch (_sortMode) {
-        case SortMode.nameAsc: listToSort.sort((a, b) => a.name.compareTo(b.name)); break;
-        case SortMode.nameDesc: listToSort.sort((a, b) => b.name.compareTo(a.name)); break;
-        case SortMode.expiryAsc:
-          listToSort.sort((a, b) {
-            DateTime? dateA = _parseDate(a.expiryTime);
-            DateTime? dateB = _parseDate(b.expiryTime);
-            if (dateA == null && dateB == null) return 0;
-            if (dateA == null) return 1;
-            if (dateB == null) return -1;
-            return dateA.compareTo(dateB);
-          });
-          break;
-      }
-    });
-  }
+  // [제거] 6. 모든 로직 함수 삭제
+  // _parseDate(), _getEventsForDay(), _sortList() (일부 로직 제외)
 
   @override
   void initState() {
     super.initState();
-    filteredIngredients = allIngredients;
-    _sortList();
+    _refreshList(); // [수정] 7. 새로고침 함수 호출
   }
 
+  // [추가] 8. 데이터를 서비스에서 다시 불러오는 '새로고침' 함수
+  void _refreshList() {
+    setState(() {
+      List<Ingredient> allData = _service.getAllIngredients();
+      if (_selectedDay == null) {
+        // 전체 보기
+        filteredIngredients = allData;
+      } else {
+        // 날짜 필터링
+        filteredIngredients = _service.getEventsForDay(_selectedDay!);
+      }
+      // 정렬
+      filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
+    });
+  }
+
+  // [유지] 9. UI 관련 헬퍼 함수
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
+  // [수정] 10. 다이얼로그 (UI)
   void _showIngredientDialog({Ingredient? ingredient, int? index}) {
     final isEditMode = ingredient != null;
 
@@ -85,9 +69,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     final quantityController = TextEditingController(text: ingredient?.quantity ?? "");
 
     String year = '', month = '', day = '';
-    // [수정] '미정'이 없으므로 파싱 실패를 걱정할 필요가 거의 없음
     if (isEditMode) {
-      DateTime? date = _parseDate(ingredient!.expiryTime);
+      DateTime? date = _service.parseDate(ingredient!.expiryTime); // 서비스 함수 호출
       if (date != null) {
         year = date.year.toString();
         month = date.month.toString();
@@ -103,6 +86,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
       builder: (context) {
 
         Widget buildDateTextField(TextEditingController controller, String hint, int maxLength) {
+          // (내부 UI 코드는 동일)
           return TextField(
             controller: controller,
             maxLength: maxLength,
@@ -110,9 +94,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
             decoration: InputDecoration(
-              hintText: hint,
-              counterText: '',
-              filled: true,
+              hintText: hint, counterText: '', filled: true,
               fillColor: Colors.blue[50],
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -121,6 +103,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
         }
 
         return AlertDialog(
+          // (다이얼로그 UI 코드는 동일)
           backgroundColor: Colors.white,
           titlePadding: EdgeInsets.zero,
           title: Container(
@@ -139,28 +122,10 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("이름", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    hintText: "텍스트를 입력하세요.",
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                  ),
-                ),
+                TextField(controller: nameController, /* ... */),
                 const SizedBox(height: 16),
                 const Text("수량", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(
-                  controller: quantityController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    hintText: "1",
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                  ),
-                ),
+                TextField(controller: quantityController, /* ... */),
                 const SizedBox(height: 16),
                 const Text("유통기한", style: TextStyle(fontWeight: FontWeight.bold)),
                 Row(
@@ -182,73 +147,46 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             ),
             TextButton(
               onPressed: () {
-                // [수정됨] 1. 유효성 검사
+                // (유효성 검사 로직은 동일)
                 final name = nameController.text.trim();
                 final quantityStr = quantityController.text.trim();
                 final yearStr = yearController.text.trim();
                 final monthStr = monthController.text.trim();
                 final dayStr = dayController.text.trim();
-
                 if (name.isEmpty) { _showErrorSnackBar("이름을 입력해주세요."); return; }
                 int quantity = int.tryParse(quantityStr) ?? 0;
                 if (quantity <= 0) { _showErrorSnackBar("수량을 1 이상 입력해주세요."); return; }
-
-                String expiryDate; // 날짜 저장 변수
-
-                // [수정됨] 2. 날짜 필드가 하나라도 비어있으면 경고
+                String expiryDate;
                 if (yearStr.isEmpty || monthStr.isEmpty || dayStr.isEmpty) {
-                  _showErrorSnackBar("유통기한(연/월/일)을 모두 입력해주세요.");
-                  return;
-                }
-
-                // 3. 날짜 형식 검증
+                  _showErrorSnackBar("유통기한(연/월/일)을 모두 입력해주세요."); return; }
                 try {
-                  int y = int.parse(yearStr);
-                  int m = int.parse(monthStr);
-                  int d = int.parse(dayStr);
-
+                  int y = int.parse(yearStr); int m = int.parse(monthStr); int d = int.parse(dayStr);
                   DateTime date = DateTime(y, m, d);
-                  // (2025.2.30 -> 2025.3.1)처럼 자동 변경되는 것 방지
-                  if (date.year != y || date.month != m || date.day != d) {
-                    throw FormatException("유효하지 않은 날짜입니다.");
-                  }
-
+                  if (date.year != y || date.month != m || date.day != d) { throw FormatException("유효하지 않은 날짜입니다."); }
                   DateTime today = DateTime.now();
                   DateTime todayOnly = DateTime(today.year, today.month, today.day);
-                  if (date.isBefore(todayOnly)) {
-                    _showErrorSnackBar("유통기한이 오늘보다 빠를 수 없습니다.");
-                    return;
-                  }
-
+                  if (date.isBefore(todayOnly)) { _showErrorSnackBar("유통기한이 오늘보다 빠를 수 없습니다."); return; }
                   expiryDate = DateFormat('yyyy.MM.dd').format(date);
-
                 } catch (e) {
-                  _showErrorSnackBar("유효하지 않은 날짜 형식입니다.");
-                  return;
+                  _showErrorSnackBar("유효하지 않은 날짜 형식입니다."); return;
                 }
 
-                // 4. 저장
-                setState(() {
-                  Ingredient newIngredient = Ingredient(
-                    id: ingredient?.id ?? DateTime.now().toString(),
+                // [수정] 11. 로직 대신 서비스 호출
+                if (isEditMode) {
+                  _service.updateIngredient(ingredient!.id,
                     name: name,
                     quantity: quantity.toString(),
-                    expiryTime: expiryDate, // [수정] '미정'이 아닌 검증된 날짜
+                    expiryTime: expiryDate,
                   );
+                } else {
+                  _service.addIngredient(
+                    name: name,
+                    quantity: quantity.toString(),
+                    expiryTime: expiryDate,
+                  );
+                }
 
-                  if (isEditMode) {
-                    allIngredients[allIngredients.indexWhere((item) => item.id == ingredient.id)] = newIngredient;
-                  } else {
-                    allIngredients.add(newIngredient);
-                  }
-
-                  if (_selectedDay == null) {
-                    filteredIngredients = allIngredients;
-                  } else {
-                    _filterIngredients(_selectedDay!);
-                  }
-                  _sortList();
-                });
+                _refreshList(); // 12. 서비스 호출 후 화면 갱신
                 Navigator.pop(context);
               },
               child: Text(
@@ -262,8 +200,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     );
   }
 
+  // [유지] 13. 정렬 버튼 UI
   Widget _buildSortButtonChild() {
-    // (기존과 동일 ... 생략)
     IconData icon = Icons.swap_vert;
     String label;
     switch (_sortMode) {
@@ -288,7 +226,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // (캘린더 ... 기존과 동일)
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -301,19 +238,17 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
                 headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
-                eventLoader: _getEventsForDay,
+                eventLoader: _service.getEventsForDay, // [수정] 14. 서비스 함수 호출
                 onDaySelected: (selectedDay, focusedDay) {
                   setState(() {
                     if (isSameDay(_selectedDay, selectedDay)) {
                       _selectedDay = null;
                       _focusedDay = focusedDay;
-                      filteredIngredients = allIngredients;
                     } else {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
-                      _filterIngredients(selectedDay);
                     }
-                    _sortList();
+                    _refreshList(); // [수정] 15. 날짜 선택 시 갱신
                   });
                 },
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -324,34 +259,29 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 ),
               ),
             ),
-
-            // [수정됨] 1. 버튼 영역 (타이틀, 추가 버튼, 필터 해제, 정렬)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: Row(
                 children: [
-                  // [추가됨] 2. (+) 추가 버튼
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add, color: Colors.green, size: 20),
                     label: const Text(
                       "추가",
                       style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    onPressed: () => _showIngredientDialog(),
+                    onPressed: () => _showIngredientDialog(), // UI 함수 호출
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade50, // 연두색 배경
-                      foregroundColor: Colors.green, // 텍스트/아이콘 색상
-                      elevation: 0, // 그림자 없애기
+                      backgroundColor: Colors.green.shade50,
+                      foregroundColor: Colors.green,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // 둥근 모서리
-                        side: const BorderSide(color: Colors.green, width: 1), // 테두리
+                        borderRadius: BorderRadius.circular(20),
+                        side: const BorderSide(color: Colors.green, width: 1),
                       ),
                     ),
                   ),
                   const Spacer(),
-
-                  // 'X 전체 보기' 버튼
                   AnimatedOpacity(
                     opacity: _selectedDay != null ? 1.0 : 0.0,
                     duration: const Duration(milliseconds: 300),
@@ -359,21 +289,19 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                       onPressed: () {
                         setState(() {
                           _selectedDay = null;
-                          filteredIngredients = allIngredients;
-                          _sortList();
+                          _refreshList(); // [수정] 16. 갱신
                         });
                       },
                       child: const Text("X 전체 보기"),
                     ),
                   ),
-                  // '정렬' 버튼
                   TextButton(
                     onPressed: () {
                       setState(() {
                         if (_sortMode == SortMode.nameAsc) _sortMode = SortMode.nameDesc;
                         else if (_sortMode == SortMode.nameDesc) _sortMode = SortMode.expiryAsc;
                         else _sortMode = SortMode.nameAsc;
-                        _sortList();
+                        _refreshList(); // [수정] 17. 갱신
                       });
                     },
                     child: _buildSortButtonChild(),
@@ -382,8 +310,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               ),
             ),
             const Divider(height: 10),
-
-            // (리스트뷰 ... 기존과 동일)
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -393,6 +319,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 return Dismissible(
                   key: Key(item.id),
                   confirmDismiss: (direction) async {
+                    // (삭제 확인 팝업 UI 로직)
                     bool? confirm = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
@@ -409,8 +336,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     return confirm ?? false;
                   },
                   onDismissed: (dir) {
+                    // [수정] 18. 서비스 호출
+                    _service.deleteIngredient(item.id);
                     setState(() {
-                      allIngredients.removeWhere((i) => i.id == item.id);
                       filteredIngredients.removeAt(index);
                     });
                   },
@@ -419,7 +347,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   child: IngredientItem(
                     ingredient: item,
                     onEdit: () {
-                      _showIngredientDialog(
+                      _showIngredientDialog( // UI 함수 호출
                         ingredient: item,
                         index: index,
                       );

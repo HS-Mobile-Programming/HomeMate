@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
+import '../data/recipe_data.dart'; // [추가] 공용 데이터 import
 
-// [추가] 1. 정렬 모드 enum
 enum RecipeSortMode { nameAsc, nameDesc }
 
 class RecipeScreen extends StatefulWidget {
@@ -14,20 +14,14 @@ class RecipeScreen extends StatefulWidget {
 }
 
 class _RecipeScreenState extends State<RecipeScreen> {
-  final List<Recipe> _allRecipes = [
-    Recipe(
-        title: "김치찌개", description: "매콤하고 맛있는 김치찌개", imageUrl: "",
-        difficulty: "쉬움", ingredients: ["김치 1포기", "돼지고기 200g", "두부 1모"], steps: ["김치를 볶는다.", "물을 붓고 끓인다.", "고기와 두부를 넣는다."]),
-    Recipe(title: "된장찌개", description: "구수한 된장찌개", imageUrl: "", difficulty: "보통"),
-    Recipe(title: "파스타", description: "토마토 파스타", imageUrl: "", difficulty: "쉬움"),
-  ];
+  // [제거] final List<Recipe> _allRecipes = [...] (기존 데이터 삭제)
 
   List<Recipe> _foundRecipes = [];
-  RecipeSortMode _sortMode = RecipeSortMode.nameAsc; // [수정] 정렬 상태 변수
+  RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
 
   @override
   void initState() {
-    _foundRecipes = _allRecipes;
+    _foundRecipes = allRecipes; // [수정] 공용 데이터로 초기화
     _sortList();
     super.initState();
   }
@@ -35,9 +29,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
   void _runFilter(String keyword) {
     List<Recipe> results = [];
     if (keyword.isEmpty) {
-      results = _allRecipes;
+      results = allRecipes; // [수정] 공용 데이터
     } else {
-      results = _allRecipes.where((recipe) => recipe.title.contains(keyword)).toList();
+      results = allRecipes.where((recipe) => recipe.title.contains(keyword)).toList();
     }
     setState(() {
       _foundRecipes = results;
@@ -45,21 +39,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
     });
   }
 
-  // [수정] 2. 정렬 로직
   void _sortList() {
     setState(() {
       switch (_sortMode) {
         case RecipeSortMode.nameAsc:
-          _foundRecipes.sort((a, b) => a.title.compareTo(b.title)); // 가-힣 순
+          _foundRecipes.sort((a, b) => a.title.compareTo(b.title));
           break;
         case RecipeSortMode.nameDesc:
-          _foundRecipes.sort((a, b) => b.title.compareTo(a.title)); // 힣-가 순
+          _foundRecipes.sort((a, b) => b.title.compareTo(a.title));
           break;
       }
     });
   }
 
-  // [추가] 3. 정렬 버튼 텍스트/아이콘 반환
   Widget _buildSortButtonChild() {
     IconData icon = Icons.swap_vert;
     String label;
@@ -89,7 +81,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 1. 검색창
             TextField(
               onChanged: (value) => _runFilter(value),
               decoration: InputDecoration(
@@ -100,8 +91,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 fillColor: Colors.white,
               ),
             ),
-
-            // [수정] 4. 정렬 버튼 영역
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
               child: Row(
@@ -116,13 +105,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         _sortList();
                       });
                     },
-                    child: _buildSortButtonChild(), // 버튼 내용 변경
+                    child: _buildSortButtonChild(),
                   ),
                 ],
               ),
             ),
-
-            // 2. 레시피 리스트
             Expanded(
               child: _foundRecipes.isNotEmpty
                   ? ListView.builder(
@@ -135,7 +122,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         MaterialPageRoute(
                           builder: (context) => RecipeDetailScreen(recipe: _foundRecipes[index]),
                         ),
-                      );
+                      )
+                      // [추가] 상세 화면에서 돌아왔을 때 화면 갱신
+                          .then((_) => setState(() { _runFilter(""); }));
                     },
                     child: RecipeCard(recipe: _foundRecipes[index]),
                   );
