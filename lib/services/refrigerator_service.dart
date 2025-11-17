@@ -1,8 +1,8 @@
 import 'package:table_calendar/table_calendar.dart';
 import '../models/ingredient.dart';
-import '../data/ingredient_data.dart'; // 가짜 데이터 원본
+import '../data/ingredient_data.dart';
 
-// 재료 정렬 모드 (UI 파일과 공유해야 하므로 여기로 이동)
+// 재료 정렬 모드
 enum SortMode { nameAsc, nameDesc, expiryAsc }
 
 class RefrigeratorService {

@@ -1,7 +1,7 @@
 
 import '../models/recipe.dart';
 
-// [핵심] 앱 전체에서 공유할 단 하나의 레시피 목록
+//앱 전체에서 공유할 레시피 목록
 List<Recipe> allRecipes = [
   Recipe(
       title: "김치찌개",

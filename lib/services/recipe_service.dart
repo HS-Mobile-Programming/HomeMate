@@ -1,7 +1,7 @@
 // lib/services/recipe_service.dart
 
 import '../models/recipe.dart';
-import '../data/recipe_data.dart'; // 가짜 데이터베이스
+import '../data/recipe_data.dart';
 
 // 레시피 정렬 모드
 enum RecipeSortMode { nameAsc, nameDesc }

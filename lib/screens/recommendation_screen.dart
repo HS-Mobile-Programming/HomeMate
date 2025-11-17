@@ -1,12 +1,21 @@
+// [SCREEN CLASS] - StatefulWidget
+// '추천' 탭 (index 3)에 표시되는 화면입니다.
+// '선호도 설정' 버튼과 '정렬' 기능을 통해 '추천된' 레시피 목록을 보여줍니다.
+//
+// 'StatefulWidget':
+// '정렬 모드(_sortMode)'와 '추천 결과(_recommendedRecipes)' 상태를
+// '스스로' 관리해야 하므로 StatefulWidget으로 선언되었습니다.
+
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import 'tags_screen.dart';
-import '../services/recommendation_service.dart'; // [수정] 1. 추천 서비스
+import '../services/recommendation_service.dart';
 import '../services/recipe_service.dart'; // (정렬 enum 재사용)
 
 class RecommendationScreen extends StatefulWidget {
+  // const RecommendationScreen(...): 위젯 생성자
   const RecommendationScreen({super.key});
 
   @override
@@ -14,52 +23,73 @@ class RecommendationScreen extends StatefulWidget {
 }
 
 class _RecommendationScreenState extends State<RecommendationScreen> {
-  // [추가] 2. 서비스 객체
+  // [상태 변수 (State Variables)]
+
+  //  2. 서비스 객체
+  // '추천' 로직을 담당하는 서비스 객체를 생성합니다.
   final RecommendationService _service = RecommendationService();
 
-  // [유지] 3. UI 상태 변수
+  // 3. UI 상태 변수
+
+  // 화면에 표시될 '추천 레시피' 목록입니다.
   List<Recipe> _recommendedRecipes = [];
+
+  // 현재 정렬 방식입니다. (기본값: 이름 오름차순)
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
 
-  // [제거] 4. 데이터/로직 삭제
-  // final List<Recipe> _allRecipes = [...] (삭제)
-  // _updateRecommendations(), _sortList() (삭제)
-
+  // [initState]
+  // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
   void initState() {
     super.initState();
-    _refreshList(); // [추가] 5. 초기 로드
+    _refreshList(); //  5. 초기 로드 (처음 추천 목록을 불러옴)
   }
 
   // [추가] 6. 중앙 갱신 함수
+  // (RecipeScreen의 _refreshList와 동일한 구조)
   void _refreshList() {
+    // 'setState()': 화면을 다시 그리도록 요청합니다.
     setState(() {
+      // (A) 서비스에서 '데이터를 가져옵니다' (추천)
+      // 서비스의 'getRecommendations' 로직을 호출합니다.
       var recipes = _service.getRecommendations();
+
+      // (B) 서비스에서 '데이터를 정렬합니다'
+      // (A)에서 추천된 'recipes' 목록과
+      // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
       _recommendedRecipes = _service.sortRecipes(recipes, _sortMode);
     });
   }
 
-  // [추가] 7. 이벤트 핸들러
+  //  7. 이벤트 핸들러
+
+  // '정렬' 버튼의 'onPressed' 콜백에 연결됩니다.
   void _onSortPressed() {
+    // (RecipeScreen의 _onSortPressed와 동일한 로직)
     setState(() {
       _sortMode = _sortMode == RecipeSortMode.nameAsc
           ? RecipeSortMode.nameDesc
           : RecipeSortMode.nameAsc;
     });
-    _refreshList();
+    _refreshList(); // 갱신
   }
 
+  // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
   void _onPreferencesPressed() {
-    Navigator.push(
+    Navigator.push( // 'TagsScreen'으로 '이동'
       context,
       MaterialPageRoute(builder: (context) => const TagsScreen()),
     ).then((_) {
+      // 'TagsScreen'에서 '뒤로가기'로 '돌아왔을 때'
       // (선호도 설정값 기반으로 갱신)
+      // -> 사용자가 태그(선호도)를 변경했을 것이라 가정하고,
+      //    'getRecommendations' (로직)가 새 선호도를 반영할 수 있도록
+      //    '_refreshList()'를 호출하여 추천 목록을 '새로고침'합니다.
       _refreshList();
     });
   }
 
-  // (정렬 버튼 UI는 기존과 동일)
+  // (정렬 버튼 UI 헬퍼 함수 - RecipeScreen과 동일)
   Widget _buildSortButtonChild() {
     IconData icon = Icons.swap_vert;
     String label;
@@ -77,58 +107,80 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     );
   }
 
+  // [build]
+  // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold( // (배경색 등을 위해 Scaffold로 감싸기)
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+        padding: const EdgeInsets.all(16.0), // 화면 바깥쪽 여백
+        child: Column( // 위젯들을 세로(수직)로 배치
           children: [
-            Row(
+            // [상단 버튼 영역]
+            Row( // 위젯들을 가로(수평)로 배치
+              // mainAxisAlignment: 가로 정렬 방식
+              // 'spaceBetween': 자식 위젯들 사이의 '공간(Space)'을 '균등하게(Between)' 배분
+              // (왼쪽 버튼 그룹은 '왼쪽 끝'에, 오른쪽 정렬 버튼은 '오른쪽 끝'에 붙게 됨)
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // [왼쪽 버튼 그룹]
                 Row(
                   children: [
+                    // '_buildTopButton' 헬퍼 메서드를 사용하여 버튼 생성
                     _buildTopButton(
                       text: "선호도 설정",
-                      onPressed: _onPreferencesPressed, // [수정] 8. 핸들러 연결
+                      onPressed: _onPreferencesPressed, //  8. 핸들러 연결
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 8), // 버튼 사이 간격
+                    // '추천' 버튼 (누르면 '_refreshList'를 수동으로 호출)
                     _buildTopButton(text: "추천", onPressed: _refreshList),
                   ],
                 ),
+                // [오른쪽 정렬 버튼]
                 TextButton(
-                  onPressed: _onSortPressed, // [수정] 9. 핸들러 연결
+                  onPressed: _onSortPressed, //  9. 핸들러 연결
                   child: _buildSortButtonChild(),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16), // 상단 버튼과 목록 사이 간격
+
+            // [추천 목록 영역]
+            // Expanded: 'Column' 안에서 '남은 모든 세로 공간'을 차지
             Expanded(
+              // '_recommendedRecipes' (상태 변수)가 '비어있지 않으면' -> ListView
+              // '비어있으면' -> Center(Text)
               child: _recommendedRecipes.isEmpty
                   ? const Center(child: Text("선호도에 맞는 추천 레시피가 없습니다."))
                   : ListView.builder(
                 itemCount: _recommendedRecipes.length,
                 itemBuilder: (context, index) {
+                  // GestureDetector: '탭' 이벤트 처리
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
+                          // 'recipe' 파라미터로 '탭한 추천 레시피' 전달
                           builder: (context) => RecipeDetailScreen(
                               recipe: _recommendedRecipes[index]
                           ),
                         ),
                       )
-                      // [수정] 10. 돌아왔을 때 갱신 (즐겨찾기 상태 반영)
+                      //  10. 돌아왔을 때 갱신 (즐겨찾기 상태 반영)
+                      // (RecipeScreen의 .then()과 동일한 로직)
                           .then((_) => _refreshList());
                     },
+                    // [특별한 스타일링]
+                    // 'RecipeCard'를 '추천'의 느낌을 주기 위해
+                    // '연한 하늘색(E0F7FA)' 배경의 'Container'로 한 번 더 감쌌습니다.
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 12), // 카드 하단 여백
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F7FA),
+                        color: const Color(0xFFE0F7FA), // 연한 하늘색 배경
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      // 'RecipeCard' 위젯을 재사용합니다.
                       child: RecipeCard(recipe: _recommendedRecipes[index]),
                     ),
                   );
@@ -141,13 +193,15 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     );
   }
 
+  // [헬퍼 메서드 (Helper Method)]
+  // '선호도 설정', '추천' 버튼처럼 '반복되는 상단 버튼 UI'를 생성하는 함수입니다.
   Widget _buildTopButton({required String text, required VoidCallback onPressed}) {
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: onPressed, // 전달받은 'onPressed' 함수 연결
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFE6E6FA),
-        foregroundColor: Colors.black,
-        elevation: 0,
+        backgroundColor: const Color(0xFFE6E6FA), // 연보라색 배경
+        foregroundColor: Colors.black, // 글자색 검정
+        elevation: 0, // 그림자 없음
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
