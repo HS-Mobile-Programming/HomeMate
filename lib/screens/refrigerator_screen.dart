@@ -326,6 +326,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
   // `setState()`가 호출될 때마다 이 `build` 메서드가 다시 실행됩니다.
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     // Scaffold: 앱 화면의 기본적인 구조(상단바, 본문, 하단바 등)를 제공합니다.
     return Scaffold(
       // SingleChildScrollView: 자식 위젯(Column)의 내용이 화면보다 길어질 경우
@@ -395,24 +396,24 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 children: [
                   // '추가' 버튼
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.add, color: Colors.green, size: 20),
-                    label: const Text(
+                    icon: Icon(Icons.add, color: colorScheme.primary, size: 20),
+                    label: Text(
                       "추가",
-                      style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    onPressed: () => _showIngredientDialog(), // UI 함수 호출
+                    onPressed: () => _showIngredientDialog(), // _showIngredientDialog() 호출
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade50, // 연한 초록 배경
-                      foregroundColor: Colors.green, // 아이콘/텍스트 색상
-                      elevation: 0, // 그림자 없음
+                      backgroundColor: colorScheme.surface, // 흰색/밝은색
+                      surfaceTintColor: colorScheme.primary, // 틴트
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // 둥근 모서리
-                        side: const BorderSide(color: Colors.green, width: 1), // 초록색 테두리
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(color: colorScheme.primary, width: 1),
                       ),
                     ),
                   ),
-                  const Spacer(), // '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
+                  const Spacer(),// '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
 
                   // 'X 전체 보기' 버튼
                   AnimatedOpacity(
