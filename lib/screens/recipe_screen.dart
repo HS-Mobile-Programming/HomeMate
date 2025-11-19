@@ -1,12 +1,3 @@
-// [SCREEN CLASS] - StatefulWidget
-// '레시피' 탭 (index 2)에 표시되는 화면입니다.
-// '검색' 기능과 '정렬' 기능을 통해 레시피 목록을 보여줍니다.
-//
-// 'StatefulWidget':
-// '검색어(_searchKeyword)', '정렬 모드(_sortMode)', '검색 결과(_foundRecipes)' 등
-// 사용자의 입력에 따라 '변경되는 상태'들을 '스스로' 관리해야 하므로
-// StatefulWidget으로 선언되었습니다.
-
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
@@ -39,6 +30,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
   // '현재 검색어' (TextField에 입력된 값)를 저장합니다. (기본값: 빈 문자열)
   String _searchKeyword = "";
 
+  // [추가] 로딩 상태 변수
+  bool _isLoading = false;
+
   // [initState]
   // 이 위젯(화면)이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
@@ -51,19 +45,25 @@ class _RecipeScreenState extends State<RecipeScreen> {
   // 6. UI 갱신을 위한 중앙 함수
   // 이 함수는 화면에 보여질 '_foundRecipes' 목록을 갱신하는 유일한 통로입니다.
   // (1) 처음 로드 시, (2) 검색어 변경 시, (3) 정렬 변경 시, (4) 상세 화면에서 돌아올 시 호출됩니다.
-  void _refreshList() {
-    // 'setState()': 화면을 다시 그리도록 요청합니다.
-    setState(() {
-      // (A) 서비스에서 '데이터를 가져옵니다' (검색)
-      // 현재 '_searchKeyword' (상태 변수) 값을 서비스에 전달하여 '검색'을 요청합니다.
-      // (키워드가 비어있으면 서비스가 '전체' 목록을 반환할 것입니다.)
-      var recipes = _service.getRecipes(keyword: _searchKeyword);
+  Future<void> _refreshList() async {
+    setState(() => _isLoading = true); // 로딩 시작
 
-      // (B) 서비스에서 '데이터를 정렬합니다'
-      // (A)에서 검색된 'recipes' 목록과
-      // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
-      _foundRecipes = _service.sortRecipes(recipes, _sortMode);
-    });
+    // (A) 서비스에서 '데이터를 가져옵니다' (검색)
+    // 현재 '_searchKeyword' (상태 변수) 값을 서비스에 전달하여 '검색'을 요청합니다.
+    // (키워드가 비어있으면 서비스가 '전체' 목록을 반환할 것입니다.)
+    var recipes = await _service.getRecipes(keyword: _searchKeyword);
+
+    // (B) 서비스에서 '데이터를 정렬합니다'
+    // (A)에서 검색된 'recipes' 목록과
+    // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
+    var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
+
+    if (mounted) {
+      setState(() {
+        _foundRecipes = sortedRecipes;
+        _isLoading = false; // 로딩 종료
+      });
+    }
   }
 
   //  7. UI 이벤트 핸들러 (로직 X, 오직 호출)
@@ -150,9 +150,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
             // Expanded: 'Column' 안에서 '남은 모든 세로 공간'을 차지합니다.
             // (검색창, 정렬 버튼을 제외한 모든 하단 영역)
             Expanded(
-              // '_foundRecipes' (상태 변수)가 '비어있지 않으면' (true) -> ListView
-              // '비어있으면' (false) -> Center(Text)
-              child: _foundRecipes.isNotEmpty
+              // [수정] 로딩 중이면 스피너 표시
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _foundRecipes.isNotEmpty
                   ? ListView.builder( // 목록이 있으면
                 itemCount: _foundRecipes.length, // 목록의 개수만큼
                 itemBuilder: (context, index) {

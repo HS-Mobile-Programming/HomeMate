@@ -37,6 +37,9 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   // 현재 정렬 방식입니다. (기본값: 이름 오름차순)
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
 
+  // [추가] 로딩 상태 변수
+  bool _isLoading = false;
+
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
@@ -47,18 +50,24 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
 
   // [추가] 6. 중앙 갱신 함수
   // (RecipeScreen의 _refreshList와 동일한 구조)
-  void _refreshList() {
-    // 'setState()': 화면을 다시 그리도록 요청합니다.
-    setState(() {
-      // (A) 서비스에서 '데이터를 가져옵니다' (추천)
-      // 서비스의 'getRecommendations' 로직을 호출합니다.
-      var recipes = _service.getRecommendations();
+  Future<void> _refreshList() async {
+    setState(() => _isLoading = true); // 로딩 시작
 
-      // (B) 서비스에서 '데이터를 정렬합니다'
-      // (A)에서 추천된 'recipes' 목록과
-      // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
-      _recommendedRecipes = _service.sortRecipes(recipes, _sortMode);
-    });
+    // (A) 서비스에서 '데이터를 가져옵니다' (추천)
+    // 서비스의 'getRecommendations' 로직을 호출합니다.
+    var recipes = await _service.getRecommendations();
+
+    // (B) 서비스에서 '데이터를 정렬합니다'
+    // (A)에서 추천된 'recipes' 목록과
+    // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
+    var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
+
+    if (mounted) {
+      setState(() {
+        _recommendedRecipes = sortedRecipes;
+        _isLoading = false; // 로딩 종료
+      });
+    }
   }
 
   //  7. 이벤트 핸들러
@@ -148,9 +157,10 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
             // [추천 목록 영역]
             // Expanded: 'Column' 안에서 '남은 모든 세로 공간'을 차지
             Expanded(
-              // '_recommendedRecipes' (상태 변수)가 '비어있지 않으면' -> ListView
-              // '비어있으면' -> Center(Text)
-              child: _recommendedRecipes.isEmpty
+              // [수정] 로딩 중이면 스피너 표시
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _recommendedRecipes.isEmpty
                   ? const Center(child: Text("선호도에 맞는 추천 레시피가 없습니다."))
                   : ListView.builder(
                 itemCount: _recommendedRecipes.length,

@@ -14,21 +14,34 @@ class _HomeScreenState extends State<HomeScreen> {
   final RefrigeratorService _service = RefrigeratorService();
   List<Ingredient> _expiringSoonIngredients = [];
 
+  // [추가] 로딩 상태 변수
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
     _refreshIngredients();
   }
 
-  void _refreshIngredients() {
-    var all = _service.getAllIngredients();
+  Future<void> _refreshIngredients() async { // [수정] async 추가
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    // [수정] 비동기 데이터 호출
+    var all = await _service.getAllIngredients();
     var sorted = _service.sortList(all, SortMode.expiryAsc);
-    _expiringSoonIngredients = sorted.take(5).toList();
+
+    if (mounted) {
+      setState(() {
+        _expiringSoonIngredients = sorted.take(5).toList();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    _refreshIngredients();
+    // _refreshIngredients(); // [주의] build에서 비동기 함수를 직접 호출하면 무한 루프에 빠질 수 있어 제거했습니다.
 
     // [수정] 테마 색상 가져오기
     final colorScheme = Theme.of(context).colorScheme;
@@ -42,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // [수정] 테마의 primary 색상을 옅게 사용하여 일관성 유지
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: colorScheme.primary.withOpacity(0.3), width: 2),
+              side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3), width: 2),
             ),
             child: Padding(
               padding: const EdgeInsets.all(32.0),
@@ -62,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 유통기한 임박 목록 카드
           Card(
             // primaryContainer는 보통 메인 색상의 아주 연한 버전을 의미합니다.
-            color: colorScheme.primaryContainer.withOpacity(0.4),
+            color: colorScheme.primaryContainer..withValues(alpha: 0.4),
             elevation: 0, // 플랫한 느낌을 위해 그림자 제거 (선택사항)
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
@@ -86,8 +99,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
-
-                  if (_expiringSoonIngredients.isEmpty)
+                  // [수정] 로딩 중이면 스피너 표시
+                  if (_isLoading)
+                    const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator()))
+                  else if (_expiringSoonIngredients.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Center(child: Text("임박한 재료가 없습니다!")),

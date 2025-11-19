@@ -32,6 +32,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   // 화면에 표시될 '즐겨찾기된' 레시피 목록입니다.
   List<Recipe> _favoriteRecipes = [];
 
+  // [추가] 로딩 상태 변수
+  bool _isLoading = false;
+
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
@@ -42,14 +45,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   //  4. 중앙 갱신 함수
   // (RecipeScreen, RecommendationScreen의 _refreshList와 유사한 역할)
-  void _refreshList() {
-    // 'setState()': 화면을 다시 그리도록 요청합니다.
-    setState(() {
-      // 'RecipeService'의 'getFavoriteRecipes' 로직을 호출하여
-      // 'isFavorite == true'인 레시피 목록만 가져와서
-      // '_favoriteRecipes' (상태 변수)에 '업데이트'합니다.
-      _favoriteRecipes = _service.getFavoriteRecipes();
-    });
+  Future<void> _refreshList() async {
+    setState(() => _isLoading = true); // 로딩 시작
+
+    // 'RecipeService'의 'getFavoriteRecipes' 로직을 호출하여
+    // 'isFavorite == true'인 레시피 목록만 가져와서
+    // '_favoriteRecipes' (상태 변수)에 '업데이트'합니다.
+    var favorites = await _service.getFavoriteRecipes();
+
+    if (mounted) {
+      setState(() {
+        _favoriteRecipes = favorites;
+        _isLoading = false; // 로딩 종료
+      });
+    }
   }
 
   // [build]
@@ -70,7 +79,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       // body: 화면 본문 영역
       // '_favoriteRecipes' (상태 변수)가 '비어있으면' (true) -> Center
       // '비어있지 않으면' (false) -> ListView
-      body: _favoriteRecipes.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _favoriteRecipes.isEmpty
           ? const Center( // [즐겨찾기가 없을 때 UI]
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, // 세로 중앙 정렬

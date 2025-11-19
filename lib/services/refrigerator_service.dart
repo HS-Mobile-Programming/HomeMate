@@ -8,17 +8,19 @@ enum SortMode { nameAsc, nameDesc, expiryAsc }
 class RefrigeratorService {
 
   // 1. 모든 재료 가져오기
-  List<Ingredient> getAllIngredients() {
+  Future<List<Ingredient>> getAllIngredients() async {
+    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     // (나중에 여기를 Firebase에서 데이터 불러오는 코드로 변경)
     return allIngredients;
   }
 
   // 2. 재료 추가하기
-  void addIngredient({
+  Future<void> addIngredient({
     required String name,
     required String quantity,
     required String expiryTime,
-  }) {
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     final newIngredient = Ingredient(
       id: DateTime.now().toString(), // 임시 ID
       name: name,
@@ -30,11 +32,12 @@ class RefrigeratorService {
   }
 
   // 3. 재료 수정하기
-  void updateIngredient(String id, {
+  Future<void> updateIngredient(String id, {
     required String name,
     required String quantity,
     required String expiryTime,
-  }) {
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     try {
       final index = allIngredients.indexWhere((item) => item.id == id);
       final updatedIngredient = Ingredient(
@@ -51,7 +54,8 @@ class RefrigeratorService {
   }
 
   // 4. 재료 삭제하기
-  void deleteIngredient(String id) {
+  Future<void> deleteIngredient(String id) async {
+    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     // (나중에 여기를 Firebase 데이터 삭제 코드로 변경)
     allIngredients.removeWhere((item) => item.id == id);
   }
@@ -66,6 +70,7 @@ class RefrigeratorService {
   }
 
   // 6. 캘린더 마커용 이벤트 가져오기 (로직)
+  // (이 함수는 TableCalendar에서 동기적으로 호출하므로 Future를 적용하지 않고 그대로 둡니다.)
   List<Ingredient> getEventsForDay(DateTime day) {
     return allIngredients.where((ingredient) {
       DateTime? expiryDate = parseDate(ingredient.expiryTime);

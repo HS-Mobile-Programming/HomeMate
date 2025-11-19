@@ -56,9 +56,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   // [이벤트 핸들러]
   // '즐겨찾기(별)' 아이콘을 탭했을 때 호출되는 함수입니다.
-  void _toggleFavorite() {
+  Future<void> _toggleFavorite() async { // [수정] async 추가
 
-    _service.toggleFavorite(widget.recipe);
+    await _service.toggleFavorite(widget.recipe); // [수정] await 추가
     // -> 'recipe_service'는 전달받은 'widget.recipe' 객체의
     //    'isFavorite' 값을 (true <-> false) '직접' 변경합니다.
 
@@ -74,12 +74,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
 
     // 스낵바를 띄워 사용자에게 피드백을 줍니다.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isFavorite ? "즐겨찾기에 등록되었습니다. ⭐" : "즐겨찾기가 해제되었습니다."),
-        duration: const Duration(seconds: 1), // 1초간 표시
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isFavorite ? "즐겨찾기에 등록되었습니다. ⭐" : "즐겨찾기가 해제되었습니다."),
+          duration: const Duration(seconds: 1), // 1초간 표시
+        ),
+      );
+    }
   }
 
   // [build]

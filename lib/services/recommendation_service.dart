@@ -7,7 +7,8 @@ import 'recipe_service.dart'; // 정렬 모드(enum) 재사용
 class RecommendationService {
 
   // 1. 추천 레시피 조회 로직 (AI 로직이 들어갈 곳)
-  List<Recipe> getRecommendations() {
+  Future<List<Recipe>> getRecommendations() async {
+    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     // (나중에 여기를 AI 모델 호출 코드로 변경)
 
     // 지금은 임시로 '쉬움' 난이도만 필터링

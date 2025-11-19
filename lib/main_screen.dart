@@ -46,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     // Scaffold: 화면의 기본 구조 (AppBar, body, BottomNavigationBar)
     return Scaffold(
       // AppBar: 화면 상단 바
@@ -74,42 +75,34 @@ class _MainScreenState extends State<MainScreen> {
 
       // bottomNavigationBar: 화면 하단 네비게이션 바
       bottomNavigationBar: BottomNavigationBar(
-        // currentIndex: '현재 선택된 탭'이 몇 번째인지를 BottomNavigationBar 위젯에게 알려줍니다.
-        // 이 값을 '상태 변수(_currentIndex)'와 연결해야,
-        // 탭을 눌렀을 때 해당 탭 아이콘에 '활성화' 표시가 됩니다.
         currentIndex: _currentIndex,
 
-        // onTap: 하단 탭(아이템)이 '탭(클릭)'되었을 때 호출되는 콜백 함수
-        // 'index' 파라미터로 '몇 번째 탭이 눌렸는지' (0~4) 알려줍니다.
         onTap: (index) {
-          // 'setState()': 플러터에게 "상태가 변경되었으니 화면을 다시 그려라"라고 알립니다.
           setState(() {
-            // '눌린 탭의 인덱스(index)'를
-            // '현재 인덱스 상태 변수(_currentIndex)'에 '업데이트'합니다.
             _currentIndex = index;
           });
-          // -> setState가 호출되면, 'build' 메서드가 다시 실행됩니다.
-          // -> 'body: _screens[_currentIndex]' 부분이
-          //    새로운 '_currentIndex' 값에 해당하는 화면으로 '교체'됩니다.
         },
 
-        // type: BottomNavigationBarType.fixed:
-        // 탭이 4개 이상일 때, 탭이 '고정'되어 보이도록 설정합니다.
-        // (기본값인 'shifting'은 탭을 누를 때마다 아이콘이 움직이는 애니메이션)
         type: BottomNavigationBarType.fixed,
 
-        // selectedItemColor: '선택된' 탭의 아이콘/텍스트 색상 (검은색)
-        selectedItemColor: Colors.black,
-        // unselectedItemColor: '선택되지 않은' 탭의 아이콘/텍스트 색상 (회색)
+        // (보통 아주 연한 초록색이 됩니다)
+        backgroundColor: Colors.white,
+
+        // [수정] 선택된 아이템: 검은색 -> 테마의 메인 색상 (primary)
+        selectedItemColor: colorScheme.primary,
+
+        // [수정] 선택되지 않은 아이템: 회색 유지 (또는 onSurfaceVariant 사용 가능)
         unselectedItemColor: Colors.grey,
 
-        // items: 하단 바에 표시할 '탭 버튼'들의 리스트 (필수!)
+        // [옵션] 선택된 라벨의 글자 굵기 등 스타일 지정 가능
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'), // index 0
-          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: '냉장고'), // index 1
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: '레시피'), // index 2
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '추천'), // index 3
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '마이페이지'), // index 4
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: '냉장고'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: '레시피'),
+          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '추천'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '마이페이지'),
         ],
       ),
     );
