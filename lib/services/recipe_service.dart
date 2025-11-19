@@ -10,7 +10,7 @@ class RecipeService {
 
   // 1. 레시피 검색/조회 로직
   Future<List<Recipe>> getRecipes({String? keyword}) async {
-    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
+    // await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
 
     List<Recipe> recipes;
     if (keyword == null || keyword.isEmpty) {
@@ -40,14 +40,14 @@ class RecipeService {
 
   // 3. 즐겨찾기 조회 로직
   Future<List<Recipe>> getFavoriteRecipes() async {
-    await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
+    // await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     // (나중에 여기를 Firebase 'where' 쿼리로 변경)
     return allRecipes.where((r) => r.isFavorite).toList();
   }
 
   // 4. 즐겨찾기 상태 변경 로직
   Future<void> toggleFavorite(Recipe recipe) async {
-    await Future.delayed(const Duration(milliseconds: 300)); // 가짜 지연
+    // await Future.delayed(const Duration(milliseconds: 300)); // 가짜 지연
     // (나중에 여기를 Firebase 'update' 쿼리로 변경)
     recipe.isFavorite = !recipe.isFavorite;
   }

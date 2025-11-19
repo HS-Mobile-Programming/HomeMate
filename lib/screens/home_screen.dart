@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 유통기한 임박 목록 카드
           Card(
             // primaryContainer는 보통 메인 색상의 아주 연한 버전을 의미합니다.
-            color: colorScheme.primaryContainer..withValues(alpha: 0.4),
+            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
             elevation: 0, // 플랫한 느낌을 위해 그림자 제거 (선택사항)
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(

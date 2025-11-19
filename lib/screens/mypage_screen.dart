@@ -183,10 +183,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
       child: ElevatedButton(
         onPressed: onTap, // 전달받은 'onTap' 함수 연결
         style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.primaryContainer,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87, // 텍스트 색상을 약간 진하게
           padding: const EdgeInsets.symmetric(vertical: 16), // 버튼 내부 세로 여백
-          alignment: Alignment.centerLeft, // 버튼 내부의 '텍스트'를 '왼쪽 정렬'
+          alignment: Alignment.centerLeft,
+          // 버튼 내부의 '텍스트'를 '왼쪽 정렬'
           elevation: 0, // 그림자 제거 (선택사항)
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50), // 버튼 둥글기 통일
+            side: BorderSide(color: Colors.green.withValues(alpha: 1.0), width: 2), // 연한 초록색 테두리 추가
+          ),
         ),
         child: Text(text, style: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 16)),
       ),

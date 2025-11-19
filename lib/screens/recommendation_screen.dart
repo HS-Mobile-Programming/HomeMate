@@ -181,13 +181,11 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                       // (RecipeScreen의 .then()과 동일한 로직)
                           .then((_) => _refreshList());
                     },
-                    // [특별한 스타일링]
-                    // 'RecipeCard'를 '추천'의 느낌을 주기 위해
-                    // '연한 하늘색(E0F7FA)' 배경의 'Container'로 한 번 더 감쌌습니다.
+
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12), // 카드 하단 여백
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F7FA), // 연한 하늘색 배경
+                        color: Colors.green.shade50, // 연한 하늘색 배경
                         borderRadius: BorderRadius.circular(16),
                       ),
                       // 'RecipeCard' 위젯을 재사용합니다.
@@ -209,7 +207,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     return ElevatedButton(
       onPressed: onPressed, // 전달받은 'onPressed' 함수 연결
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFE6E6FA), // 연보라색 배경
+        backgroundColor: Colors.green.shade50, // 연보라색 배경
         foregroundColor: Colors.black, // 글자색 검정
         elevation: 0, // 그림자 없음
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

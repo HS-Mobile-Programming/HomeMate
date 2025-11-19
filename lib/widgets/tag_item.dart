@@ -53,16 +53,14 @@ class TagItem extends StatelessWidget {
               // 'tag.isSelected ? (A) : (B)'
               // 'tag.isSelected' 값이 'true'이면 (A) 스타일을, 'false'이면 (B) 스타일을 적용합니다.
 
-              // [배경색]
-              // 0xFFE3F2FD: 연한 파란색 (선택됨)
-              // 0xFFEEEEEE: 연한 회색 (선택 안 됨)
-              color: tag.isSelected ? const Color(0xFFE3F2FD) : const Color(0xFFEEEEEE),
+
+              color: tag.isSelected ? Colors.green.shade50 : const Color(0xFFEEEEEE),
 
               // [테두리]
               border: Border.all(
                 // 0xFF2196F3: 진한 파란색 (선택됨)
                 // Colors.transparent: 투명 (선택 안 됨 - 테두리 없음)
-                color: tag.isSelected ? const Color(0xFF2196F3) : Colors.transparent,
+                color: tag.isSelected ? Colors.green : Colors.transparent,
                 width: 2, // 테두리 두께
               ),
             ),
@@ -70,7 +68,7 @@ class TagItem extends StatelessWidget {
             // Icon: 원형 Container '안'에 표시될 아이콘
             child: Icon(
               Icons.collections, // (임시 아이콘, '태그' 관련 아이콘으로 변경 가능)
-              color: Colors.grey[600], // 아이콘 색상
+              color: tag.isSelected ? Colors.green : Colors.grey[600], // 아이콘 색상
               size: 32, // 아이콘 크기
             ),
           ),

@@ -173,7 +173,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   // '반복되는 정보 섹션 UI'를 생성하는 함수입니다.
   Widget _buildInfoSection(String title, String content) {
     return Container(
-      color: const Color(0xFFE0F7FA), // 연한 하늘색 배경 (추천 카드와 동일)
+      color: Colors.white,
       padding: const EdgeInsets.all(20.0), // 내부 여백
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
