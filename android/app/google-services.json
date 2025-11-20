@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873594167994",
+    "project_id": "homemate-13d3d",
+    "storage_bucket": "homemate-13d3d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873594167994:android:ba078e60ab52d2276d5883",
+        "android_client_info": {
+          "package_name": "com.example.homemate2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSHLwU7fSNKRoNjbFWDcCQb2v9TfO5lIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
