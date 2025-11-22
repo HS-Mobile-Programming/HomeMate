@@ -1,24 +1,43 @@
 class Recipe {
-  final String title; // 레시피 제목
-  final String description; // 레시피 요약 설명
-  final String imageUrl; // 레시피 이미지 URL (현재 코드에서는 사용되지 않음)
-  final String difficulty; // 난이도 (예: '쉬움', '보통')
-  final List<String> ingredients; // 재료 목록 (예: ["김치", "돼지고기"])
-  final List<String> steps; // 조리 단계 목록 (예: ["김치를 볶는다.", "물을 붓는다."])
+  // DB 필드
+  final String id;
+  final String name;
+  final String description;
+  final String difficulty;
+  final String cookTime;
+  final String ingredients;
+  final String step;
+  final String tasteTags;
+  final String imageName;
+
+  // 앱 내부용 상태
   bool isFavorite;
 
-  // [생성자 (Constructor)]
   Recipe({
-    // 'required' 키워드: Recipe 객체를 생성할 때 이 값들(title, description, imageUrl)은
-    // 반드시! 전달되어야 함을 의미합니다.
-    required this.title,
+    required this.id,
+    required this.name,
     required this.description,
-    required this.imageUrl,
-
-    // '기본값 (Default Value)':
-    this.difficulty = '보통',
-    this.ingredients = const [],
-    this.steps = const [],
+    required this.difficulty,
+    required this.cookTime,
+    required this.ingredients,
+    required this.step,
+    required this.tasteTags,
+    required this.imageName,
     this.isFavorite = false,
   });
+
+  // 재료 리스트 가져오기
+  List<String> get ingredientList {
+    return ingredients.split(',').map((e) => e.trim()).toList();
+  }
+
+  // 조리 순서 리스트 가져오기
+  List<String> get stepList {
+    return step.split('\n').map((e) => e.trim()).toList();
+  }
+
+  // 맛 태그 리스트 가져오기
+  List<String> get tagList {
+    return tasteTags.split(',').map((e) => e.trim()).toList();
+  }
 }

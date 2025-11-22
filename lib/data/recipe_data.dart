@@ -1,37 +1,28 @@
-
 import '../models/recipe.dart';
 
-//앱 전체에서 공유할 레시피 목록
+// 임시 데이터 - DB 완성후 삭제할 것
 List<Recipe> allRecipes = [
   Recipe(
-      title: "김치찌개",
-      description: "매콤하고 맛있는 김치찌개",
-      imageUrl: "",
-      difficulty: "쉬움",
-      ingredients: ["김치 1포기", "돼지고기 200g", "두부 1모"],
-      steps: ["김치를 볶는다.", "물을 붓고 끓인다.", "고기와 두부를 넣는다."],
-      isFavorite: true // (테스트용으로 하나 켜놓기)
+    id: 'recipe_001',
+    name: '웨지감자',
+    description: '맥주 안주로 딱 좋은 짭짤한 웨지감자입니다.',
+    difficulty: '초급',
+    cookTime: '30분',
+    ingredients: '감자 2개, 버터 1큰술, 소금 약간, 파슬리 가루',
+    step: '1. 감자를 깨끗이 씻어 웨지 모양으로 썬다.\n2. 물기를 제거하고 버터와 섞는다.\n3. 에어프라이어 180도에서 20분 굽는다.',
+    tasteTags: '짭짤한, 고소한, 바삭한',
+    imageName: 'recipe_001',
+    isFavorite: true,
   ),
   Recipe(
-      title: "된장찌개",
-      description: "구수한 된장찌개",
-      imageUrl: "",
-      difficulty: "보통",
-      ingredients: ["된장 2큰술", "애호박 1/2개", "두부 1모", "양파 1/2개"],
-      steps: ["멸치 육수를 낸다.", "된장을 푼다.", "야채를 넣고 끓인다."]
-  ),
-  Recipe(
-      title: "파스타",
-      description: "토마토 파스타",
-      imageUrl: "",
-      difficulty: "쉬움",
-      ingredients: ["파스타면 1인분", "토마토 소스 200g", "마늘 5쪽"],
-      steps: ["면을 8분간 삶는다.", "마늘을 볶다가 소스를 넣는다.", "면을 넣고 섞는다."]
-  ),
-  Recipe(
-    title: "계란찜",
-    description: "부드럽고 촉촉한 계란찜",
-    imageUrl: "",
-    difficulty: "쉬움",
+    id: 'recipe_002',
+    name: '김치찌개',
+    description: '한국인의 소울푸드',
+    difficulty: '중급',
+    cookTime: '40분',
+    ingredients: '김치 1포기, 돼지고기 200g, 두부 1모, 대파 1개',
+    step: '1. 김치와 고기를 볶는다.\n2. 물을 넣고 끓인다.\n3. 두부와 대파를 넣고 마무리.',
+    tasteTags: '매콤한, 얼큰한, 한식',
+    imageName: 'recipe_002',
   ),
 ];
