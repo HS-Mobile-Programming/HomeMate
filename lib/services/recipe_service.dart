@@ -17,9 +17,14 @@ class RecipeService {
       recipes = allRecipes; // 전체 조회
     } else {
       // 오류수정: 이름만이 아니라 정상적으로 이름 또는 재료 검색이 되도록 수정
+      final keywordLower = keyword.toLowerCase();
       recipes = allRecipes
           .where((recipe) =>
-          recipe.name.toLowerCase().contains(keyword.toLowerCase()) || recipe.ingredients.toLowerCase().contains(keyword.toLowerCase())).toList();
+              recipe.name.toLowerCase().contains(keywordLower) ||
+              // ingredients 리스트의 각 요소(재료)를 확인하여 재료명에 키워드가 포함되는지 검사
+              recipe.ingredients.any((ingredient) =>
+                  ingredient.ingredientName.toLowerCase().contains(keywordLower)))
+          .toList();
     }
     return recipes;
   }
