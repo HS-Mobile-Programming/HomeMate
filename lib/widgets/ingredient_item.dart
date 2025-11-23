@@ -7,8 +7,8 @@
 // 'ingredient'나 'onEdit' 같은 '외부'에서 전달받은 값(파라미터)에 의해서만
 // 화면이 그려집니다.
 
-
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../models/ingredient.dart';
 
 class IngredientItem extends StatelessWidget {
@@ -18,7 +18,6 @@ class IngredientItem extends StatelessWidget {
   // 'final Ingredient ingredient':
   // 표시할 '재료 데이터' 원본입니다. (예: 계란, 10개, 2025.11.20)
   final Ingredient ingredient;
-
 
   // '수정' 아이콘을 눌렀을 때 실행될 '함수'입니다.
   final VoidCallback? onEdit;
@@ -35,9 +34,32 @@ class IngredientItem extends StatelessWidget {
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
   Widget build(BuildContext context) {
+    // 1. 문자열("2025.11.20")을 날짜 객체(DateTime)로 변환
+    DateTime? expiryDate = DateTime.tryParse(ingredient.expiryTime.replaceAll('.', '-'));
+
+    // 카드 배경색 변수
+    // 날짜 상태에 따라 배경색을 변경한다.
+    // 기본값은 흰색
+    Color cardColor = Colors.white;
+
+    // 날짜 비교 로직
+    if (expiryDate != null) {
+      DateTime now = DateTime.now();
+
+      if (isSameDay(expiryDate, now)) {
+        // 유통기한이 오늘까지인 경우에는 배경색을 노란색으로 변경
+        cardColor = Colors.yellow;
+      } else if (expiryDate.isBefore(now)) {
+        // 유통기간이 지난 경우에는 배경색을 빨간색으로 변경
+        // (isSameDay 체크를 먼저 했으므로, 여기는 '오늘이 아니면서 과거인 경우'만 해당됨)
+        cardColor = Colors.red;
+      }
+    }
+
     // Card: UI를 카드 형태로 감싸주는 위젯 (약간의 그림자와 둥근 모서리)
     return Card(
-      color: Colors.white, // 카드 배경색
+      color: cardColor,
+
       elevation: 1, // 그림자(음영)의 정도 (0은 그림자 없음)
       // 카드 모서리를 12 픽셀만큼 둥글게 처리
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -67,7 +89,7 @@ class IngredientItem extends StatelessWidget {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
 
-                  // [추가됨] [재료 수량]
+                  // [재료 수량]
                   Text(
                     "수량: ${ingredient.quantity}", // 'quantity' 데이터를 표시
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -79,10 +101,10 @@ class IngredientItem extends StatelessWidget {
             // [유통기한]
             Text(
               ingredient.expiryTime, // 'expiryTime' 데이터를 표시
-              // Color(0xFFC90000): 16진수 색상 코드 (ARGB)
-              // '0xFF': Alpha(투명도) - FF는 '불투명'
-              // 'C90000': RGB(색상) - '진한 빨간색'
-              style: const TextStyle(fontSize: 14, color: Color(0xFFC90000)),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black,
+              ),
             ),
 
             // [조건부 렌더링]

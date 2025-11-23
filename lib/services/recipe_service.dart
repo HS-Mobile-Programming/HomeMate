@@ -16,11 +16,10 @@ class RecipeService {
     if (keyword == null || keyword.isEmpty) {
       recipes = allRecipes; // 전체 조회
     } else {
-      // 검색 조회
+      // 오류수정: 이름만이 아니라 정상적으로 이름 또는 재료 검색이 되도록 수정
       recipes = allRecipes
           .where((recipe) =>
-          recipe.title.toLowerCase().contains(keyword.toLowerCase()))
-          .toList();
+          recipe.name.toLowerCase().contains(keyword.toLowerCase()) || recipe.ingredients.toLowerCase().contains(keyword.toLowerCase())).toList();
     }
     return recipes;
   }
@@ -29,10 +28,10 @@ class RecipeService {
   List<Recipe> sortRecipes(List<Recipe> recipes, RecipeSortMode mode) {
     switch (mode) {
       case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.title.compareTo(b.title));
+        recipes.sort((a, b) => a.name.compareTo(b.name));
         break;
       case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.title.compareTo(a.title));
+        recipes.sort((a, b) => b.name.compareTo(a.name));
         break;
     }
     return recipes;
