@@ -21,10 +21,10 @@ class RecommendationService {
     // '정확도순' 등이 추가될 수 있으므로 별도 함수로 분리)
     switch (mode) {
       case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.title.compareTo(b.title));
+        recipes.sort((a, b) => a.name.compareTo(b.name));
         break;
       case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.title.compareTo(a.title));
+        recipes.sort((a, b) => b.name.compareTo(a.name));
         break;
     }
     return recipes;

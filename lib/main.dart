@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'screens/loading_screen.dart';
+// import 'package:firebase_core/firebase_core.dart';  // Import Firebase Package
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp();     // Initialize Firebase
   runApp(const HomeMateApp());
 }
 
