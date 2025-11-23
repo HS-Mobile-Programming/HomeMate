@@ -88,7 +88,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Wrap(
                     spacing: 8,
                     // [수정] tagList getter 사용
-                    children: widget.recipe.tagList.map((tag) => Chip(
+                    children: widget.recipe.tasteTags.map((tag) => Chip(
                       label: Text(tag),
                       backgroundColor: Colors.green.shade50,
                     )).toList(),
@@ -105,7 +105,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildIconInfo(Icons.timer, "시간", widget.recipe.cookTime),
+                  //_buildIconInfo(Icons.timer, "시간", widget.recipe.cookTime),
+                  _buildIconInfo(Icons.timer, "시간", "${widget.recipe.cookTimeMinutes}분"),
                   _buildIconInfo(Icons.restaurant, "난이도", widget.recipe.difficulty),
                 ],
               ),
@@ -115,15 +116,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             // 재료
             _buildInfoSection(
                 "재료",
-                widget.recipe.ingredientList.join("\n") // 줄바꿈으로 보여주기
+                //widget.recipe.ingredientList.join("\n") // 줄바꿈으로 보여주기
+                widget.recipe.ingredients.map((e) => e.rawText).toList().join("\n")
             ),
             const Divider(height: 1, thickness: 1),
 
             // 조리 방법
             _buildInfoSection(
               "조리 방법",
+              /*
               widget.recipe.stepList.isNotEmpty
                   ? widget.recipe.stepList.join("\n\n") // 단계별로 간격 두기
+              */
+              widget.recipe.steps.isNotEmpty
+                  ? widget.recipe.steps.join("\n\n") // 단계별로 간격 두기
                   : "조리 방법 정보 없음",
             ),
             const SizedBox(height: 50),
