@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/loading_screen.dart';
-// import 'package:firebase_core/firebase_core.dart';  // Import Firebase Package
+import 'package:firebase_core/firebase_core.dart';  // Import Firebase Package
+import 'firebase_options.dart';     // Import flutterfire configure file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();     // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);     // Initialize Firebase
   runApp(const HomeMateApp());
 }
 
