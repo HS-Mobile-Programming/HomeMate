@@ -40,4 +40,18 @@ class Recipe {
   List<String> get tagList {
     return tasteTags.split(',').map((e) => e.trim()).toList();
   }
+
+  // Recipe 객체를 JSON 맵으로 변환하는 메서드
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,'difficulty': difficulty,
+      'cook_time': cookTime, // 모델의 필드명과 일치
+      'ingredients': ingredients,
+      'step': step,         // 모델의 필드명과 일치
+      'taste_tags': tasteTags,
+      'image_name': imageName,
+    };
+  }
 }
