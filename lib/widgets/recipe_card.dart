@@ -47,7 +47,8 @@ class RecipeCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.timer, size: 14, color: Colors.grey),
-                    Text(" ${recipe.cookTime}  ", style: TextStyle(color: Colors.grey)),
+                    //Text(" ${recipe.cookTime}  ", style: TextStyle(color: Colors.grey)),
+                    Text(" ${recipe.cookTimeMinutes}  ", style: TextStyle(color: Colors.grey)),
                     Icon(Icons.restaurant, size: 14, color: Colors.grey),
                     Text(" ${recipe.difficulty}", style: TextStyle(color: Colors.grey)),
                   ],
