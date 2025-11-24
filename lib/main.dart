@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'screens/loading_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';  // Import Firebase Package
 import 'firebase_options.dart';     // Import flutterfire configure file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);     // Initialize Firebase
   runApp(const HomeMateApp());
 }
