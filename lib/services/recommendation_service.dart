@@ -12,7 +12,7 @@ class RecommendationService {
   // --- 1. Gemini AI 설정 ---
   // 여기에 발급받은 Gemini API 키를 입력하세요.
   // 보안을 위해 실제 앱에서는 환경 변수나 별도의 키 관리 서비스를 사용하는 것이 좋습니다.
-  static const String _apiKey = "AIzaSyAGPjh3pOHFVGxKR0Zg5xllzw5XsMGqMm8"; // <--- 여기에 API 키를 입력하세요
+  static const String _apiKey = ""; // <--- 여기에 API 키를 입력하세요
 
   //
   final RecipeService _recipeService = RecipeService();
@@ -20,7 +20,7 @@ class RecommendationService {
   // --- 2. 추천 레시피 조회 로직 (Gemini AI 호출 코드로 변경) ---
   Future<List<Recipe>> getRecommendations() async {
     // AI 모델 초기화
-    final model = GenerativeModel(model: 'gemini-pro', apiKey: _apiKey);
+    final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
 
     // Firestore에서 전체 레시피 불러옵니다.
     final allRecipes = await _recipeService.getRecipes();
