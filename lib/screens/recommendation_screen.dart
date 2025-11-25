@@ -58,22 +58,24 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   Future<void> _refreshList() async {
     setState(() => _isLoading = true); // 로딩 시작
 
-    // (A) 서비스에서 '데이터를 가져옵니다' (추천)
-    // 서비스의 'getRecommendations' 로직을 호출합니다.
-    // [수정] 실제로는 여기서 '_savedTags'를 서비스에 넘겨줘야 필터링이 되겠죠?
-    // 예: _service.getRecommendations(tags: _savedTags);
-    var recipes = await _service.getRecommendations();
+    try {
+      // 서비스가 알아서 판단해서 줍니다.
+      var recipes = await _service.getRecommendations();
+      var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
 
-    // (B) 서비스에서 '데이터를 정렬합니다'
-    // (A)에서 추천된 'recipes' 목록과
-    // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
-    var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
-
-    if (mounted) {
-      setState(() {
-        _recommendedRecipes = sortedRecipes;
-        _isLoading = false; // 로딩 종료
-      });
+      if (mounted) {
+        setState(() {
+          _recommendedRecipes = sortedRecipes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("추천을 불러오는데 실패했습니다.")),
+        );
+      }
     }
   }
 
