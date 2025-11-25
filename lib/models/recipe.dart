@@ -76,6 +76,36 @@ class Recipe {
       'isFavorite': isFavorite,
     };
   }
+
+  // getter
+    // 표시용 문자열 (예 : "30분")
+  String get cookTime => '$cookTimeMinutes분';
+
+    // 재료의 rawText 리스트 (예: ["감자 2개", "버터 1큰술", ...])
+  List<String> get ingredientList =>
+      ingredients.map((e) => e.rawText).toList();
+
+    // 조리 단계 리스트 (원본으로 출력)
+  List<String> get stepList => steps;
+
+    // 맛 태그 리스트 (원본으로 출력)
+  List<String> get tagList => tasteTags;
+
+  // AI(Gemini)에게 넘길 JSON
+  // 필요하다면 키 이름을 바꿔도 괜찮습니다.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'difficulty': difficulty,
+      'cookTimeMinutes': cookTimeMinutes,
+      'tasteTags': tasteTags,
+      'ingredients': ingredients.map((e) => e.toJson()).toList(),
+      'steps': steps,
+      'imageName': imageName,
+    };
+  }
 }
 
 // RecipeIngredient
@@ -114,12 +144,14 @@ class RecipeIngredient {
     };
   }
 
+  /* 클래스 접근이 잘못되서 주석처리하고 상단으로 올리고 수정했습니다.
   // Recipe 객체를 JSON 맵으로 변환하는 메서드
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
-      'description': description,'difficulty': difficulty,
+      'description': description,
+      'difficulty': difficulty,
       'cook_time': cookTime, // 모델의 필드명과 일치
       'ingredients': ingredients,
       'step': step,         // 모델의 필드명과 일치
@@ -127,4 +159,7 @@ class RecipeIngredient {
       'image_name': imageName,
     };
   }
+  */
+  // AI에 포함할 때도 같은 구조 사용하도록 매핑합니다.
+  Map<String, dynamic> toJson() => toMap();
 }
