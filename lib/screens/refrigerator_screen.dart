@@ -391,8 +391,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   borderRadius: BorderRadius.circular(16), // 모서리 둥글게
                 ),
                 child: TableCalendar(
-                  locale: 'en_US',
-                  // 달력 언어 (이 코드에서는 'en_US'지만, 'ko_KR'로 변경 가능)
+                  locale: 'ko_KR',
+                  // 달력 언어
                   firstDay: DateTime.utc(2020, 1, 1),
                   // 달력이 보여줄 수 있는 최소 날짜
                   lastDay: DateTime.utc(2030, 12, 31),
