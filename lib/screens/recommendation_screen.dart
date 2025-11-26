@@ -40,6 +40,11 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   // [추가] 로딩 상태 변수
   bool _isLoading = false;
 
+  // [추가] 4. 태그 저장소
+  // 사용자가 'TagsScreen'에서 선택한 태그 목록을 기억하는 변수입니다.
+  // 이 변수가 있어야 TagsScreen에 들어갈 때 "이거 원래 체크되어 있었어"라고 알려줄 수 있습니다.
+  List<String> _savedTags = [];
+
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
@@ -53,20 +58,24 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   Future<void> _refreshList() async {
     setState(() => _isLoading = true); // 로딩 시작
 
-    // (A) 서비스에서 '데이터를 가져옵니다' (추천)
-    // 서비스의 'getRecommendations' 로직을 호출합니다.
-    var recipes = await _service.getRecommendations();
+    try {
+      // 서비스가 알아서 판단해서 줍니다.
+      var recipes = await _service.getRecommendations();
+      var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
 
-    // (B) 서비스에서 '데이터를 정렬합니다'
-    // (A)에서 추천된 'recipes' 목록과
-    // 현재 '_sortMode' (상태 변수) 값을 서비스에 전달하여 '정렬'을 요청합니다.
-    var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
-
-    if (mounted) {
-      setState(() {
-        _recommendedRecipes = sortedRecipes;
-        _isLoading = false; // 로딩 종료
-      });
+      if (mounted) {
+        setState(() {
+          _recommendedRecipes = sortedRecipes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("추천을 불러오는데 실패했습니다.")),
+        );
+      }
     }
   }
 
@@ -83,19 +92,33 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     _refreshList(); // 갱신
   }
 
-  // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
-  void _onPreferencesPressed() {
-    Navigator.push( // 'TagsScreen'으로 '이동'
+  // [수정] '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
+  // TagsScreen을 열 때 저장된 태그를 보내고, 돌아올 때 결과를 받아옵니다.
+  void _onPreferencesPressed() async {
+    // 1. 화면을 열 때 '주머니에 있던 태그(_savedTags)'를 쥐여서 보냅니다.
+    // (push가 Future를 반환하므로 await를 사용해 결과를 기다립니다)
+    final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const TagsScreen()),
-    ).then((_) {
-      // 'TagsScreen'에서 '뒤로가기'로 '돌아왔을 때'
-      // (선호도 설정값 기반으로 갱신)
-      // -> 사용자가 태그(선호도)를 변경했을 것이라 가정하고,
-      //    'getRecommendations' (로직)가 새 선호도를 반영할 수 있도록
-      //    '_refreshList()'를 호출하여 추천 목록을 '새로고침'합니다.
+      MaterialPageRoute(
+        builder: (context) => TagsScreen(
+          initialSelectedTags: _savedTags, // "이거 원래 체크되어 있었어" 전달
+        ),
+      ),
+    );
+
+    // 2. 'TagsScreen'에서 '뒤로가기'로 '돌아왔을 때'
+    // 결과물(result)이 있으면 내 주머니(_savedTags)를 갱신합니다.
+    if (result != null) {
+      setState(() {
+        _savedTags = result; // 받아온 태그 목록 저장
+      });
+
+      // 확인용 로그
+      print("갱신된 태그 목록: $_savedTags");
+
+      // 3. 변경된 선호도(_savedTags)를 기반으로 목록 새로고침
       _refreshList();
-    });
+    }
   }
 
   // (정렬 버튼 UI 헬퍼 함수 - RecipeScreen과 동일)

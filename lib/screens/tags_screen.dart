@@ -13,7 +13,9 @@ import '../widgets/tag_item.dart';
 
 class TagsScreen extends StatefulWidget {
   // const TagsScreen(...): 위젯 생성자
-  const TagsScreen({super.key});
+  final List<String>? initialSelectedTags; // 초기 선택된 태그 목록
+  
+  const TagsScreen({super.key, this.initialSelectedTags});
 
   @override
   State<TagsScreen> createState() => _TagsScreenState();
@@ -22,27 +24,65 @@ class TagsScreen extends StatefulWidget {
 class _TagsScreenState extends State<TagsScreen> {
   // [상태 변수 (State Variable)]
 
-  // 이 화면에 표시될 '전체 태그 목록'입니다. (TagModel의 리스트)
-  late List<TagModel> tags;
+  // 카테고리별 태그 목록
+  late List<TagModel> section1Tags; // 첫 번째 섹션
+  late List<TagModel> section2Tags; // 두 번째 섹션
+  late List<TagModel> section3Tags; // 세 번째 섹션
 
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
   void initState() {
     super.initState();
-    // 'tags' (상태 변수)를 '초기화'합니다.
-    // (임시 데이터)
-    // 'List.generate(24, ...)' : '24개'의 아이템을 생성하는 리스트
-    tags = List.generate(24, (index) {
-      // (index: 0~23)
-      // 'String.fromCharCode(65 + index)':
-      //   ASCII 코드 65는 'A', 66은 'B' ...
-      //   -> "태그 A", "태그 B", ... "태그 X" (24개)
-      return TagModel("태그 ${String.fromCharCode(65 + index)}");
-      // (모든 태그는 'TagModel' 생성자의 기본값에 따라
-      //  'isSelected: false' 상태로 생성됩니다.)
-    });
+    
+    // 첫 번째 섹션 태그
+    final List<String> section1TagNames = [
+      '매콤한',
+      '담백한',
+      '짭짤한',
+      '달달한',
+      '새콤한',
+      '고소한',
+      '기름진',
+      '깔끔한',
+    ];
+    
+    // 두 번째 섹션 태그
+    final List<String> section2TagNames = [
+      '고기요리',
+      '해산물요리',
+      '채소요리',
+      '면요리',
+      '밥요리',
+    ];
+    
+    // 세 번째 섹션 태그
+    final List<String> section3TagNames = [
+      '반찬',
+      '메인요리',
+      '에피타이저',
+      '디저트',
+    ];
+    
+    // 각 카테고리별로 TagModel 리스트 생성
+    section1Tags = section1TagNames.map((tagName) {
+      bool isSelected = widget.initialSelectedTags?.contains(tagName) ?? false;
+      return TagModel(tagName, isSelected: isSelected);
+    }).toList();
+    
+    section2Tags = section2TagNames.map((tagName) {
+      bool isSelected = widget.initialSelectedTags?.contains(tagName) ?? false;
+      return TagModel(tagName, isSelected: isSelected);
+    }).toList();
+    
+    section3Tags = section3TagNames.map((tagName) {
+      bool isSelected = widget.initialSelectedTags?.contains(tagName) ?? false;
+      return TagModel(tagName, isSelected: isSelected);
+    }).toList();
   }
+  
+  // 모든 태그를 하나의 리스트로 반환 (뒤로가기 시 사용)
+  List<TagModel> get allTags => [...section1Tags, ...section2Tags, ...section3Tags];
 
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
@@ -58,57 +98,59 @@ class _TagsScreenState extends State<TagsScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // 선택된 태그 목록을 추출하여 반환
+            List<String> selectedTags = allTags
+                .where((tag) => tag.isSelected)
+                .map((tag) => tag.name)
+                .toList();
+            Navigator.pop(context, selectedTags);
+          },
         ),
       ),
       backgroundColor: const Color(0xFFF5F5F5), // 앱 공통 배경색
 
       // body: 화면 본문 영역
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16.0), // 화면 바깥쪽 여백
-
-        // GridView.builder:
-        // '격자(Grid)' 형태의 목록을 '동적'으로(builder) 생성하는 위젯입니다.
-        // (ListView.builder의 격자 버전)
-        child: GridView.builder(
-          // gridDelegate: '격자(Grid)'를 '어떻게' 나눌지 정의하는 '위임자(Delegate)'
-          // 'SliverGridDelegateWithFixedCrossAxisCount':
-          //   '가로(CrossAxis)'에 '고정된(Fixed)' '개수(Count)'로 나누는 방식
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, // 가로(CrossAxis)에 '4개'의 아이템을 배치
-            mainAxisSpacing: 8, // '세로(MainAxis)' 아이템 간의 간격
-            crossAxisSpacing: 8, // '가로(CrossAxis)' 아이템 간의 간격
-            childAspectRatio: 0.8, // 각 아이템의 '가로:세로' 비율 (1.0이면 정사각형, 0.8이면 세로가 더 긴 직사각형)
-          ),
-
-          itemCount: tags.length, // 'tags' (상태 변수)의 개수(24)만큼 생성
-
-          itemBuilder: (context, index) {
-            // 'TagItem' 위젯을 재사용합니다.
-            return TagItem(
-              tag: tags[index], // 'index'에 해당하는 'tag' 데이터 전달
-
-              // onTap: 'TagItem' 위젯이 '탭'되었을 때 실행될 함수 전달
-              onTap: () {
-                // 'setState()': 플러터에게 "상태가 변경되었으니 화면을 다시 그려라"라고 알립니다.
-                setState(() {
-                  // 'tags' 리스트의 'index' 번째 아이템의
-                  // 'isSelected' 값을 '!' (NOT) 연산자로 '뒤집습니다'.
-                  // (true -> false, false -> true)
-                  tags[index].isSelected = !tags[index].isSelected;
-
-                  // (나중에 여기에 '변경된 태그'를 '서비스'나 'DB'에
-                  //  '저장'하는 로직이 추가되어야 합니다.)
-                });
-                // -> 'setState'가 호출되면 'build'가 다시 실행되고,
-                //    'GridView.builder'가 'TagItem'들을 다시 그립니다.
-                // -> 'TagItem'은 변경된 'tags[index].isSelected' 값을 전달받아
-                //    '색상'과 '테두리'를 '갱신'합니다.
-              },
-            );
-          },
-        ),
+        children: [
+          // 첫 번째 섹션
+          _buildTagSection(section1Tags),
+          const Divider(height: 32, thickness: 1),
+          
+          // 두 번째 섹션
+          _buildTagSection(section2Tags),
+          const Divider(height: 32, thickness: 1),
+          
+          // 세 번째 섹션
+          _buildTagSection(section3Tags),
+        ],
       ),
+    );
+  }
+  
+  // 태그 섹션을 생성하는 헬퍼 메서드
+  Widget _buildTagSection(List<TagModel> tagList) {
+    return GridView.builder(
+      shrinkWrap: true, // ListView 내부에서 사용하기 위해 필요
+      physics: const NeverScrollableScrollPhysics(), // 스크롤 비활성화 (ListView가 스크롤 처리)
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4, // 가로(CrossAxis)에 '4개'의 아이템을 배치
+        mainAxisSpacing: 8, // '세로(MainAxis)' 아이템 간의 간격
+        crossAxisSpacing: 8, // '가로(CrossAxis)' 아이템 간의 간격
+        childAspectRatio: 0.8, // 각 아이템의 '가로:세로' 비율
+      ),
+      itemCount: tagList.length,
+      itemBuilder: (context, index) {
+        return TagItem(
+          tag: tagList[index],
+          onTap: () {
+            setState(() {
+              tagList[index].isSelected = !tagList[index].isSelected;
+            });
+          },
+        );
+      },
     );
   }
 }
