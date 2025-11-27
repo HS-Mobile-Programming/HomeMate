@@ -5,10 +5,72 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import '../main_screen.dart';
+import '../services/account_service.dart';
 
 class LoginScreen extends StatelessWidget {
   // const LoginScreen(...): 위젯 생성자
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+// [SCREEN CLASS] - StatefulWidget
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _pwController = TextEditingController();
+
+  bool _isLoading = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _pwController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onLoginPressed() async {
+    final email = _idController.text.trim();
+    final password = _pwController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorText = 'ID(이메일)와 비밀번호를 모두 입력해주세요.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    try {
+      await AccountService.instance.signIn(
+        email: email,
+        password: password,
+      );
+
+      // 로그인 성공 → MainScreen으로 이동 (기존 네비게이션 유지)
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+            (route) => false,
+      );
+    } catch (e) {
+      setState(() {
+        _errorText = '로그인에 실패했습니다: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
@@ -37,12 +99,30 @@ class LoginScreen extends StatelessWidget {
             // ID 입력
             // '_buildTextField'는 이 클래스 내부에 정의된 '헬퍼 함수(Helper Method)'입니다.
             // (코드가 중복되는 것을 방지하기 위함)
-            _buildTextField(hint: "ID"),
+            _buildTextField(
+              hint: "ID (이메일)",
+              controller: _idController,
+            ),
             const SizedBox(height: 16),
 
             // PW 입력
-            _buildTextField(hint: "PW", isObscure: true), // 'isObscure: true' 전달
+            _buildTextField(
+              hint: "PW",
+              isObscure: true,
+              controller: _pwController
+            ), // 'isObscure: true' 전달
             const SizedBox(height: 32),
+
+            // 에러 메시지
+            if(_errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  _errorText!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            const SizedBox(height: 16),
 
             // [버튼 영역]
             Row( // 버튼들을 가로(수평)로 배치
@@ -76,6 +156,7 @@ class LoginScreen extends StatelessWidget {
                 Expanded(
                   // '로그인' 버튼
                   child: ElevatedButton(
+                    /*  계정 서비스 로직을 위해 주석처리 했습니다.
                     onPressed: () {
                       // 화면 이동을 담당합니다.
                       Navigator.pushAndRemoveUntil(
@@ -84,6 +165,8 @@ class LoginScreen extends StatelessWidget {
                             (route) => false,
                       );
                     },
+                    */
+                    onPressed: _isLoading ? null : _onLoginPressed,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green, // 초록색 버튼
                       foregroundColor: Colors.white, // 글자색 흰색
@@ -91,7 +174,19 @@ class LoginScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text("로그인", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "로그인",
+                          style: TextStyle(fontWeight: FontWeight.bold)
+                        ),
                   ),
                 ),
               ],
@@ -105,9 +200,14 @@ class LoginScreen extends StatelessWidget {
   // [헬퍼 메서드 (Helper Method)]
   // 'ID', 'PW' 입력 필드처럼 '반복되는 UI'를 생성하는 함수입니다.
   // 'hint'(안내 문구)를 받고, 'isObscure'(비밀번호 가리기) 여부를 선택적으로 받습니다.
-  Widget _buildTextField({required String hint, bool isObscure = false}) {
+  Widget _buildTextField({
+    required String hint,
+    bool isObscure = false,
+    required TextEditingController controller
+  }) {
     // 'isObscure' 파라미터가 'true'이면 (PW 입력 시) 텍스트를 가립니다.
     return TextField(
+      controller: controller,
       obscureText: isObscure,
       style: const TextStyle(color: Colors.black), // 입력되는 글자 색상
       decoration: InputDecoration( // 텍스트 필드의 '장식' (테두리, 힌트, 배경색 등)

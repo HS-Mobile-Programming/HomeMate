@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'screens/loading_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:firebase_core/firebase_core.dart';  // Import Firebase Package
+import 'package:firebase_core/firebase_core.dart';      // Import Firebase Package
+import 'package:cloud_firestore/cloud_firestore.dart';  // Import Firestore Package
+import 'package:firebase_auth/firebase_auth.dart';      // Import Firebase_auth Package
 import 'firebase_options.dart';     // Import flutterfire configure file
 
 void main() async {
