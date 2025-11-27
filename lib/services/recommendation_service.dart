@@ -16,9 +16,6 @@ class RecommendationService {
   // [추가] 추천받은 레시피 목록을 임시로 저장할 변수 (캐시)
   // 태그 조합을 키로 사용하여 태그별로 캐시를 관리합니다.
   static Map<String, List<Recipe>> _cachedRecipesByTags = {};
-  
-  // 마지막으로 추천받은 태그 조합을 저장 (같은 태그로 다시 요청 시 다른 레시피 추천)
-  static String? _lastUsedTagKey;
 
   // --- 2. 추천 레시피 조회 로직 ---
   // [수정] 선택된 태그들을 파라미터로 받도록 수정
@@ -33,13 +30,7 @@ class RecommendationService {
     }
     final tagKey = sortedTags.join(',');
     
-    // 같은 태그로 다시 요청한 경우 캐시를 무시하고 새 추천 (랜덤성을 위해)
-    if (tagKey == _lastUsedTagKey && _cachedRecipesByTags.containsKey(tagKey)) {
-      _cachedRecipesByTags.remove(tagKey);
-      _lastUsedTagKey = null; // 마지막 태그 키 초기화
-    }
-    
-    // 캐시에 있는 경우 반환 (다른 태그 조합이거나 첫 요청)
+    // 캐시에 있는 경우 반환
     if (_cachedRecipesByTags.containsKey(tagKey)) {
       return List<Recipe>.from(_cachedRecipesByTags[tagKey]!);
     }
@@ -123,7 +114,6 @@ class RecommendationService {
 
       // [추가] API 호출로 받아온 데이터를 태그별 캐시에 저장
       _cachedRecipesByTags[tagKey] = recommendedRecipes;
-      _lastUsedTagKey = tagKey; // 마지막 사용된 태그 키 저장
 
       return recommendedRecipes;
 
@@ -141,7 +131,6 @@ class RecommendationService {
   // 저장된 데이터를 지워서 강제로 새로운 추천을 받도록 할 때 사용합니다.
   void clearCache() {
     _cachedRecipesByTags.clear();
-    _lastUsedTagKey = null;
   }
 
   // --- 3. 추천 레시피 정렬 로직 (기존과 동일) ---
