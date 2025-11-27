@@ -51,7 +51,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   // 재료 목록의 정렬 방식 (기본값: nameAsc - 이름 오름차순)
   // 이 값에 따라 _refreshList()에서 목록을 정렬하는 방식이 달라집니다.
-  SortMode _sortMode = SortMode.nameAsc;
+  SortMode _sortMode = SortMode.expiryAsc;
 
 
   // 4. 화면에 보여질 리스트
@@ -143,23 +143,24 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     showDialog(
       context: context,
       builder: (context) { // 'context'는 다이얼로그가 그려질 위치(화면) 정보입니다.
+        final colorScheme = Theme.of(context).colorScheme;
 
-        // (내부 함수) 년/월/일 입력을 위한 텍스트 필드 UI를 생성합니다.
+        // [복원] 기존 날짜 입력용 TextField 스타일
         Widget buildDateTextField(TextEditingController controller, String hint, int maxLength) {
           return TextField(
-            controller: controller, // 이 컨트롤러와 텍스트 필드를 연결
-            maxLength: maxLength, // 최대 입력 글자 수 (예: 'YYYY'는 4)
-            keyboardType: TextInputType.number, // 숫자 키보드만 표시
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly], // 숫자만 입력되도록 필터링
-            textAlign: TextAlign.center, // 텍스트 가운데 정렬
+            controller: controller,
+            maxLength: maxLength,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            textAlign: TextAlign.center,
             decoration: InputDecoration(
-              hintText: hint, // 입력 예시 (예: "YYYY")
-              counterText: '', // '4/4' 같은 글자 수 표시 숨김
-              filled: true, // 배경색 채우기
-              fillColor: Colors.blue[50], // 연한 파란색 배경
+              hintText: hint,
+              counterText: '',
+              filled: true,
+              fillColor: colorScheme.primary.withValues(alpha: 0.1), // 연한 메인 색상으로 변경
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none // 테두리선 없음
+                  borderSide: BorderSide.none
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -168,36 +169,41 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
         // AlertDialog: 다이얼로그의 본체입니다.
         return AlertDialog(
-          // (다이얼로그 UI 코드는 동일)
           backgroundColor: Colors.white, // 다이얼로그 배경색
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titlePadding: EdgeInsets.zero, // 제목(Title) 영역의 기본 패딩(여백) 제거
           title: Container( // 제목 영역을 직접 디자인
-            color: Colors.blue[200], // 제목 배경색
+            decoration: BoxDecoration(
+                color: colorScheme.primary, // 메인 색상으로 변경
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                )
+            ),
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
                 isEditMode ? "재료 수정" : "재료 등록", // 모드에 따라 텍스트 변경
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: colorScheme.onPrimary, fontSize: 18), // 대비되는 색상으로 변경
               ),
             ),
           ),
           content: SingleChildScrollView( // 내용(Content) 영역
-            // 내용이 길어지면 스크롤이 가능하도록 합니다.
+            padding: const EdgeInsets.only(top: 16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min, // 컨텐츠 높이만큼만 다이얼로그 크기 잡기
               crossAxisAlignment: CrossAxisAlignment.start, // '이름', '수량' 글자를 왼쪽 정렬
               children: [
                 const Text("이름", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(controller: nameController, /* ... */),
+                TextField(controller: nameController),
                 const SizedBox(height: 16), // 위젯 사이의 수직 간격
                 const Text("수량", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(controller: quantityController, /* ... */),
+                TextField(controller: quantityController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                 const SizedBox(height: 16),
                 const Text("유통기한", style: TextStyle(fontWeight: FontWeight.bold)),
                 Row( // 년/월/일 필드를 가로로 배치
                   children: [
-                    // Expanded: Row 안에서 남은 공간을 차지하는 비율을 정합니다.
                     Expanded(flex: 2, child: buildDateTextField(yearController, "YYYY", 4)), // '년' (2비율)
                     const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text(".")),
                     Expanded(flex: 1, child: buildDateTextField(monthController, "MM", 2)), // '월' (1비율)
@@ -208,6 +214,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           actions: [ // 하단 버튼(Actions) 영역
             TextButton(
               onPressed: () => Navigator.pop(context), // 버튼 누르면 다이얼로그 닫기
@@ -216,28 +223,26 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             TextButton(
               onPressed: () async { // [수정] async 추가
                 // [유효성 검사 (Validation)]
-
-                // 1. 입력값 가져오기 (trim: 앞뒤 공백 제거)
                 final name = nameController.text.trim();
                 final quantityStr = quantityController.text.trim();
                 final yearStr = yearController.text.trim();
                 final monthStr = monthController.text.trim();
                 final dayStr = dayController.text.trim();
 
-                // 2. 이름 검사
+                // 이름 검사
                 if (name.isEmpty) {
                   _showErrorSnackBar("이름을 입력해주세요.");
                   return; // 함수 종료
                 }
 
-                // 3. 수량 검사
+                // 수량 검사
                 int quantity = int.tryParse(quantityStr) ?? 0; // 숫자로 변환 시도, 실패하면 0
                 if (quantity <= 0) {
                   _showErrorSnackBar("수량을 1 이상 입력해주세요.");
                   return;
                 }
 
-                // 4. 날짜 검사
+                // 날짜 검사
                 String expiryDate;
                 if (yearStr.isEmpty || monthStr.isEmpty || dayStr.isEmpty) {
                   _showErrorSnackBar("유통기한(연/월/일)을 모두 입력해주세요.");
@@ -248,43 +253,35 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   int y = int.parse(yearStr);
                   int m = int.parse(monthStr);
                   int d = int.parse(dayStr);
-                  DateTime date = DateTime(y, m, d); // 2025, 2, 30 -> 2025, 3, 1 (DateTime이 자동 보정)
+                  DateTime date = DateTime(y, m, d);
 
-                  // '2025.2.30'처럼 유효하지 않은 날짜를 입력했는지 확인 (보정된 날짜와 원본이 다른지)
                   if (date.year != y || date.month != m || date.day != d) {
                     throw FormatException("유효하지 않은 날짜입니다.");
                   }
 
-                  // 오늘 날짜와 비교 (시간, 분, 초 제외)
                   DateTime today = DateTime.now();
                   DateTime todayOnly = DateTime(today.year, today.month, today.day);
-                  if (date.isBefore(todayOnly)) { // 선택한 날짜가 오늘 이전이면
+                  if (date.isBefore(todayOnly)) {
                     _showErrorSnackBar("유통기한이 오늘보다 빠를 수 없습니다.");
                     return;
                   }
 
-                  // 모든 검사 통과 -> "yyyy.MM.dd" 형식의 문자열로 변환
                   expiryDate = DateFormat('yyyy.MM.dd').format(date);
                 } catch (e) {
-                  // int.parse 실패 또는 FormatException 발생 시
                   _showErrorSnackBar("유효하지 않은 날짜 형식입니다.");
                   return;
                 }
 
                 Navigator.pop(context); // 다이얼로그 닫기
 
-
-                //  11. 로직 대신 서비스 호출
-                // 유효성 검사를 모두 통과하면, 실제 데이터 처리는 서비스에 위임합니다.
+                // 로직 대신 서비스 호출
                 if (isEditMode) {
-                  // '수정' 모드일 경우
                   await _service.updateIngredient(ingredient.id,
                     name: name,
                     quantity: quantity,
                     expiryTime: expiryDate,
                   );
                 } else {
-                  // '등록' 모드일 경우
                   await _service.addIngredient(
                     name: name,
                     quantity: quantity,
@@ -292,11 +289,11 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   );
                 }
 
-                await _refreshList(); // 12. 서비스 호출 후 화면 갱신 (가장 중요)
+                await _refreshList(); // 서비스 호출 후 화면 갱신
               },
               child: Text(
                 isEditMode ? "수정" : "추가", // 모드에 따라 버튼 텍스트 변경
-                style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -348,7 +345,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
       body: CustomScrollView(
         slivers: [
           // [달력 위젯]
-          // 기존 Container를 SliverToBoxAdapter로 감싸서 Sliver 영역에 배치
           SliverToBoxAdapter(
             child: Padding(
               // 기존 SingleChildScrollView의 padding(16.0)을 여기서 적용
