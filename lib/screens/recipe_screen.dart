@@ -31,7 +31,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   // '현재 검색어' (TextField에 입력된 값)를 저장합니다. (기본값: 빈 문자열)
   String _searchKeyword = "";
 
-  // [추가] 로딩 상태 변수
+  // 로딩 상태 변수
   bool _isLoading = false;
 
   // [initState]
@@ -126,7 +126,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // [추가] 검색 결과가 없을 때 표시할 위젯을 생성하는 헬퍼 함수
+  // 검색 결과가 없을 때 표시할 위젯을 생성하는 헬퍼 함수
   Widget _buildSuggestionPoint(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

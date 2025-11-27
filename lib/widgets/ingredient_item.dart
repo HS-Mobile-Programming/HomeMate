@@ -21,8 +21,6 @@ class IngredientItem extends StatelessWidget {
   // '수정' 아이콘을 눌렀을 때 실행될 '함수'입니다.
   final VoidCallback? onEdit;
 
-
-
   // [생성자 (Constructor)]
   // 'IngredientItem' 위젯을 생성할 때 호출됩니다.
   const IngredientItem({
@@ -37,23 +35,28 @@ class IngredientItem extends StatelessWidget {
   Widget build(BuildContext context) {
     DateTime? expiryDate = DateTime.tryParse(ingredient.expiryTime.replaceAll('.', '-'));
 
-    // [수정] 기본값 설정
+    // 기본값 설정
     Color cardColor = Colors.white;
     Color textColor = Colors.black;
     FontWeight fontWeight = FontWeight.normal;
 
-    // [수정] applyExpiryColor가 true일 때만 색상 변경 로직을 실행합니다.
+    // applyExpiryColor가 true일 때만 색상 변경 로직을 실행합니다.
     if (expiryDate != null) {
       DateTime now = DateTime.now();
       final difference = expiryDate.difference(now).inDays;
 
       if (difference < 0) {
-        // [수정] 유통기한 지남
+        // 유통기한 지남
         cardColor = Colors.red.shade100;
         textColor = Colors.red.shade900;
         fontWeight = FontWeight.bold;
       } else if (difference <= 1) {
-        // [수정] 유통기한 1일 이하
+        // 유통기한 1일 이하
+        cardColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade900;
+        fontWeight = FontWeight.bold;
+      } else if (difference <= 3) {
+        // 유통기한 3일 이하
         cardColor = Colors.yellow.shade100;
         textColor = Colors.yellow.shade900;
         fontWeight = FontWeight.bold;
