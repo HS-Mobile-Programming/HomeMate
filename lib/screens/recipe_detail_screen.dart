@@ -87,7 +87,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   // [태그 표시]
                   Wrap(
                     spacing: 8,
-                    // [수정] tagList getter 사용
+                    // tagList getter 사용
                     children: widget.recipe.tasteTags.map((tag) => Chip(
                       label: Text(tag),
                       backgroundColor: Colors.green.shade50,

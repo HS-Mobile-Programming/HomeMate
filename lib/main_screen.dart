@@ -8,7 +8,6 @@
 // 기억하고 변경해야 하므로 StatefulWidget으로 선언되었습니다.
 
 import 'package:flutter/material.dart';
-// 5개 탭에 해당하는 화면(Screen) 위젯들을 import 합니다.
 import 'screens/home_screen.dart';
 import 'screens/refrigerator_screen.dart';
 import 'screens/recipe_screen.dart';
@@ -84,14 +83,14 @@ class _MainScreenState extends State<MainScreen> {
         },
 
         type: BottomNavigationBarType.fixed,
-
-        // (보통 아주 연한 초록색이 됩니다)
+        
+        // 배경색 : 흰색
         backgroundColor: Colors.white,
 
-        // [수정] 선택된 아이템: 검은색 -> 테마의 메인 색상 (primary)
+        // 선택된 아이템: 검은색 -> 테마의 메인 색상 (primary)
         selectedItemColor: colorScheme.primary,
 
-        // [수정] 선택되지 않은 아이템: 회색 유지 (또는 onSurfaceVariant 사용 가능)
+        // 선택되지 않은 아이템: 회색 유지 (또는 onSurfaceVariant 사용 가능)
         unselectedItemColor: Colors.grey,
 
         // [옵션] 선택된 라벨의 글자 굵기 등 스타일 지정 가능

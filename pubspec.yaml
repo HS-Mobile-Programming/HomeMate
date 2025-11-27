@@ -42,6 +42,7 @@ dependencies:
 
   google_generative_ai: ^0.4.0 # Gemini AI 사용을 위한 패키지
   http: ^1.2.1                   # (선택사항) 다른 API 호출에 필요할 수 있음
+  fluttertoast: ^9.0.0
 
 dev_dependencies:
   flutter_test:
