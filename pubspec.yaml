@@ -37,8 +37,6 @@ dependencies:
   table_calendar: ^3.2.0
   intl: ^0.20.2
 
-  firebase_core: ^3.9.0     # Firebase Package
-  cloud_firestore: ^5.6.12   # Firestore Package
   firebase_core: ^3.9.0       # Firebase Package
   cloud_firestore: ^5.6.12    # Firestore Package
   firebase_auth: ^5.7.0       # Firebase_auth Package
