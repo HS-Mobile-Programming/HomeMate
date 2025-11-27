@@ -106,9 +106,15 @@ class RefrigeratorService {
         list.sort((a, b) {
           DateTime? dateA = parseDate(a.expiryTime);
           DateTime? dateB = parseDate(b.expiryTime);
-          if (dateA == null && dateB == null) return 0;
-          if (dateA == null) return 1;
-          if (dateB == null) return -1;
+          if (dateA == null && dateB == null) {
+            return 0;
+          }
+          if (dateA == null) {
+            return 1;
+          }
+          if (dateB == null) {
+            return -1;
+          }
           return dateA.compareTo(dateB);
         });
         break;

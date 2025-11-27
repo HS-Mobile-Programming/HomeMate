@@ -183,7 +183,7 @@ class _TagsScreenState extends State<TagsScreen> {
         }).toList(),
       ),
 
-      // [추가] 화면 하단에 고정된 '저장하기' 버튼입니다.
+      // 화면 하단에 고정된 '저장하기' 버튼입니다.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onSave, // 버튼 클릭 시 위에서 정의한 _onSave 함수 실행
         label: const Text("저장하기", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),

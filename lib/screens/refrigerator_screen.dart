@@ -1,4 +1,3 @@
-// flutter/material.dart: 플러터의 핵심 UI 위젯(예: Scaffold, Text, Icon)들을 포함합니다.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
