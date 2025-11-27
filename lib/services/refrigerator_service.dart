@@ -17,24 +17,39 @@ class RefrigeratorService {
   // 2. 재료 추가하기
   Future<void> addIngredient({
     required String name,
-    required String quantity,
+    required int quantity,
     required String expiryTime,
   }) async {
     //await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
-    final newIngredient = Ingredient(
-      id: DateTime.now().toString(), // 임시 ID
-      name: name,
-      quantity: quantity,
-      expiryTime: expiryTime,
-    );
-    // (나중에 여기를 Firebase에 데이터 전송하는 코드로 변경)
-    allIngredients.add(newIngredient);
+    final existingIndex = allIngredients.indexWhere(
+          (item) => item.name == name && item.expiryTime == expiryTime);
+
+    if (existingIndex != -1) {
+      final existingIngredient = allIngredients[existingIndex];
+      final updatedIngredient = Ingredient(
+        id: existingIngredient.id,
+        name: existingIngredient.name,
+        quantity: existingIngredient.quantity + quantity,
+        expiryTime: existingIngredient.expiryTime,
+      );
+      // (나중에 여기를 Firebase 데이터 업데이트 코드로 변경)
+      allIngredients[existingIndex] = updatedIngredient;
+    } else {
+      final newIngredient = Ingredient(
+        id: DateTime.now().toString(), // 임시 ID
+        name: name,
+        quantity: quantity,
+        expiryTime: expiryTime,
+      );
+      // (나중에 여기를 Firebase에 데이터 전송하는 코드로 변경)
+      allIngredients.add(newIngredient);
+    }
   }
 
   // 3. 재료 수정하기
   Future<void> updateIngredient(String id, {
     required String name,
-    required String quantity,
+    required int quantity,
     required String expiryTime,
   }) async {
     //await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
