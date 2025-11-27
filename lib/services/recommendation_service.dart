@@ -4,7 +4,6 @@ import 'dart:convert'; // Recipe 객체를 JSON으로 변환하기 위해 추가
 import 'package:google_generative_ai/google_generative_ai.dart'; // Gemini AI 패키지 import
 import '../models/recipe.dart';
 import '../services/recipe_service.dart'; // Firestore 기반 레시피 로딩으로 전환
-import 'recipe_service.dart'; // 정렬 모드(enum) 재사용
 
 class RecommendationService {
 
@@ -12,7 +11,7 @@ class RecommendationService {
   // 여기에 발급받은 Gemini API 키를 입력하세요.
   // 보안을 위해 실제 앱에서는 환경 변수나 별도의 키 관리 서비스를 사용하는 것이 좋습니다.
   // [주의] Git에 올릴 때는 이 키를 지우고 올리는 것이 안전합니다.
-  static const String _apiKey = "AIzaSyAGPjh3pOHFVGxKR0Zg5xllzw5XsMGqMm8"; // <--- 여기에 API 키를 입력하세요
+  static const String _apiKey = ""; // <--- 여기에 API 키를 입력하세요
 
   final RecipeService _recipeService = RecipeService();
 
