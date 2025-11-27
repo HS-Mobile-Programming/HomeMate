@@ -60,6 +60,14 @@ class _TagsScreenState extends State<TagsScreen> {
       "음식 분류": [
         "반찬", "메인요리", "에피타이저", "디저트"
       ].map((name) => TagModel(name, isSelected: savedTags.contains(name))).toList(),
+
+      "난이도": [
+        "초급", "중급", "고급"
+      ].map((name) => TagModel(name, isSelected: savedTags.contains(name))).toList(),
+
+      "조리시간": [
+        "15분", "30분", "60분 이상"
+      ].map((name) => TagModel(name, isSelected: savedTags.contains(name))).toList(),
     };
   }
 
