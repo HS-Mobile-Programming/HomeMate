@@ -110,6 +110,22 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
+  // [추가] 검색 결과가 없을 때 표시할 위젯을 생성하는 헬퍼 함수
+  Widget _buildSuggestionPoint(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(" • ", style: TextStyle(color: Colors.black54, height: 1.5)),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.black54, height: 1.5),
+          ),
+        ),
+      ],
+    );
+  }
+
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
@@ -178,7 +194,44 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   );
                 },
               )
-                  : const Center(child: Text("검색 결과가 없습니다.")), // 목록이 없으면
+                  : Center(
+                child: Container(
+                  margin: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F9),
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.info_outline, color: Colors.black54),
+                          SizedBox(width: 8),
+                          Text(
+                            "검색 결과가 없습니다.",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSuggestionPoint("단어의 철자가 정확한지 다시 한번 확인해주세요."),
+                      const SizedBox(height: 8),
+                      _buildSuggestionPoint("단어의 수를 줄이거나, 표준어인지 확인해주세요."),
+                      const SizedBox(height: 8),
+                      _buildSuggestionPoint("보다 일반적인 단어로 검색 바랍니다."),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),
