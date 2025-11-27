@@ -92,7 +92,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     _refreshList(); // 갱신
   }
 
-  // [수정] '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
+  // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
   // TagsScreen을 열 때 저장된 태그를 보내고, 돌아올 때 결과를 받아옵니다.
   void _onPreferencesPressed() async {
     // 1. 화면을 열 때 '주머니에 있던 태그(_savedTags)'를 쥐여서 보냅니다.

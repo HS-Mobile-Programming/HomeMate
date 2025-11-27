@@ -14,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final RefrigeratorService _service = RefrigeratorService();
   List<Ingredient> _expiringSoonIngredients = [];
 
-  // [추가] 로딩 상태 변수
+  // 로딩 상태 변수
   bool _isLoading = false;
 
   @override
