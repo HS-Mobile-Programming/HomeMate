@@ -59,8 +59,10 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     setState(() => _isLoading = true); // 로딩 시작
 
     try {
-      // 서비스가 알아서 판단해서 줍니다.
-      var recipes = await _service.getRecommendations();
+      // [수정] 선택된 태그를 서비스에 전달
+      var recipes = await _service.getRecommendations(
+        selectedTags: _savedTags.isEmpty ? null : _savedTags,
+      );
       var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
 
       if (mounted) {
@@ -83,13 +85,14 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
 
   // '정렬' 버튼의 'onPressed' 콜백에 연결됩니다.
   void _onSortPressed() {
-    // (RecipeScreen의 _onSortPressed와 동일한 로직)
+    // 정렬 모드만 변경하고, 이미 받은 데이터를 정렬만 함 (새 추천 받지 않음)
     setState(() {
       _sortMode = _sortMode == RecipeSortMode.nameAsc
           ? RecipeSortMode.nameDesc
           : RecipeSortMode.nameAsc;
+      // 이미 받은 데이터를 정렬만 함
+      _recommendedRecipes = _service.sortRecipes(_recommendedRecipes, _sortMode);
     });
-    _refreshList(); // 갱신
   }
 
   // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
@@ -116,8 +119,8 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
       // 확인용 로그
       print("갱신된 태그 목록: $_savedTags");
 
-      // 3. 변경된 선호도(_savedTags)를 기반으로 목록 새로고침
-      _refreshList();
+      // [수정] 저장 후 자동 추천 제거 - 추천 버튼을 눌러야만 재추천됨
+      // _refreshList() 제거됨
     }
   }
 
@@ -164,8 +167,11 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                       onPressed: _onPreferencesPressed, //  8. 핸들러 연결
                     ),
                     const SizedBox(width: 8), // 버튼 사이 간격
-                    // '추천' 버튼 (누르면 '_refreshList'를 수동으로 호출)
-                    _buildTopButton(text: "추천", onPressed: _refreshList),
+                    // '추천' 버튼 (누르면 '_refreshList'를 호출하여 새 추천 받기)
+                    _buildTopButton(
+                      text: "추천", 
+                      onPressed: _refreshList,
+                    ),
                   ],
                 ),
                 // [오른쪽 정렬 버튼]
@@ -200,9 +206,14 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                           ),
                         ),
                       )
-                      //  10. 돌아왔을 때 갱신 (즐겨찾기 상태 반영)
-                      // (RecipeScreen의 .then()과 동일한 로직)
-                          .then((_) => _refreshList());
+                      // [수정] 돌아왔을 때 UI만 갱신 (즐겨찾기 상태 반영, 새 추천 받지 않음)
+                          .then((_) {
+                            if (mounted) {
+                              setState(() {
+                                // UI만 갱신하여 즐겨찾기 상태 반영
+                              });
+                            }
+                          });
                     },
 
                     child: Container(
