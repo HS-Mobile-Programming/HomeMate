@@ -1,5 +1,3 @@
-// [IMPORT] - 외부 라이브러리 또는 다른 파일의 기능을 가져옵니다.
-
 // flutter/material.dart: 플러터의 핵심 UI 위젯(예: Scaffold, Text, Icon)들을 포함합니다.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -98,7 +96,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   //  9. UI 관련 헬퍼 함수
   // 사용자에게 빨간색 배경의 에러 메시지(스낵바)를 띄웁니다.
-// [IMPORT] - 외부 라이브러리 또는 다른 파일의 기능을 가져옵니다.
   void _showErrorSnackBar(String message) {
     // ScaffoldMessenger: 화면 하단에 스낵바, 상단에 배너 등을 관리하는 객체입니다.
     ScaffoldMessenger.of(context).showSnackBar(
@@ -357,9 +354,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 child: TableCalendar(
                   locale: 'ko_KR',
                   // 달력 언어
-                  firstDay: DateTime.utc(2020, 1, 1),
+                  firstDay: DateTime.utc(2000, 1, 1),
                   // 달력이 보여줄 수 있는 최소 날짜
-                  lastDay: DateTime.utc(2030, 12, 31),
+                  lastDay: DateTime.utc(2099, 12, 31),
                   // 달력이 보여줄 수 있는 최대 날짜
                   focusedDay: _focusedDay,
                   // 현재 포커스된 날짜 (상태 변수)

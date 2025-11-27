@@ -1,10 +1,7 @@
-// lib/services/recommendation_service.dart
-
 import 'dart:convert'; // Recipe 객체를 JSON으로 변환하기 위해 추가
 import 'package:google_generative_ai/google_generative_ai.dart'; // Gemini AI 패키지 import
 import '../models/recipe.dart';
 import '../services/recipe_service.dart'; // Firestore 기반 레시피 로딩으로 전환
-import 'recipe_service.dart'; // 정렬 모드(enum) 재사용
 
 class RecommendationService {
 
@@ -24,7 +21,7 @@ class RecommendationService {
   // --- 2. 추천 레시피 조회 로직 ---
   Future<List<Recipe>> getRecommendations() async {
 
-    // [수정] 캐시 확인 로직 추가
+    // 캐시 확인 로직 추가
     // 만약 이전에 저장해둔 데이터(_cachedRecipes)가 있다면,
     // AI를 호출하지 않고 저장된 데이터를 즉시 반환합니다. (API 호출 절약, 로딩 시간 단축)
     if (_cachedRecipes != null) {
@@ -91,7 +88,7 @@ class RecommendationService {
       print("AI 호출 에러: $e"); // [추가] 디버깅을 위해 에러 로그 출력
       // 오류 발생 시 사용자에게 빈 리스트를 보여주거나, 다른 대체 로직을 수행할 수 있습니다.
       // throw Exception('레시피 추천을 받아오는 데 실패했습니다.');
-      return []; // [수정] 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환으로 변경
+      return []; // 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환으로 변경
     }
   }
 

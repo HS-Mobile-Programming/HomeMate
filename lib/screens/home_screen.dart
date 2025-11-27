@@ -13,6 +13,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final RefrigeratorService _service = RefrigeratorService();
   List<Ingredient> _expiringSoonIngredients = [];
+
+  // 로딩 상태 변수
   bool _isLoading = false;
 
   // PageView를 위한 상태 변수 추가

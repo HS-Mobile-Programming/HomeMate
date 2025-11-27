@@ -1,7 +1,6 @@
 // [SCREEN CLASS] - StatelessWidget
 // '이용약관' 내용을 보여주는 화면입니다.
-// (Stateless: 화면에 'tosContent' 데이터를 '보여주기만' 할 뿐,
-//  스스로 변경하는 상태가 없습니다.)
+// (Stateless: 화면에 'tosContent' 데이터를 '보여주기만' 할 뿐, 스스로 변경하는 상태가 없습니다.)
 
 import 'package:flutter/material.dart';
 import '../data/tos_data.dart';
