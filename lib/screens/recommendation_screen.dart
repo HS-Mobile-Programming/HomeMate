@@ -22,7 +22,8 @@ class RecommendationScreen extends StatefulWidget {
   State<RecommendationScreen> createState() => _RecommendationScreenState();
 }
 
-class _RecommendationScreenState extends State<RecommendationScreen> {
+class _RecommendationScreenState extends State<RecommendationScreen>
+    with AutomaticKeepAliveClientMixin {
   // [상태 변수 (State Variables)]
 
   //  2. 서비스 객체
@@ -45,20 +46,33 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   // 이 변수가 있어야 TagsScreen에 들어갈 때 "이거 원래 체크되어 있었어"라고 알려줄 수 있습니다.
   List<String> _savedTags = [];
 
+  // [추가] 초기 로드 여부를 추적하는 변수
+  bool _hasInitialLoad = false;
+
+  // AutomaticKeepAliveClientMixin 설정
+  @override
+  bool get wantKeepAlive => true;
+
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
   void initState() {
     super.initState();
-    _refreshList(); //  5. 초기 로드 (처음 추천 목록을 불러옴)
+    if (!_hasInitialLoad) {
+      _hasInitialLoad = true;
+      _refreshList();
+    }
   }
 
   // [추가] 6. 중앙 갱신 함수
   // (RecipeScreen의 _refreshList와 동일한 구조)
-  Future<void> _refreshList() async {
+  Future<void> _refreshList({bool clearCache = false}) async {
     setState(() => _isLoading = true); // 로딩 시작
 
     try {
+      if (clearCache) {
+        _service.clearCache();
+      }
       // [수정] 선택된 태그를 서비스에 전달
       var recipes = await _service.getRecommendations(
         selectedTags: _savedTags.isEmpty ? null : _savedTags,
@@ -146,6 +160,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold( // (배경색 등을 위해 Scaffold로 감싸기)
       body: Padding(
         padding: const EdgeInsets.all(16.0), // 화면 바깥쪽 여백
@@ -169,12 +184,12 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                     const SizedBox(width: 8), // 버튼 사이 간격
                     // '추천' 버튼 (누르면 '_refreshList'를 호출하여 새 추천 받기)
                     _buildTopButton(
-                      text: "추천", 
-                      onPressed: _refreshList,
+                      text: "추천",
+                      onPressed: () => _refreshList(clearCache: true),
                     ),
                   ],
                 ),
-                // [오른쪽 정렬 버튼]
+                // [오른쪽 정 렬 버튼]
                 TextButton(
                   onPressed: _onSortPressed, //  9. 핸들러 연결
                   child: _buildSortButtonChild(),
