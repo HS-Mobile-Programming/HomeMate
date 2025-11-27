@@ -56,8 +56,8 @@ class TosScreen extends StatelessWidget {
                     child: const Text(
                       tosContent, // 'tos_data.dart'에서 import한 긴 문자열
                       style: TextStyle(
-                          fontSize: 14,
-                          height: 1.6, // '줄 간격' (1.0이 기본값)
+                          fontSize: 10,
+                          height: 1.6,
                           color: Colors.black87
                       ),
                     ),

@@ -4,8 +4,7 @@
 //
 // 'StatelessWidget' (상태가 없는 위젯):
 // 이 위젯은 '스스로' 상태를 변경하지 않습니다.
-// 'ingredient'나 'onEdit' 같은 '외부'에서 전달받은 값(파라미터)에 의해서만
-// 화면이 그려집니다.
+// 'ingredient'나 'onEdit' 같은 '외부'에서 전달받은 값(파라미터)에 의해서만 화면이 그려집니다.
 
 import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
@@ -81,7 +80,7 @@ class IngredientItem extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                   ),
                   Text(
-                    "수량: ${ingredient.quantity.toString()}", // [오류 수정] quantity가 int이므로 toString() 추가
+                    "수량: ${ingredient.quantity.toString()}",
                     style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.8)),
                   ),
                 ],

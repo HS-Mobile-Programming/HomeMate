@@ -1,4 +1,4 @@
-// [SCREEN CLASS] - StatefulWidget으로 변경 [추가]
+// [SCREEN CLASS] - StatefulWidget으로 변경
 // 앱 실행 시 가장 먼저 표시되는 '로딩' 또는 '스플래시' 화면입니다.
 
 import 'package:flutter/material.dart';

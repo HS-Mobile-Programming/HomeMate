@@ -1,7 +1,7 @@
-import 'dart:convert'; // Recipe 객체를 JSON으로 변환하기 위해 추가
-import 'package:google_generative_ai/google_generative_ai.dart'; // Gemini AI 패키지 import
+import 'dart:convert';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/recipe.dart';
-import '../services/recipe_service.dart'; // Firestore 기반 레시피 로딩으로 전환
+import '../services/recipe_service.dart';
 
 class RecommendationService {
 
