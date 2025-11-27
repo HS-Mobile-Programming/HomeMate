@@ -395,12 +395,45 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
                   // calendarStyle: 달력의 세부 스타일을 지정합니다.
                   calendarStyle: CalendarStyle(
-                    // markerDecoration: eventLoader에 의해 이벤트가 있는 날(유통기한)의 마커 스타일
-                    markerDecoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                     // todayDecoration: '오늘' 날짜의 스타일
                     todayDecoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
                     // selectedDecoration: '선택된' 날짜의 스타일
                     selectedDecoration: BoxDecoration(color: Colors.green.shade300, shape: BoxShape.circle),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    // markerBuilder: 날짜 아래의 점(이벤트 마커)을 그리는 함수
+                    markerBuilder: (context, day, events) {
+                      if (events.isEmpty) {
+                        return null; // 재료 없으면 점 안 찍음
+                      }
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      final target = DateTime(day.year, day.month, day.day);
+
+                      final difference = target.difference(today).inDays;
+
+                      Color dotColor = Colors.black; // 표시 기본은 검정색
+
+                      if (difference < 0) {
+                        dotColor = Colors.red;      // 유통기간 지나간것은 빨간색
+                      } else if (difference == 0) {
+                        dotColor = Colors.orange;   // 유통기간이 오늘까지인것은 오랜지색
+                      } else if (difference <= 3) {
+                        dotColor = Colors.yellow;   // 유통기간이 3일이내인것은 노란색
+                      }
+
+                      return Positioned(
+                        bottom: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: dotColor,
+                            shape: BoxShape.circle,
+                          ),
+                          width: 7.0,
+                          height: 7.0,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

@@ -31,7 +31,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   // 화면에 표시될 '즐겨찾기된' 레시피 목록입니다.
   List<Recipe> _favoriteRecipes = [];
 
-  // [추가] 로딩 상태 변수
+  // 로딩 상태 변수
   bool _isLoading = false;
 
   // [initState]
