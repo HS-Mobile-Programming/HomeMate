@@ -166,7 +166,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             // Expanded: 'Column' 안에서 '남은 모든 세로 공간'을 차지합니다.
             // (검색창, 정렬 버튼을 제외한 모든 하단 영역)
             Expanded(
-              // [수정] 로딩 중이면 스피너 표시
+              // 로딩 중이면 스피너 표시
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _foundRecipes.isNotEmpty

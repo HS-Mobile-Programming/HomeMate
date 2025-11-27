@@ -390,9 +390,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 child: TableCalendar(
                   locale: 'ko_KR',
                   // 달력 언어
-                  firstDay: DateTime.utc(2020, 1, 1),
+                  firstDay: DateTime.utc(2000, 1, 1),
                   // 달력이 보여줄 수 있는 최소 날짜
-                  lastDay: DateTime.utc(2030, 12, 31),
+                  lastDay: DateTime.utc(2099, 12, 31),
                   // 달력이 보여줄 수 있는 최대 날짜
                   focusedDay: _focusedDay,
                   // 현재 포커스된 날짜 (상태 변수)
