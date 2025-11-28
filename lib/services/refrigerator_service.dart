@@ -3,7 +3,7 @@ import '../models/ingredient.dart';
 import '../data/ingredient_data.dart';
 
 // 재료 정렬 모드
-enum SortMode { nameAsc, nameDesc, expiryAsc }
+enum SortMode { nameAsc, nameDesc, expiryAsc, expiryDesc }
 
 class RefrigeratorService {
 
@@ -116,6 +116,16 @@ class RefrigeratorService {
             return -1;
           }
           return dateA.compareTo(dateB);
+        });
+        break;
+      case SortMode.expiryDesc:
+        list.sort((a, b) {
+          DateTime? dateA = parseDate(a.expiryTime);
+          DateTime? dateB = parseDate(b.expiryTime);
+          if (dateA == null && dateB == null) return 0;
+          if (dateA == null) return 1;
+          if (dateB == null) return -1;
+          return dateB.compareTo(dateA);
         });
         break;
     }
