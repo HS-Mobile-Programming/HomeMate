@@ -46,13 +46,6 @@ class _RecommendationScreenState extends State<RecommendationScreen>
   // 이 변수가 있어야 TagsScreen에 들어갈 때 "이거 원래 체크되어 있었어"라고 알려줄 수 있습니다.
   List<String> _savedTags = [];
 
-  // [추가] 초기 로드 여부를 추적하는 변수
-  bool _hasInitialLoad = false;
-
-  // AutomaticKeepAliveClientMixin 설정
-  @override
-  bool get wantKeepAlive => true;
-
   // [initState]
   // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
   @override
@@ -70,6 +63,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
     setState(() => _isLoading = true); // 로딩 시작
 
     try {
+      /*
       if (clearCache) {
         _service.clearCache();
       }
@@ -77,6 +71,9 @@ class _RecommendationScreenState extends State<RecommendationScreen>
       var recipes = await _service.getRecommendations(
         selectedTags: _savedTags.isEmpty ? null : _savedTags,
       );
+      */
+      // 서비스가 알아서 판단해서 줍니다.
+      var recipes = await _service.getRecommendations();
       var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
 
       if (mounted) {
@@ -109,7 +106,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
     });
   }
 
-  // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
+  // 수정 : '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
   // TagsScreen을 열 때 저장된 태그를 보내고, 돌아올 때 결과를 받아옵니다.
   void _onPreferencesPressed() async {
     // 1. 화면을 열 때 '주머니에 있던 태그(_savedTags)'를 쥐여서 보냅니다.
@@ -133,8 +130,8 @@ class _RecommendationScreenState extends State<RecommendationScreen>
       // 확인용 로그
       print("갱신된 태그 목록: $_savedTags");
 
-      // [수정] 저장 후 자동 추천 제거 - 추천 버튼을 눌러야만 재추천됨
-      // _refreshList() 제거됨
+      // 3. 변경된 선호도(_savedTags)를 기반으로 목록 새로고침
+      _refreshList();
     }
   }
 

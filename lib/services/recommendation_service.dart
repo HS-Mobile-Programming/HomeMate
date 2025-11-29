@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/recipe.dart';
-import '../services/recipe_service.dart';
+import '../services/recipe_service.dart'; // Firestore 기반 레시피 로딩으로 전환
+import 'recipe_service.dart'; // 정렬 모드(enum) 재사용
 
 class RecommendationService {
 
@@ -14,25 +15,18 @@ class RecommendationService {
   final RecipeService _recipeService = RecipeService();
 
   // [추가] 추천받은 레시피 목록을 임시로 저장할 변수 (캐시)
-  // 태그 조합을 키로 사용하여 태그별로 캐시를 관리합니다.
-  static Map<String, List<Recipe>> _cachedRecipesByTags = {};
+  // static으로 선언하여 앱이 실행되는 동안 데이터가 메모리에 유지되도록 합니다.
+  // (화면을 나갔다 와도 데이터가 남아있게 됨)
+  static List<Recipe>? _cachedRecipes;
 
   // --- 2. 추천 레시피 조회 로직 ---
-  // [수정] 선택된 태그들을 파라미터로 받도록 수정
-  Future<List<Recipe>> getRecommendations({List<String>? selectedTags}) async {
+  Future<List<Recipe>> getRecommendations() async {
 
-    // 태그를 정렬하여 캐시 키 생성 (순서와 무관하게 동일한 태그 조합은 같은 키)
-    final List<String> sortedTags;
-    if (selectedTags != null && selectedTags.isNotEmpty) {
-      sortedTags = List<String>.from(selectedTags)..sort();
-    } else {
-      sortedTags = <String>[];
-    }
-    final tagKey = sortedTags.join(',');
-
-    // 캐시에 있는 경우 반환
-    if (_cachedRecipesByTags.containsKey(tagKey)) {
-      return List<Recipe>.from(_cachedRecipesByTags[tagKey]!);
+    // [수정] 캐시 확인 로직 추가
+    // 만약 이전에 저장해둔 데이터(_cachedRecipes)가 있다면,
+    // AI를 호출하지 않고 저장된 데이터를 즉시 반환합니다. (API 호출 절약, 로딩 시간 단축)
+    if (_cachedRecipes != null) {
+      return _cachedRecipes!;
     }
 
     // --- 캐시가 없다면(null), 아래 AI 호출 로직을 실행합니다 ---
@@ -112,25 +106,26 @@ class RecommendationService {
       recommendedRecipes.sort((a, b) =>
       recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id));
 
-      // [추가] API 호출로 받아온 데이터를 태그별 캐시에 저장
-      _cachedRecipesByTags[tagKey] = recommendedRecipes;
+      // [추가] API 호출로 받아온 데이터를 캐시 변수에 저장
+      // 다음 번 호출 때는 이 변수에 있는 값을 바로 사용하게 됩니다.
+      _cachedRecipes = recommendedRecipes;
 
       return recommendedRecipes;
 
     } catch (e) {
       // API 호출 중 오류 발생 시 처리
-      print("AI 호출 에러: $e"); // 디버깅을 위해 에러 로그 출력
+      print("AI 호출 에러: $e"); // [추가] 디버깅을 위해 에러 로그 출력
       // 오류 발생 시 사용자에게 빈 리스트를 보여주거나, 다른 대체 로직을 수행할 수 있습니다.
       // throw Exception('레시피 추천을 받아오는 데 실패했습니다.');
-      return []; // 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환으로 변경
+      return []; // [수정] 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환으로 변경
     }
   }
 
-  // 캐시 초기화 메서드
+  // [추가] 캐시 초기화 메서드
   // 사용자가 '추천' 버튼을 누르거나 '선호도'를 변경했을 때,
   // 저장된 데이터를 지워서 강제로 새로운 추천을 받도록 할 때 사용합니다.
   void clearCache() {
-    _cachedRecipesByTags.clear();
+    _cachedRecipes = null;
   }
 
   // --- 3. 추천 레시피 정렬 로직 (기존과 동일) ---
