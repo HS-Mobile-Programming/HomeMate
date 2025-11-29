@@ -1,9 +1,5 @@
-// lib/services/recipe_service.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
-// 레시피 더미 데이터를 사용하지 않을 예정입니다.
-//import '../data/recipe_data.dart';
 
 // 레시피 정렬 모드
 enum RecipeSortMode { nameAsc, nameDesc }
@@ -30,25 +26,6 @@ class RecipeService {
 
   // 1. 레시피 검색/조회 로직
   Future<List<Recipe>> getRecipes({String? keyword}) async {
-    /*
-    // await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
-
-    List<Recipe> recipes;
-    if (keyword == null || keyword.isEmpty) {
-      recipes = allRecipes; // 전체 조회
-    } else {
-      // 오류수정: 이름만이 아니라 정상적으로 이름 또는 재료 검색이 되도록 수정
-      final keywordLower = keyword.toLowerCase();
-      recipes = allRecipes
-          .where((recipe) =>
-              recipe.name.toLowerCase().contains(keywordLower) ||
-              // ingredients 리스트의 각 요소(재료)를 확인하여 재료명에 키워드가 포함되는지 검사
-              recipe.ingredients.any((ingredient) =>
-                  ingredient.ingredientName.toLowerCase().contains(keywordLower)))
-          .toList();
-    }
-    return recipes;
-    */
     // Firestore에서 전체 레시피 가져오기
     final recipes = await _loadAllRecipes();
 

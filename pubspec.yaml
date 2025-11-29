@@ -39,10 +39,12 @@ dependencies:
 
   firebase_core: ^3.9.0       # Firebase Package
   cloud_firestore: ^5.6.12    # Firestore Package
+  firebase_auth: ^5.7.0       # Firebase_auth Package
+  firebase_storage: ^12.0.0
 
   google_generative_ai: ^0.4.0 # Gemini AI 사용을 위한 패키지
   http: ^1.2.1                   # (선택사항) 다른 API 호출에 필요할 수 있음
-  firebase_auth: ^5.7.0       # Firebase_auth Package
+  fluttertoast: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +72,8 @@ flutter:
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

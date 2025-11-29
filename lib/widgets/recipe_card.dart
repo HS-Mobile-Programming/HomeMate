@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
@@ -16,6 +17,8 @@ class RecipeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 이미지 영역
+          // ---> 파이어 스토리지 연동에 맞게 주석처리하고 코드 변경했습니다.
+          /*
           Container(
             height: 160,
             width: double.infinity,
@@ -26,6 +29,17 @@ class RecipeCard extends StatelessWidget {
             // 나중에 Image.asset('~~~.png')로 변경
             child: const Icon(Icons.image, size: 50, color: Colors.white),
           ),
+          */
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: _RecipeImage(imageName: recipe.imageName),
+            ),
+          ),
+
+          // 텍스트 영역
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -58,6 +72,62 @@ class RecipeCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Firebase Storage에서 이미지 불러오는 위젯
+class _RecipeImage extends StatelessWidget {
+  final String imageName; // 예: "recipe_001.jpg"
+
+  const _RecipeImage({required this.imageName});
+
+  @override
+  Widget build(BuildContext context) {
+    // imageName이 비어 있으면 기본 플레이스홀더
+    if (imageName.isEmpty) {
+      return Container(
+        color: Colors.grey,
+        child: const Center(
+          child: Icon(Icons.image_not_supported, size: 50, color: Colors.white),
+        ),
+      );
+    }
+
+    // Firebase Storage에서 이미지 URL 가져오기
+    final ref =
+    FirebaseStorage.instance.ref().child('recipes/$imageName'); // 파이어 스토리지 경로
+
+    return FutureBuilder<String>(
+      future: ref.getDownloadURL(),
+      builder: (context, snapshot) {
+        // 로딩 중
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            color: Colors.grey[200],
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        // 에러 또는 데이터 없음
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Container(
+            color: Colors.grey,
+            child: const Center(
+              child: Icon(Icons.error, size: 50, color: Colors.white),
+            ),
+          );
+        }
+
+        // 정상적으로 URL을 받아온 경우
+        final url = snapshot.data!;
+        return Image.network(
+          url,
+          fit: BoxFit.cover,
+        );
+      },
     );
   }
 }

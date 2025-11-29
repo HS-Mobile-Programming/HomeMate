@@ -9,10 +9,6 @@ class Recipe {
   final String name;                        // 레시피 이름
   final String description;                 // 레시피 설명 (짧은 소개)
   final String difficulty;                  // 난이도 (초급/중급/고급)
-  //final String cookTime;
-  //final String ingredients;
-  //final String step;
-  //final String tasteTags;
   final int cookTimeMinutes;                // 조리 시간(분 단위)
   final List<RecipeIngredient> ingredients; // 재료 목록
   final List<String> steps;                 // 조리 단계
@@ -27,10 +23,8 @@ class Recipe {
     required this.name,
     required this.description,
     required this.difficulty,
-    //required this.cookTime,
     required this.cookTimeMinutes,
     required this.ingredients,
-    //required this.step,
     required this.steps,
     required this.tasteTags,
     required this.imageName,

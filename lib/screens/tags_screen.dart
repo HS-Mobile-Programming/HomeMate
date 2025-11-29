@@ -12,11 +12,11 @@ import '../models/tag_model.dart';
 import '../widgets/tag_item.dart';
 
 class TagsScreen extends StatefulWidget {
-  // [추가된 부분] 부모 화면에서 전달받은 '저장된 태그 목록'을 받을 변수입니다.
+  // 부모 화면에서 전달받은 '저장된 태그 목록'을 받을 변수입니다.
   final List<String>? initialSelectedTags;
 
   // const TagsScreen(...): 위젯 생성자
-  // [수정] 생성자에서 initialSelectedTags를 받을 수 있게 수정했습니다.
+  // 생성자에서 initialSelectedTags를 받을 수 있게 수정했습니다.
   const TagsScreen({
     super.key,
     this.initialSelectedTags
@@ -29,7 +29,7 @@ class TagsScreen extends StatefulWidget {
 class _TagsScreenState extends State<TagsScreen> {
   // [상태 변수 (State Variable)]
 
-  // [수정] 태그를 그룹별로 관리하기 위해 Map으로 변경했습니다.
+  // 태그를 그룹별로 관리하기 위해 Map으로 변경했습니다.
   // Key: 그룹 이름 (String), Value: 태그 리스트 (List<TagModel>)
   late Map<String, List<TagModel>> tagGroups;
 
@@ -40,13 +40,13 @@ class _TagsScreenState extends State<TagsScreen> {
     super.initState();
     // 'tags' (상태 변수)를 '초기화'합니다.
 
-    // [로직 추가] 전달받은 초기 태그 목록이 있다면, 미리 Set으로 변환하여 검색 속도를 높입니다.
+    // 전달받은 초기 태그 목록이 있다면, 미리 Set으로 변환하여 검색 속도를 높입니다.
     // (없으면 빈 목록 {} 사용)
     // widget.initialSelectedTags는 위에서 선언한 변수를 가져오는 것입니다.
     final savedTags = widget.initialSelectedTags?.toSet() ?? {};
 
-    // [수정] 요청하신 태그들을 속성별로 그룹화하여 초기화했습니다.
-    // + [추가] 생성 시 'savedTags'에 포함되어 있다면 isSelected를 true로 설정합니다.
+    // 요청하신 태그들을 속성별로 그룹화하여 초기화했습니다.
+    // 생성 시 'savedTags'에 포함되어 있다면 isSelected를 true로 설정합니다.
     tagGroups = {
       "맛 & 풍미": [
         "매콤한", "담백한", "짭짤한", "달달한",
@@ -63,7 +63,7 @@ class _TagsScreenState extends State<TagsScreen> {
     };
   }
 
-  // [추가] '저장하기' 버튼을 눌렀을 때 실행되는 함수입니다.
+  // '저장하기' 버튼을 눌렀을 때 실행되는 함수입니다.
   // 선택된 태그들을 수집하여 서버로 보내거나 이전 화면으로 전달합니다.
   void _onSave() {
     List<String> selectedTags = [];
@@ -110,7 +110,7 @@ class _TagsScreenState extends State<TagsScreen> {
       backgroundColor: const Color(0xFFF5F5F5), // 앱 공통 배경색
 
       // body: 화면 본문 영역
-      // [수정] 그룹별로 섹션을 나누어 표시하기 위해 ListView로 변경했습니다.
+      // 그룹별로 섹션을 나누어 표시하기 위해 ListView로 변경했습니다.
       // 하단 FloatingActionButton에 가려지지 않도록 padding bottom을 넉넉히 줍니다.
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0),
@@ -120,7 +120,7 @@ class _TagsScreenState extends State<TagsScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start, // 제목 왼쪽 정렬
             children: [
-              // [추가] 그룹 제목 (예: 맛과 특징)
+              // 그룹 제목 (예: 맛과 특징)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
                 child: Text(
@@ -183,7 +183,7 @@ class _TagsScreenState extends State<TagsScreen> {
         }).toList(),
       ),
 
-      // [추가] 화면 하단에 고정된 '저장하기' 버튼입니다.
+      // 화면 하단에 고정된 '저장하기' 버튼입니다.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onSave, // 버튼 클릭 시 위에서 정의한 _onSave 함수 실행
         label: const Text("저장하기", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),

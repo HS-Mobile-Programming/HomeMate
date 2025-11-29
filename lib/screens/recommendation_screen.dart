@@ -37,10 +37,10 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   // 현재 정렬 방식입니다. (기본값: 이름 오름차순)
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
 
-  // [추가] 로딩 상태 변수
+  // 로딩 상태 변수
   bool _isLoading = false;
 
-  // [추가] 4. 태그 저장소
+  // 4. 태그 저장소
   // 사용자가 'TagsScreen'에서 선택한 태그 목록을 기억하는 변수입니다.
   // 이 변수가 있어야 TagsScreen에 들어갈 때 "이거 원래 체크되어 있었어"라고 알려줄 수 있습니다.
   List<String> _savedTags = [];
@@ -53,7 +53,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     _refreshList(); //  5. 초기 로드 (처음 추천 목록을 불러옴)
   }
 
-  // [추가] 6. 중앙 갱신 함수
+  // 6. 중앙 갱신 함수
   // (RecipeScreen의 _refreshList와 동일한 구조)
   Future<void> _refreshList() async {
     setState(() => _isLoading = true); // 로딩 시작
@@ -92,7 +92,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     _refreshList(); // 갱신
   }
 
-  // [수정] '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
+  // '선호도 설정' 버튼의 'onPressed' 콜백에 연결됩니다.
   // TagsScreen을 열 때 저장된 태그를 보내고, 돌아올 때 결과를 받아옵니다.
   void _onPreferencesPressed() async {
     // 1. 화면을 열 때 '주머니에 있던 태그(_savedTags)'를 쥐여서 보냅니다.
@@ -180,7 +180,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
             // [추천 목록 영역]
             // Expanded: 'Column' 안에서 '남은 모든 세로 공간'을 차지
             Expanded(
-              // [수정] 로딩 중이면 스피너 표시
+              // 로딩 중이면 스피너 표시
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _recommendedRecipes.isEmpty

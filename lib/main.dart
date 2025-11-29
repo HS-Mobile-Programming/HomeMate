@@ -9,7 +9,7 @@ import 'firebase_options.dart';     // Import flutterfire configure file
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);     // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
   runApp(const HomeMateApp());
 }
 
@@ -22,7 +22,7 @@ class HomeMateApp extends StatelessWidget {
       title: '집밥 메이트',
       theme: ThemeData(
         useMaterial3: true,
-        // [수정] 색상 체계를 중앙에서 관리합니다.
+        // 색상 체계를 중앙에서 관리합니다.
         // seedColor를 지정하면 어울리는 색상 팔레트가 자동 생성됩니다.
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.green, // 메인 색상
@@ -34,7 +34,7 @@ class HomeMateApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
 
-        // [수정] 카드 테마 기본값 설정
+        // 카드 테마 기본값 설정
         cardTheme: CardThemeData(
           color: Colors.white,
           elevation: 2,
