@@ -1,7 +1,6 @@
 // [SCREEN CLASS] - StatefulWidget
 // '즐겨찾기 목록'을 보여주는 화면입니다.
 // '마이페이지' 탭에서 '즐겨찾기' 메뉴를 누르면 이 화면으로 이동합니다.
-//
 // 'StatefulWidget':
 // '즐겨찾기 목록(_favoriteRecipes)'을 '서비스'로부터 '불러와서'
 // '상태'로 '스스로' 관리해야 하고,
@@ -12,7 +11,7 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
-import '../services/recipe_service.dart'; // [추가] 1. 서비스 import
+import '../services/recipe_service.dart';
 
 class FavoritesScreen extends StatefulWidget {
   // const FavoritesScreen(...): 위젯 생성자
@@ -32,7 +31,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   // 화면에 표시될 '즐겨찾기된' 레시피 목록입니다.
   List<Recipe> _favoriteRecipes = [];
 
-  // [추가] 로딩 상태 변수
+  // 로딩 상태 변수
   bool _isLoading = false;
 
   // [initState]

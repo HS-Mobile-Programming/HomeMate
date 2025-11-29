@@ -1,6 +1,3 @@
-// [IMPORT] - 외부 라이브러리 또는 다른 파일의 기능을 가져옵니다.
-
-// flutter/material.dart: 플러터의 핵심 UI 위젯(예: Scaffold, Text, Icon)들을 포함합니다.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -51,7 +48,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   // 재료 목록의 정렬 방식 (기본값: nameAsc - 이름 오름차순)
   // 이 값에 따라 _refreshList()에서 목록을 정렬하는 방식이 달라집니다.
-  SortMode _sortMode = SortMode.nameAsc;
+  SortMode _sortMode = SortMode.expiryAsc;
 
 
   // 4. 화면에 보여질 리스트
@@ -98,7 +95,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   //  9. UI 관련 헬퍼 함수
   // 사용자에게 빨간색 배경의 에러 메시지(스낵바)를 띄웁니다.
-// [IMPORT] - 외부 라이브러리 또는 다른 파일의 기능을 가져옵니다.
   void _showErrorSnackBar(String message) {
     // ScaffoldMessenger: 화면 하단에 스낵바, 상단에 배너 등을 관리하는 객체입니다.
     ScaffoldMessenger.of(context).showSnackBar(
@@ -120,13 +116,11 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     // '수정' 모드일 경우, 기존 재료의 값으로 초기화합니다.
     final nameController = TextEditingController(text: ingredient?.name ?? "");
     final quantityController = TextEditingController(
-        text: ingredient?.quantity ?? "");
+        text: isEditMode ? ingredient.quantity.toString() : "1");
 
     // '수정' 모드일 때, 기존 유통기한(예: "2025.11.20")을 파싱하여
     // 년/월/일 컨트롤러에 각각 초기값(예: "2025", "11", "20")을 설정합니다.
-    String year = '',
-        month = '',
-        day = '';
+    String year = '', month = '', day = '';
     if (isEditMode) {
       // 날짜 파싱 로직을 서비스에 위임합니다.
       DateTime? date = _service.parseDate(ingredient.expiryTime);
@@ -145,33 +139,24 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     showDialog(
       context: context,
       builder: (context) { // 'context'는 다이얼로그가 그려질 위치(화면) 정보입니다.
+        final colorScheme = Theme.of(context).colorScheme;
 
-        // (내부 함수) 년/월/일 입력을 위한 텍스트 필드 UI를 생성합니다.
-        Widget buildDateTextField(TextEditingController controller, String hint,
-            int maxLength) {
+        // [복원] 기존 날짜 입력용 TextField 스타일
+        Widget buildDateTextField(TextEditingController controller, String hint, int maxLength) {
           return TextField(
             controller: controller,
-            // 이 컨트롤러와 텍스트 필드를 연결
             maxLength: maxLength,
-            // 최대 입력 글자 수 (예: 'YYYY'는 4)
             keyboardType: TextInputType.number,
-            // 숫자 키보드만 표시
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            // 숫자만 입력되도록 필터링
             textAlign: TextAlign.center,
-            // 텍스트 가운데 정렬
             decoration: InputDecoration(
               hintText: hint,
-              // 입력 예시 (예: "YYYY")
               counterText: '',
-              // '4/4' 같은 글자 수 표시 숨김
               filled: true,
-              // 배경색 채우기
-              fillColor: Colors.blue[50],
-              // 연한 파란색 배경
+              fillColor: colorScheme.primary.withValues(alpha: 0.1), // 연한 메인 색상으로 변경
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none // 테두리선 없음
+                  borderSide: BorderSide.none
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -180,59 +165,52 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
         // AlertDialog: 다이얼로그의 본체입니다.
         return AlertDialog(
-          // (다이얼로그 UI 코드는 동일)
-          backgroundColor: Colors.white,
-          // 다이얼로그 배경색
-          titlePadding: EdgeInsets.zero,
-          // 제목(Title) 영역의 기본 패딩(여백) 제거
+          backgroundColor: Colors.white, // 다이얼로그 배경색
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: EdgeInsets.zero, // 제목(Title) 영역의 기본 패딩(여백) 제거
           title: Container( // 제목 영역을 직접 디자인
-            color: Colors.blue[200], // 제목 배경색
+            decoration: BoxDecoration(
+                color: colorScheme.primary, // 메인 색상으로 변경
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                )
+            ),
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
                 isEditMode ? "재료 수정" : "재료 등록", // 모드에 따라 텍스트 변경
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: colorScheme.onPrimary, fontSize: 18), // 대비되는 색상으로 변경
               ),
             ),
           ),
           content: SingleChildScrollView( // 내용(Content) 영역
-            // 내용이 길어지면 스크롤이 가능하도록 합니다.
+            padding: const EdgeInsets.only(top: 16.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              // 컨텐츠 높이만큼만 다이얼로그 크기 잡기
-              crossAxisAlignment: CrossAxisAlignment.start,
-              // '이름', '수량' 글자를 왼쪽 정렬
+              mainAxisSize: MainAxisSize.min, // 컨텐츠 높이만큼만 다이얼로그 크기 잡기
+              crossAxisAlignment: CrossAxisAlignment.start, // '이름', '수량' 글자를 왼쪽 정렬
               children: [
                 const Text("이름", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(controller: nameController, /* ... */),
+                TextField(controller: nameController),
                 const SizedBox(height: 16), // 위젯 사이의 수직 간격
                 const Text("수량", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(controller: quantityController, /* ... */),
+                TextField(controller: quantityController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                 const SizedBox(height: 16),
-                const Text(
-                    "유통기한", style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text("유통기한", style: TextStyle(fontWeight: FontWeight.bold)),
                 Row( // 년/월/일 필드를 가로로 배치
                   children: [
-                    // Expanded: Row 안에서 남은 공간을 차지하는 비율을 정합니다.
-                    Expanded(flex: 2,
-                        child: buildDateTextField(yearController, "YYYY", 4)),
-                    // '년' (2비율)
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(".")),
-                    Expanded(flex: 1,
-                        child: buildDateTextField(monthController, "MM", 2)),
-                    // '월' (1비율)
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(".")),
-                    Expanded(flex: 1,
-                        child: buildDateTextField(dayController, "DD", 2)),
-                    // '일' (1비율)
+                    Expanded(flex: 2, child: buildDateTextField(yearController, "YYYY", 4)), // '년' (2비율)
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text(".")),
+                    Expanded(flex: 1, child: buildDateTextField(monthController, "MM", 2)), // '월' (1비율)
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text(".")),
+                    Expanded(flex: 1, child: buildDateTextField(dayController, "DD", 2)), // '일' (1비율)
                   ],
                 ),
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           actions: [ // 하단 버튼(Actions) 영역
             TextButton(
               onPressed: () => Navigator.pop(context), // 버튼 누르면 다이얼로그 닫기
@@ -241,29 +219,26 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             TextButton(
               onPressed: () async { // [수정] async 추가
                 // [유효성 검사 (Validation)]
-
-                // 1. 입력값 가져오기 (trim: 앞뒤 공백 제거)
                 final name = nameController.text.trim();
                 final quantityStr = quantityController.text.trim();
                 final yearStr = yearController.text.trim();
                 final monthStr = monthController.text.trim();
                 final dayStr = dayController.text.trim();
 
-                // 2. 이름 검사
+                // 이름 검사
                 if (name.isEmpty) {
                   _showErrorSnackBar("이름을 입력해주세요.");
                   return; // 함수 종료
                 }
 
-                // 3. 수량 검사
-                int quantity = int.tryParse(quantityStr) ??
-                    0; // 숫자로 변환 시도, 실패하면 0
+                // 수량 검사
+                int quantity = int.tryParse(quantityStr) ?? 0; // 숫자로 변환 시도, 실패하면 0
                 if (quantity <= 0) {
                   _showErrorSnackBar("수량을 1 이상 입력해주세요.");
                   return;
                 }
 
-                // 4. 날짜 검사
+                // 날짜 검사
                 String expiryDate;
                 if (yearStr.isEmpty || monthStr.isEmpty || dayStr.isEmpty) {
                   _showErrorSnackBar("유통기한(연/월/일)을 모두 입력해주세요.");
@@ -274,58 +249,47 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   int y = int.parse(yearStr);
                   int m = int.parse(monthStr);
                   int d = int.parse(dayStr);
-                  DateTime date = DateTime(
-                      y, m, d); // 2025, 2, 30 -> 2025, 3, 1 (DateTime이 자동 보정)
+                  DateTime date = DateTime(y, m, d);
 
-                  // '2025.2.30'처럼 유효하지 않은 날짜를 입력했는지 확인 (보정된 날짜와 원본이 다른지)
                   if (date.year != y || date.month != m || date.day != d) {
                     throw FormatException("유효하지 않은 날짜입니다.");
                   }
 
-                  // 오늘 날짜와 비교 (시간, 분, 초 제외)
                   DateTime today = DateTime.now();
-                  DateTime todayOnly = DateTime(
-                      today.year, today.month, today.day);
-                  if (date.isBefore(todayOnly)) { // 선택한 날짜가 오늘 이전이면
+                  DateTime todayOnly = DateTime(today.year, today.month, today.day);
+                  if (date.isBefore(todayOnly)) {
                     _showErrorSnackBar("유통기한이 오늘보다 빠를 수 없습니다.");
                     return;
                   }
 
-                  // 모든 검사 통과 -> "yyyy.MM.dd" 형식의 문자열로 변환
                   expiryDate = DateFormat('yyyy.MM.dd').format(date);
                 } catch (e) {
-                  // int.parse 실패 또는 FormatException 발생 시
                   _showErrorSnackBar("유효하지 않은 날짜 형식입니다.");
                   return;
                 }
 
                 Navigator.pop(context); // 다이얼로그 닫기
 
-
-                //  11. 로직 대신 서비스 호출
-                // 유효성 검사를 모두 통과하면, 실제 데이터 처리는 서비스에 위임합니다.
+                // 로직 대신 서비스 호출
                 if (isEditMode) {
-                  // '수정' 모드일 경우
                   await _service.updateIngredient(ingredient.id,
                     name: name,
-                    quantity: quantity.toString(),
+                    quantity: quantity,
                     expiryTime: expiryDate,
                   );
                 } else {
-                  // '등록' 모드일 경우
                   await _service.addIngredient(
                     name: name,
-                    quantity: quantity.toString(),
+                    quantity: quantity,
                     expiryTime: expiryDate,
                   );
                 }
 
-                await _refreshList(); // 12. 서비스 호출 후 화면 갱신 (가장 중요)
+                await _refreshList(); // 서비스 호출 후 화면 갱신
               },
               child: Text(
                 isEditMode ? "수정" : "추가", // 모드에 따라 버튼 텍스트 변경
-                style: const TextStyle(
-                    color: Colors.blue, fontWeight: FontWeight.bold),
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -369,9 +333,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
   // `setState()`가 호출될 때마다 이 `build` 메서드가 다시 실행됩니다.
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     // Scaffold: 앱 화면의 기본적인 구조(상단바, 본문, 하단바 등)를 제공합니다.
     return Scaffold(
       // SingleChildScrollView + Column 구조를 CustomScrollView + Slivers 구조로 변경
@@ -379,23 +341,21 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
       body: CustomScrollView(
         slivers: [
           // [달력 위젯]
-          // 기존 Container를 SliverToBoxAdapter로 감싸서 Sliver 영역에 배치
           SliverToBoxAdapter(
             child: Padding(
               // 기존 SingleChildScrollView의 padding(16.0)을 여기서 적용
-              padding: const EdgeInsets.only(
-                  top: 16.0, left: 16.0, right: 16.0),
+              padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
               child: Container( // 달력을 감싸는 컨테이너
                 decoration: BoxDecoration(
-                  color: Colors.white, // 배경색 흰색
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16), // 모서리 둥글게
                 ),
                 child: TableCalendar(
-                  locale: 'en_US',
-                  // 달력 언어 (이 코드에서는 'en_US'지만, 'ko_KR'로 변경 가능)
-                  firstDay: DateTime.utc(2020, 1, 1),
+                  locale: 'ko_KR',
+                  // 달력 언어
+                  firstDay: DateTime.utc(2000, 1, 1),
                   // 달력이 보여줄 수 있는 최소 날짜
-                  lastDay: DateTime.utc(2030, 12, 31),
+                  lastDay: DateTime.utc(2099, 12, 31),
                   // 달력이 보여줄 수 있는 최대 날짜
                   focusedDay: _focusedDay,
                   // 현재 포커스된 날짜 (상태 변수)
@@ -434,15 +394,45 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
                   // calendarStyle: 달력의 세부 스타일을 지정합니다.
                   calendarStyle: CalendarStyle(
-                    // markerDecoration: eventLoader에 의해 이벤트가 있는 날(유통기한)의 마커 스타일
-                    markerDecoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
                     // todayDecoration: '오늘' 날짜의 스타일
-                    todayDecoration: BoxDecoration(
-                        color: Colors.grey.shade300, shape: BoxShape.circle),
+                    todayDecoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
                     // selectedDecoration: '선택된' 날짜의 스타일
-                    selectedDecoration: BoxDecoration(
-                        color: Colors.green.shade300, shape: BoxShape.circle),
+                    selectedDecoration: BoxDecoration(color: Colors.green.shade300, shape: BoxShape.circle),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    // markerBuilder: 날짜 아래의 점(이벤트 마커)을 그리는 함수
+                    markerBuilder: (context, day, events) {
+                      if (events.isEmpty) {
+                        return null; // 재료 없으면 점 안 찍음
+                      }
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      final target = DateTime(day.year, day.month, day.day);
+
+                      final difference = target.difference(today).inDays;
+
+                      Color dotColor = Colors.black; // 표시 기본은 검정색
+
+                      if (difference < 0) {
+                        dotColor = Colors.red;      // 유통기간 지나간것은 빨간색
+                      } else if (difference == 0) {
+                        dotColor = Colors.orange;   // 유통기간이 오늘까지인것은 오랜지색
+                      } else if (difference <= 3) {
+                        dotColor = Colors.yellow;   // 유통기간이 3일이내인것은 노란색
+                      }
+
+                      return Positioned(
+                        bottom: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: dotColor,
+                            shape: BoxShape.circle,
+                          ),
+                          width: 7.0,
+                          height: 7.0,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -455,46 +445,32 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               // 기존 SingleChildScrollView의 가로 패딩 적용
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0, vertical: 4.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: Row( // 위젯들을 가로로 배치
                   children: [
                     // '추가' 버튼
                     ElevatedButton.icon(
-                      icon: Icon(
-                          Icons.add, color: colorScheme.primary, size: 20),
-                      label: Text(
-                        "추가",
-                        style: TextStyle(color: colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14),
-                      ),
-                      onPressed: () => _showIngredientDialog(),
-                      // _showIngredientDialog() 호출
+                      icon: Icon(Icons.add, color: colorScheme.primary, size: 20),
+                      label: Text("추가", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+                      onPressed: () => _showIngredientDialog(), // _showIngredientDialog() 호출
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        // 흰색/밝은색
-                        surfaceTintColor: colorScheme.primary,
-                        // 틴트
+                        backgroundColor: colorScheme.surface, // 흰색/밝은색
+                        surfaceTintColor: colorScheme.primary, // 틴트
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: colorScheme.primary,
-                              width: 1),
+                          side: BorderSide(color: colorScheme.primary, width: 1),
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    // '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
+                    const Spacer(), // '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
 
                     // 'X 전체 보기' 버튼
                     AnimatedOpacity(
                       // `_selectedDay`가 null이 아닐 때만(즉, 날짜가 선택됐을 때만) 보이도록 처리
                       opacity: _selectedDay != null ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      // 0.3초 동안 서서히 나타남/사라짐
+                      duration: const Duration(milliseconds: 300), // 0.3초 동안 서서히 나타남/사라짐
                       child: TextButton(
                         onPressed: () {
                           setState(() {
@@ -529,19 +505,13 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             ),
           ),
 
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Divider(height: 10),
-            ),
-          ), // 구분선
+          const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Divider(height: 10))), // 구분선
 
           // [재료 목록 (ListView)]
           // filteredIngredients(상태 변수)의 내용에 따라 목록을 동적으로 생성합니다.
           // 기존 ListView.builder를 SliverList로 변경하여 성능 최적화
           SliverPadding(
-            padding: const EdgeInsets.only(
-                left: 16.0, right: 16.0, bottom: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
             sliver: SliverList(
               // itemBuilder: 'itemCount'만큼 반복 호출되며, 각 인덱스(index)에 해당하는
               // UI(위젯)를 생성합니다.
@@ -568,13 +538,10 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                             title: const Text("삭제 확인"),
                             content: Text("재료 '${item.name}'을(를) 삭제하시겠습니까?"),
                             actions: <Widget>[
-                              TextButton(onPressed: () =>
-                                  Navigator.pop(context, false),
-                                  child: const Text("취소")),
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("취소")),
                               TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: const Text("삭제",
-                                      style: TextStyle(color: Colors.red))),
+                                  child: const Text("삭제", style: TextStyle(color: Colors.red))),
                             ],
                           );
                         },
