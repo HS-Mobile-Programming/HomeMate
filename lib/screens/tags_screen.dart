@@ -27,16 +27,18 @@ class TagsScreen extends StatefulWidget {
 }
 
 class _TagsScreenState extends State<TagsScreen> {
-  // [상태 변수 (State Variable)]
-
-  // 태그를 그룹별로 관리하기 위해 Map으로 변경했습니다.
-  // Key: 그룹 이름 (String), Value: 태그 리스트 (List<TagModel>)
+  // 태그를 그룹별로 관리하는 Map
+  // Key: 그룹 이름 (예: "맛 & 풍미", "주재료")
+  // Value: 해당 그룹의 태그 리스트 (List<TagModel>)
   late Map<String, List<TagModel>> tagGroups;
 
   @override
   void initState() {
     super.initState();
+    // 부모 화면에서 전달받은 초기 선택 태그를 Set으로 변환 (빠른 검색을 위해)
     final savedTags = widget.initialSelectedTags?.toSet() ?? {};
+    
+    // 태그 그룹 초기화 - 각 태그의 isSelected 상태를 초기값으로 설정
     tagGroups = {
       "맛 & 풍미": [
         "매콤한", "담백한", "짭짤한", "달달한",
@@ -61,9 +63,14 @@ class _TagsScreenState extends State<TagsScreen> {
     };
   }
 
+  /// 저장하기 버튼 클릭 시 호출되는 메서드
+  /// - 모든 그룹에서 선택된 태그(isSelected == true)를 수집
+  /// - 선택된 태그 목록을 부모 화면으로 반환
+  /// - 저장 완료 메시지(SnackBar) 표시
   void _onSave() {
     List<String> selectedTags = [];
 
+    // 모든 태그 그룹을 순회하며 선택된 태그만 수집
     tagGroups.forEach((category, tags) {
       for (var tag in tags) {
         if (tag.isSelected) {
@@ -72,6 +79,7 @@ class _TagsScreenState extends State<TagsScreen> {
       }
     });
 
+    // 저장 완료 알림 표시
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("취향 태그가 저장되었습니다."),
@@ -80,6 +88,7 @@ class _TagsScreenState extends State<TagsScreen> {
       ),
     );
 
+    // 선택된 태그 목록을 부모 화면으로 전달하며 화면 닫기
     Navigator.pop(context, selectedTags);
   }
 
@@ -93,16 +102,17 @@ class _TagsScreenState extends State<TagsScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context), // 뒤로가기 - 선택한 태그 저장하지 않음
         ),
       ),
       backgroundColor: const Color(0xFFF5F5F5),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0), // 하단 버튼 공간 확보
         children: tagGroups.entries.map((entry) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 그룹 제목 표시 (예: "맛 & 풍미", "주재료")
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
                 child: Text(
@@ -114,13 +124,14 @@ class _TagsScreenState extends State<TagsScreen> {
                   ),
                 ),
               ),
+              // 그룹별 태그를 4열 그리드로 표시
               GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true, // ListView 내부에서 높이 자동 조절
+                physics: const NeverScrollableScrollPhysics(), // ListView와 스크롤 충돌 방지
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
+                  crossAxisCount: 4, // 가로 4개씩 배치
+                  mainAxisSpacing: 8, // 세로 간격
+                  crossAxisSpacing: 8, // 가로 간격
                 ),
                 itemCount: entry.value.length,
                 itemBuilder: (context, index) {
@@ -128,6 +139,7 @@ class _TagsScreenState extends State<TagsScreen> {
                   return TagItem(
                     tag: tag,
                     onTap: () {
+                      // 태그 탭 시 선택 상태 토글
                       setState(() {
                         tag.isSelected = !tag.isSelected;
                       });
@@ -135,11 +147,12 @@ class _TagsScreenState extends State<TagsScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 24), // 그룹 간 간격
             ],
           );
         }).toList(),
       ),
+      // 하단 고정 저장 버튼
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onSave,
         label: const Text("저장하기", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),

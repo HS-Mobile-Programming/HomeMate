@@ -23,26 +23,41 @@ class RecommendationScreen extends StatefulWidget {
 }
 
 class _RecommendationScreenState extends State<RecommendationScreen> {
+  // 추천 서비스 객체 - AI 기반 레시피 추천 로직을 담당
   final RecommendationService _service = RecommendationService();
 
+  // 화면에 표시될 추천 레시피 목록
   List<Recipe> _recommendedRecipes = [];
+  
+  // 현재 정렬 방식 (기본값: 이름 오름차순)
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
+  
+  // 로딩 상태 - 추천 요청 중일 때 true
   bool _isLoading = false;
+  
+  // 사용자가 선택한 태그 목록 - IndexedStack으로 탭 전환 시에도 유지됨
   List<String> _savedTags = [];
 
   @override
   void initState() {
     super.initState();
+    // 화면 초기 진입 시 자동으로 추천 레시피 로드
     _refreshList();
   }
 
+  /// 추천 레시피 목록을 새로고침하는 메서드
+  /// - 저장된 태그를 기반으로 AI 추천을 받아옴
+  /// - 태그가 없으면 일반 추천을 받음
+  /// - 받아온 레시피를 현재 정렬 모드에 맞게 정렬하여 표시
   Future<void> _refreshList() async {
     setState(() => _isLoading = true);
 
     try {
+      // AI 서비스를 통해 태그 기반 추천 레시피 받아오기
       var recipes = await _service.getRecommendations(
         selectedTags: _savedTags.isEmpty ? null : _savedTags,
       );
+      // 현재 정렬 모드에 맞게 정렬
       var sortedRecipes = _service.sortRecipes(recipes, _sortMode);
 
       if (mounted) {
@@ -61,6 +76,9 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     }
   }
 
+  /// 정렬 버튼 클릭 시 호출되는 메서드
+  /// - 오름차순 ↔ 내림차순 토글
+  /// - 이미 받아온 레시피 목록을 재정렬 (새로운 추천 요청 없음)
   void _onSortPressed() {
     setState(() {
       _sortMode = _sortMode == RecipeSortMode.nameAsc
@@ -70,6 +88,11 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     });
   }
 
+  /// 선호도 설정 버튼 클릭 시 호출되는 메서드
+  /// - TagsScreen으로 이동하여 태그 선택 화면 표시
+  /// - 현재 저장된 태그를 초기값으로 전달
+  /// - 사용자가 선택한 태그를 받아와서 _savedTags에 저장
+  /// - 저장 후 자동 추천은 하지 않음 (사용자가 추천 버튼을 눌러야 함)
   void _onPreferencesPressed() async {
     final result = await Navigator.push(
       context,
@@ -87,6 +110,9 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     }
   }
 
+  /// 정렬 버튼의 UI를 생성하는 헬퍼 메서드
+  /// - 현재 정렬 모드에 따라 라벨 텍스트 변경
+  /// - 아이콘과 텍스트를 가로로 배치
   Widget _buildSortButtonChild() {
     final label = _sortMode == RecipeSortMode.nameAsc ? "이름 (가-힣)" : "이름 (힣-가)";
     return Row(
@@ -106,22 +132,26 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // 상단 컨트롤 영역: 선호도 설정, 추천 버튼, 정렬 버튼
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
+                    // 선호도 설정 버튼 - 태그 선택 화면으로 이동
                     _buildTopButton(
                       text: "선호도 설정",
                       onPressed: _onPreferencesPressed,
                     ),
                     const SizedBox(width: 8),
+                    // 추천 버튼 - 새로운 추천 받기
                     _buildTopButton(
                       text: "추천",
                       onPressed: _refreshList,
                     ),
                   ],
                 ),
+                // 정렬 버튼 - 오름차순/내림차순 토글
                 TextButton(
                   onPressed: _onSortPressed,
                   child: _buildSortButtonChild(),
@@ -129,6 +159,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               ],
             ),
             const SizedBox(height: 16),
+            // 추천 레시피 목록 영역
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -137,6 +168,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                   : ListView.builder(
                 itemCount: _recommendedRecipes.length,
                 itemBuilder: (context, index) {
+                  // 각 레시피 카드를 탭하면 상세 화면으로 이동
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
