@@ -1,12 +1,12 @@
 // [SCREEN CLASS] - StatefulWidget
 // '회원가입' 화면 UI를 정의합니다.
-//
 // 'StatefulWidget':
 // 이 화면은 '이용약관 동의(isAgreed)' 체크박스의 '상태(State)'를
 // '스스로' 관리하고 변경해야 하므로 (true/false) StatefulWidget으로 선언되었습니다.
 
 import 'package:flutter/material.dart';
 import 'tos_screen.dart';
+import '../services/account_service.dart';
 
 class SignupScreen extends StatefulWidget {
   // const SignupScreen(...): 위젯 생성자
@@ -17,12 +17,107 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-// [_SignupScreenState]
 // 'SignupScreen'의 실제 상태와 UI를 관리하는 클래스입니다.
 class _SignupScreenState extends State<SignupScreen> {
   // [상태 변수 (State Variable)]
   // 이 값이 'setState'에 의해 변경되면 화면이 다시 그려집니다.
   bool isAgreed = false; // 이용약관 동의 여부 (기본값: false)
+
+  // 각 입력 필드의 텍스트를 제어하기 위한 컨트롤러입니다.
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _pwController = TextEditingController();
+  final TextEditingController _pwConfirmController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  // 회원가입 처리 시 로딩 상태 및 에러 메시지를 관리하기 위한 상태 변수입니다.
+  bool _isLoading = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    // 화면이 dispose될 때 컨트롤러도 함께 정리합니다.
+    _emailController.dispose();
+    _pwController.dispose();
+    _pwConfirmController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  // '회원가입 완료' 버튼을 눌렀을 때 실행되는 메서드입니다.
+  // 1. 약관 동의 여부 확인
+  // 2. 입력값 유효성 검사 (비어 있는지, 비밀번호 길이, 비밀번호 일치 여부)
+  // 3. AccountService를 이용한 Firebase 회원가입 및 users 컬렉션에 정보 저장
+  // 4. 성공 시 SnackBar 표시 후 로그인 화면으로 복귀
+  Future<void> _onSignUpPressed() async {
+    if (!isAgreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("이용약관에 동의해주세요.")),
+      );
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _pwController.text.trim();
+    final passwordConfirm = _pwConfirmController.text.trim();
+    final nickname = _nameController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || nickname.isEmpty) {
+      setState(() {
+        _errorText = "이메일, 비밀번호, 이름을 모두 입력해주세요.";
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _errorText = "비밀번호는 6자 이상이어야 합니다.";
+      });
+      return;
+    }
+
+    if (password != passwordConfirm) {
+      setState(() {
+        _errorText = "비밀번호와 비밀번호 확인이 일치하지 않습니다.";
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    try {
+      // AccountService를 통해 FirebaseAuth 회원가입 + Firestore users/{uid} 문서를 생성합니다.
+      await AccountService.instance.signUp(
+        email: email,
+        password: password,
+        nickname: nickname,
+      );
+
+      if (!mounted) return;
+
+      // 회원가입 성공 메시지를 출력합니다.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("회원가입이 완료되었습니다.")),
+      );
+
+      // 회원가입 성공 시, 로그인 화면으로 돌아갑니다.
+      Navigator.pop(context);
+    } catch (e) {
+      // 회원가입 실패 시, 에러 메시지를 화면에 표시합니다.
+      setState(() {
+        _errorText = "회원가입에 실패했습니다: $e";
+      });
+    } finally {
+      // 로딩 상태 해제
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
@@ -56,13 +151,27 @@ class _SignupScreenState extends State<SignupScreen> {
 
             // '_buildTextField' 헬퍼 메서드(LoginScreen과 유사)를 사용하여
             // 중복되는 텍스트 필드 UI를 생성합니다.
-            _buildTextField("ID 입력 (이메일)"),
+            _buildTextField(
+              "ID 입력 (이메일)",
+              controller: _emailController,     //이메일 입력값 관리
+            ),
             const SizedBox(height: 16),
-            _buildTextField("비밀번호 입력", isObscure: true),
+            _buildTextField(
+              "비밀번호 입력",
+              isObscure: true,
+              controller: _pwController,        //비밀번호 입력값 관리
+            ),
             const SizedBox(height: 16),
-            _buildTextField("비밀번호 확인", isObscure: true),
+            _buildTextField(
+              "비밀번호 확인",
+              isObscure: true,
+              controller: _pwConfirmController, //비밀번호 확인 입력값 관리
+            ),
             const SizedBox(height: 16),
-            _buildTextField("이름 (닉네임)"),
+            _buildTextField(
+              "이름 (닉네임)",
+              controller: _nameController,      //닉네임 입력값 관리
+            ),
 
             const SizedBox(height: 24),
 
@@ -78,7 +187,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       // 'value' (새로운 체크 상태, true 또는 false)를
                       // 'isAgreed' 상태 변수에 '업데이트'합니다.
                       // '!' (null-assertion operator): 'value'가 'null'이 아님을 보장합니다.
-                      isAgreed = value!;
+                      isAgreed = value ?? false;
                     });
                   },
                   activeColor: Colors.green, // 체크되었을 때 색상
@@ -105,10 +214,25 @@ class _SignupScreenState extends State<SignupScreen> {
 
             const SizedBox(height: 32),
 
+            // 회원가입 과정에서 발생한 에러 메시지를 표시하는 영역
+            if (_errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _errorText!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+
+            const SizedBox(height: 24),
+
             // [가입 완료 버튼]
             SizedBox( // 버튼의 '가로 폭'을 설정하기 위해 사용
               width: double.infinity, // 가로 폭을 '최대'로 설정
               child: ElevatedButton(
+                // 로딩 중에는 버튼 비활성화, 아니면 _onSignUpPressed 실행
+                onPressed: _isLoading ? null : _onSignUpPressed,
+                /* 상술한 주석의 방식으로 이전 코드를 비활성화 했습니다.
                 onPressed: () {
                   // [유효성 검사]
                   // 만약 'isAgreed' (상태 변수)가 'false'이면 (동의 안 했으면)
@@ -126,6 +250,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   );
                   Navigator.pop(context);
                 },
+                */
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -133,7 +258,23 @@ class _SignupScreenState extends State<SignupScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: const Text("회원가입 완료", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: _isLoading
+                // 회원가입 처리 중일 때는 로딩 인디케이터 표시
+                    ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white
+                  ),
+                )
+                    : const Text(
+                  "회원가입 완료",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -145,8 +286,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // [헬퍼 메서드 (Helper Method)]
   // (LoginScreen의 _buildTextField와 동일한 구조)
-  Widget _buildTextField(String hint, {bool isObscure = false}) {
+  // controller를 받도록 변경했습니다.
+  Widget _buildTextField(
+      String hint, {
+        bool isObscure = false,
+        required TextEditingController controller,
+      }) {
     return TextField(
+      controller: controller, // 각 입력 필드의 값을 컨트롤러로 관리합니다.
       obscureText: isObscure,
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
