@@ -51,15 +51,20 @@ class RecipeService {
 
   // 2. 레시피 정렬 로직
   List<Recipe> sortRecipes(List<Recipe> recipes, RecipeSortMode mode) {
+    List<Recipe> favorites = recipes.where((r) => r.isFavorite).toList();
+    List<Recipe> normal = recipes.where((r) => !r.isFavorite).toList();
+
     switch (mode) {
       case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.name.compareTo(b.name));
+        favorites.sort((a, b) => a.name.compareTo(b.name));
+        normal.sort((a, b) => a.name.compareTo(b.name));
         break;
       case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.name.compareTo(a.name));
+        favorites.sort((a, b) => b.name.compareTo(a.name));
+        normal.sort((a, b) => b.name.compareTo(a.name));
         break;
     }
-    return recipes;
+    return favorites + normal;
   }
 
   // 3. 즐겨찾기 조회 로직

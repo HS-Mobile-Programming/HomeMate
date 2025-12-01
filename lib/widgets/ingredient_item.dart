@@ -32,53 +32,75 @@ class IngredientItem extends StatelessWidget {
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
   Widget build(BuildContext context) {
+    // 1. 유통기한 문자열("2025.11.20")을 DateTime 객체로 변환합니다.
+    // .replaceAll('.', '-')는 "2025.11.20" 형식을 "2025-11-20"으로 바꿔서 파싱 오류를 방지합니다.
     DateTime? expiryDate = DateTime.tryParse(ingredient.expiryTime.replaceAll('.', '-'));
 
-    // 기본값 설정
-    Color cardColor = Colors.white;
-    Color textColor = Colors.black;
-    FontWeight fontWeight = FontWeight.normal;
+    // 2. UI에 적용할 색상, 글자 스타일, D-day 텍스트를 담을 변수를 미리 선언합니다.
+    Color cardColor = Colors.white; // 카드 배경색 (기본값: 흰색)
+    Color textColor = Colors.black; // 글자색 (기본값: 검은색)
+    FontWeight fontWeight = FontWeight.normal; // 글자 굵기 (기본값: 보통)
+    String dDayText = ''; // D-day 텍스트 (기본값: 비어있음)
 
-    // applyExpiryColor가 true일 때만 색상 변경 로직을 실행합니다.
+    // 3. 유통기한 날짜(expiryDate)가 유효할 경우에만 D-day 계산 및 스타일 변경 로직을 실행합니다.
     if (expiryDate != null) {
-      DateTime now = DateTime.now();
-      final difference = expiryDate.difference(now).inDays;
+      // D-day를 정확히 계산하기 위해, 현재 시간의 시/분/초를 제외한 '오늘 날짜'를 구합니다.
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expiryDateOnly = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+
+      // '오늘'과 '유통기한 날짜'의 차이를 '일(day)' 단위로 계산합니다.
+      final difference = expiryDateOnly.difference(today).inDays;
 
       if (difference < 0) {
-        // 유통기한 지남
-        cardColor = Colors.red.shade100;
-        textColor = Colors.red.shade900;
-        fontWeight = FontWeight.bold;
-      } else if (difference <= 1) {
-        // 유통기한 1일 이하
-        cardColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade900;
-        fontWeight = FontWeight.bold;
+        // 유통기한이 지났을 경우 (음수)
+        cardColor = Colors.red.shade100; // 배경: 연한 빨강
+        textColor = Colors.red.shade900; // 글자: 진한 빨강
+        fontWeight = FontWeight.bold; // 글자: 굵게
+        dDayText = 'D+${-difference}'; // 예: -2일 -> D+2
+      } else if (difference == 0) {
+        // 유통기한이 오늘까지일 경우
+        cardColor = Colors.orange.shade100; // 배경: 연한 주황
+        textColor = Colors.orange.shade900; // 글자: 진한 주황
+        fontWeight = FontWeight.bold; // 글자: 굵게
+        dDayText = 'D-DAY';
       } else if (difference <= 3) {
-        // 유통기한 3일 이하
-        cardColor = Colors.yellow.shade100;
-        textColor = Colors.yellow.shade900;
-        fontWeight = FontWeight.bold;
+        // 유통기한이 1~3일 남았을 경우
+        cardColor = Colors.yellow.shade100; // 배경: 연한 노랑
+        textColor = Colors.orange.shade500; // 글자: 노랑
+        fontWeight = FontWeight.bold; // 글자: 굵게
+        dDayText = 'D-$difference'; // 예: 2일 -> D-2
+      } else {
+        // 유통기한이 4일 이상 남았을 경우
+        dDayText = 'D-$difference'; // D-day 텍스트만 설정
       }
     }
 
+    // Card: UI를 카드 형태로 감싸주는 위젯입니다.
     return Card(
-      color: cardColor,
-      elevation: 1,
+      color: cardColor, // 위에서 계산된 카드 배경색 적용
+      elevation: 1, // 그림자(음영)의 정도
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 4),
+
+      // Padding: Card '안'의 내용물에게 여백을 줍니다.
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        // Row: 자식 위젯들을 가로(수평)로 배치합니다.
         child: Row(
           children: [
+            // Expanded: 이름/수량 영역이 남은 공간을 모두 차지하도록 합니다.
             Expanded(
+              // Column: 재료 이름과 수량을 세로로 배치합니다.
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start, // 자식들을 왼쪽 정렬
                 children: [
+                  // 재료 이름
                   Text(
                     ingredient.name,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                   ),
+                  // 재료 수량
                   Text(
                     "수량: ${ingredient.quantity.toString()}",
                     style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.8)),
@@ -86,14 +108,34 @@ class IngredientItem extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              ingredient.expiryTime,
-              style: TextStyle(
-                fontSize: 14,
-                color: textColor,
-                fontWeight: fontWeight,
-              ),
+
+            // 유통기한과 D-day를 함께 표시하기 위해 Column으로 묶습니다.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end, // 오른쪽 정렬
+              children: [
+                // 유통기한
+                Text(
+                  ingredient.expiryTime,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textColor,
+                    fontWeight: fontWeight,
+                  ),
+                ),
+                // D-day 텍스트가 비어있지 않을 경우에만 표시합니다.
+                if (dDayText.isNotEmpty)
+                  Text(
+                    dDayText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+              ],
             ),
+
+            // 수정 버튼 (onEdit 함수가 전달된 경우에만 보임)
             if (onEdit != null) ...[
               const SizedBox(width: 8),
               IconButton(
