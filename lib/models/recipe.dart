@@ -38,20 +38,26 @@ class Recipe {
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       difficulty: json['difficulty'] ?? '',
-      cookTimeMinutes: json['cookTimeMinutes'] ?? 0,
 
-      // 맛 태그는 Firestore에서 List<String> 형태로 저장됨
-      tasteTags: List<String>.from(json['tasteTags'] ?? []),
+      // Firebase(최신)필드와 JSON(구버전 구조)필드를 하단의 코드들로 모두 지원 가능하도록 설정했습니다.
+      cookTimeMinutes: (json['cookTimeMinutes'] ?? json['cook_time'] ?? 0) as int,
 
-      // 재료 목록(List<Map>) → List<RecipeIngredient>으로 변환
+      // 맛 태그는 Firestore에서 List<String> 형태로 저장합니다.
+      tasteTags: List<String>.from(
+        json['tasteTags'] ?? json['taste_tags'] ?? [],
+      ),
+
+      // 재료 목록(List<Map>) → List<RecipeIngredient>으로 변환합니다.
       ingredients: (json['ingredients'] as List<dynamic>? ?? [])
           .map((e) => RecipeIngredient.fromJson(e))
           .toList(),
 
       // 조리 단계(List<String>)
-      steps: List<String>.from(json['steps'] ?? []),
+      steps: List<String>.from(
+        json['steps'] ?? json['step'] ?? [],
+      ),
 
-      imageName: json['imageName'] ?? '',
+      imageName: (json['imageName'] ?? json['image_name'] ?? '') as String,
     );
   }
 
