@@ -40,6 +40,16 @@ class HomeMateApp extends StatelessWidget {
           margin: EdgeInsets.zero,
         ),
       ),
+
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: child,
+        );
+      },
+
       home: const LoadingScreen(),
     );
   }

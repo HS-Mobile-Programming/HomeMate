@@ -69,21 +69,13 @@ class RecipeService {
 
   // 3. 즐겨찾기 조회 로직
   Future<List<Recipe>> getFavoriteRecipes() async {
-    /*
-    // await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
-    // (나중에 여기를 Firebase 'where' 쿼리로 변경)
-    return allRecipes.where((r) => r.isFavorite).toList();
-    */
-
     final recipes = await _loadAllRecipes();
     return recipes.where((r) => r.isFavorite).toList();
   }
 
   // 4. 즐겨찾기 상태 변경 로직
   Future<void> toggleFavorite(Recipe recipe) async {
-    // await Future.delayed(const Duration(milliseconds: 300)); // 가짜 지연
     // (나중에 여기를 Firebase 'update' 쿼리로 변경)
-
     // 지금은 로컬 객체만 수정합니다.
     // 나중에 계정/DB 연동 시 여기에서 Firestore 업데이트로 바꿀 예정입니다.
     recipe.isFavorite = !recipe.isFavorite;

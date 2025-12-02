@@ -138,22 +138,6 @@ class RecipeIngredient {
     };
   }
 
-  /* 클래스 접근이 잘못되서 주석처리하고 상단으로 올리고 수정했습니다.
-  // Recipe 객체를 JSON 맵으로 변환하는 메서드
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'difficulty': difficulty,
-      'cook_time': cookTime, // 모델의 필드명과 일치
-      'ingredients': ingredients,
-      'step': step,         // 모델의 필드명과 일치
-      'taste_tags': tasteTags,
-      'image_name': imageName,
-    };
-  }
-  */
   // AI에 포함할 때도 같은 구조 사용하도록 매핑합니다.
   Map<String, dynamic> toJson() => toMap();
 }

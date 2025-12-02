@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class RecipeImage extends StatelessWidget {
-  final String imageName; // 예: "recipe_001.jpg"
+  final String imageName;
   final double width;
   final double height;
 

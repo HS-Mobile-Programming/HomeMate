@@ -9,7 +9,6 @@ class RefrigeratorService {
 
   // 1. 모든 재료 가져오기
   Future<List<Ingredient>> getAllIngredients() async {
-    //await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
     // (나중에 여기를 Firebase에서 데이터 불러오는 코드로 변경)
     return allIngredients;
   }
