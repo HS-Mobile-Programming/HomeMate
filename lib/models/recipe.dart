@@ -14,8 +14,8 @@ class Recipe {
   final List<String> steps;                 // 조리 단계
   final List<String> tasteTags;             // 맛 태그
   final String imageName;                   // 이미지 파일명 (예: "recipe_003.jpg")
-
-  // 앱 내부에서만 사용하는 상태값 (DB에 저장되지 않음)
+  // 계정마다 즐겨찾기는 다르기 때문에 favorite을 레시피 문서 안에 넣지 않습니다.
+  // user 문서에서 favorite을 관리합니다.
   bool isFavorite;
 
   Recipe({
