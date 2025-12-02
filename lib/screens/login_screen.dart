@@ -48,6 +48,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // 이메일 형식 체크
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!emailRegex.hasMatch(email)) {
+      setState(() {
+        _errorText = '이메일 형식이 올바르지 않습니다.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorText = null;
@@ -70,7 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       // 로그인 실패 시 에러 메시지를 화면에 표시
       setState(() {
-        _errorText = '로그인에 실패했습니다: $e';
+        // AccountService에서 던진 AuthException의 message가 들어옵니다.
+        _errorText = e.toString();
       });
     } finally {
       // 로딩 상태 해제

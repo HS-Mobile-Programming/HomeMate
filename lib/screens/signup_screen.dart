@@ -105,9 +105,9 @@ class _SignupScreenState extends State<SignupScreen> {
       // 회원가입 성공 시, 로그인 화면으로 돌아갑니다.
       Navigator.pop(context);
     } catch (e) {
-      // 회원가입 실패 시, 에러 메시지를 화면에 표시합니다.
+      // 회원가입 실패 시, AccountService에서 던진 AuthException의 message가 들어옵니다.
       setState(() {
-        _errorText = "회원가입에 실패했습니다: $e";
+        _errorText = e.toString();
       });
     } finally {
       // 로딩 상태 해제

@@ -7,6 +7,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// 에러 메시지를 전달하기 위한 예외 처리 UI
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class AccountService {
   // 외부에서 new AccountService()로 여러 개를 만들지 못하게 막기 위해 내부생성자를 사용합니다.
   AccountService._internal();
@@ -31,10 +40,36 @@ class AccountService {
     required String email,
     required String password,
   }) async {
-    await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      String msg;
+      switch (e.code) {
+        case 'invalid-email':
+          msg = '이메일 형식이 올바르지 않습니다.';
+          break;
+        case 'user-disabled':
+          msg = '비활성화된 계정입니다. 관리자에게 문의해주세요.';
+          break;
+        case 'user-not-found':
+          msg = '해당 이메일 계정을 찾을 수 없습니다.';
+          break;
+        case 'wrong-password':
+          msg = '비밀번호가 올바르지 않습니다.';
+          break;
+        case 'network-request-failed':
+          msg = '네트워크 연결 상태를 확인한 뒤 다시 시도해주세요.';
+          break;
+        default:
+          msg = '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      }
+      throw AuthException(msg);
+    } catch (_) {
+      throw AuthException('알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
   }
 
   // 회원가입
@@ -45,27 +80,49 @@ class AccountService {
     required String password,
     required String nickname,
   }) async {
-    // Firebase Auth에 새 계정 생성을 요청합니다.
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      // Firebase Auth에 새 계정 생성을 요청합니다.
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    // 생성된 사용자 객체를 가져옵니다.
-    final user = credential.user;
-    if (user == null) {
-      // 혹시 모를 예외 처리
-      throw Exception('회원가입에 실패했습니다.');
+      // 생성된 사용자 객체를 가져옵니다.
+      final user = credential.user;
+      if (user == null) {
+        // 혹시 모를 예외 처리
+        throw Exception('회원가입에 실패했습니다.');
+      }
+
+      // Firestore에 users/{uid} (이메일, 닉네임, 계정 생성 시간)문서를 생성합니다.
+      // 나중에 /users/{uid}/ingredients, /users/{uid}/favorites 문서들을 위의 문서 기준으로 덧붙일 예정입니다.
+      await _db.collection('users').doc(user.uid).set({
+        'email': user.email,
+        'nickname': nickname,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseAuthException catch (e) {
+      String msg;
+      switch (e.code) {
+        case 'invalid-email':
+          msg = '이메일 형식이 올바르지 않습니다.';
+          break;
+        case 'email-already-in-use':
+          msg = '이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.';
+          break;
+        case 'weak-password':
+          msg = '비밀번호가 너무 약합니다. 더 복잡하게 설정해주세요.';
+          break;
+        case 'network-request-failed':
+          msg = '네트워크 연결 상태를 확인한 뒤 다시 시도해주세요.';
+          break;
+        default:
+          msg = '회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      }
+      throw AuthException(msg);
+    } catch (_) {
+      throw AuthException('알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-
-    // Firestore에 users/{uid} 문서를 생성합니다.
-    // 여기에는 이메일, 닉네임, 계정 생성 시간을 저장합니다.
-    // 나중에 /users/{uid}/ingredients, /users/{uid}/favorites 문서들을 위의 문서 기준으로 덧붙일 예정입니다.
-    await _db.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'nickname': nickname,
-      'createdAt': FieldValue.serverTimestamp()
-    });
   }
 
   // 로그아웃
