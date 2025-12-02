@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'favorites_screen.dart';
 import 'login_screen.dart';
+import '../data/help_data.dart';
 
 class MyPageScreen extends StatefulWidget {
   // const MyPageScreen(...): 위젯 생성자
@@ -16,7 +17,6 @@ class MyPageScreen extends StatefulWidget {
 class _MyPageScreenState extends State<MyPageScreen> {
 
   // [헬퍼 메서드 1: 액션 확인 다이얼로그]
-  // '로그아웃', '계정탈퇴' 버튼을 눌렀을 때 호출됩니다.
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -34,6 +34,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
           TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("$confirmText 완료되었습니다."),
@@ -41,11 +42,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     )
                 );
 
+                // 로그인 화면으로 이동
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
-              // 전달받은 confirmColor 사용
               child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold))
           ),
         ],
@@ -118,6 +119,52 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
+  // [헬퍼 메서드 3: 도움말 다이얼로그]
+  void _showHelpDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Center(child: Text("도움말", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                helpTitle1,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              Text(
+                helpContent1,
+                style: TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
+              ),
+              SizedBox(height: 16),
+              Text(
+                helpTitle2,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              Text(
+                helpContent2,
+                style: TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("닫기", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // [build]
   @override
   Widget build(BuildContext context) {
@@ -155,18 +202,24 @@ class _MyPageScreenState extends State<MyPageScreen> {
             const SizedBox(height: 24),
 
             // 메뉴 버튼 영역
+            // 즐거찾기 버튼
             _buildMenuButton("   즐겨찾기", () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const FavoritesScreen()),
               );
             }),
+
+            // 알람설정 버튼
             _buildMenuButton("   알림설정", _showNotificationDialog),
 
-            // 로그아웃 버튼 클릭 시 다이얼로그 호출
+            // 도움말 버튼
+            _buildMenuButton("   도움말", _showHelpDialog),
+
+            // 로그아웃 버튼
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
 
-            // 계정탈퇴 버튼 클릭 시 다이얼로그 호출
+            // 계정탈퇴 버튼
             _buildMenuButton("   계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", colorScheme.error)),
           ],
         ),
@@ -174,7 +227,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [헬퍼 메서드 3: 메뉴 버튼 UI]
+  // [헬퍼 메서드 4: 메뉴 버튼 UI]
   Widget _buildMenuButton(String text, VoidCallback onTap) {
     final colorScheme = Theme.of(context).colorScheme;
 

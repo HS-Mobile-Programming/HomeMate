@@ -300,35 +300,60 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
 //  13. 정렬 버튼 UI
 // 현재 `_sortMode` 상태에 따라 버튼의 아이콘과 텍스트를 동적으로 생성합니다.
-  Widget _buildSortButtonChild() {
-    IconData icon = Icons.swap_vert; // 기본 아이콘
-    String label; // 버튼에 표시될 텍스트
+  Widget _buildSortButton(String type, String label) {
+    bool isActive = false;
+    bool isAsc = true;
 
-    // `_sortMode` 값에 따라 'label' 텍스트를 다르게 설정
-    switch (_sortMode) {
-      case SortMode.nameAsc:
-        label = "이름 (가-힣)";
-        break;
-      case SortMode.nameDesc:
-        label = "이름 (힣-가)";
-        break;
-      case SortMode.expiryAsc:
-        label = "유통기한 임박순";
-        break;
+    // 현재 상태(_sortMode)를 보고 버튼의 상태 결정
+    if (type == "name") {
+      isActive = (_sortMode == SortMode.nameAsc || _sortMode == SortMode.nameDesc);
+      isAsc = (_sortMode == SortMode.nameAsc);
+    }
+    else {
+      isActive = (_sortMode == SortMode.expiryAsc || _sortMode == SortMode.expiryDesc);
+      isAsc = (_sortMode == SortMode.expiryAsc);
     }
 
-    // 아이콘과 텍스트를 가로(Row)로 배치하여 반환
-    return Row(
-      mainAxisSize: MainAxisSize.min, // 자식 위젯 크기만큼만 Row 크기 설정
-      children: [
-        Icon(icon, size: 18, color: Colors.black54), // 아이콘
-        const SizedBox(width: 4), // 아이콘과 텍스트 사이 간격
-        Text(label, style: const TextStyle(color: Colors.black54)), // 텍스트
-      ],
+    return TextButton(
+      onPressed: () {
+        setState(() {
+          // 버튼을 눌렀을 때 정렬 모드 변경 로직
+          if (type == "name") {
+            if (_sortMode == SortMode.nameAsc) {
+              _sortMode = SortMode.nameDesc;
+            } else {
+              _sortMode = SortMode.nameAsc;
+            }
+          } else {
+            if (_sortMode == SortMode.expiryAsc) {
+              _sortMode = SortMode.expiryDesc;
+            } else {
+              _sortMode = SortMode.expiryAsc;
+            }
+          }
+          _refreshList();
+        });
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: isActive ? Colors.black87 : Colors.grey,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
+          if (isActive) ...[
+            const SizedBox(width: 4),
+            Icon(
+              isAsc ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 16,
+            ),
+          ]
+        ],
+      ),
     );
   }
 
-// [build]
+  // [build]
   // 이 위젯의 UI(화면)를 실제로 그리는 메서드입니다.
   // `setState()`가 호출될 때마다 이 `build` 메서드가 다시 실행됩니다.
   @override
@@ -439,23 +464,22 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             ),
           ),
 
-          // [버튼 영역] (추가 버튼, 전체 보기 버튼, 정렬 버튼)
+          // [버튼 영역] (추가 버튼, 전체 보기, 그리고 정렬 버튼 2개)
           SliverToBoxAdapter(
             child: Padding(
-              // 기존 SingleChildScrollView의 가로 패딩 적용
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: Row( // 위젯들을 가로로 배치
+                child: Row(
                   children: [
                     // '추가' 버튼
                     ElevatedButton.icon(
                       icon: Icon(Icons.add, color: colorScheme.primary, size: 20),
                       label: Text("추가", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
-                      onPressed: () => _showIngredientDialog(), // _showIngredientDialog() 호출
+                      onPressed: () => _showIngredientDialog(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.surface, // 흰색/밝은색
-                        surfaceTintColor: colorScheme.primary, // 틴트
+                        backgroundColor: colorScheme.surface,
+                        surfaceTintColor: colorScheme.primary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
@@ -464,46 +488,41 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                         ),
                       ),
                     ),
-                    const Spacer(), // '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
 
-                    // 'X 전체 보기' 버튼
-                    AnimatedOpacity(
-                      // `_selectedDay`가 null이 아닐 때만(즉, 날짜가 선택됐을 때만) 보이도록 처리
-                      opacity: _selectedDay != null ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300), // 0.3초 동안 서서히 나타남/사라짐
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedDay = null; // 날짜 선택 해제
-                            _refreshList(); //  16. 전체 목록 새로고침
-                          });
-                        },
-                        child: const Text("X 전체 보기"),
-                      ),
-                    ),
+                    const Spacer(),
 
-                    // '정렬' 버튼
-                    TextButton(
-                      onPressed: () {
-                        // 정렬 버튼을 누를 때마다 `_sortMode` 상태를 순환시킵니다.
-                        setState(() {
-                          if (_sortMode == SortMode.nameAsc)
-                            _sortMode = SortMode.nameDesc;
-                          else if (_sortMode == SortMode.nameDesc)
-                            _sortMode = SortMode.expiryAsc;
-                          else
-                            _sortMode = SortMode.nameAsc;
-                          _refreshList(); //  17. 정렬 모드가 바뀌었으므로 목록 새로고침
-                        });
-                      },
-                      // 버튼의 내용은 `_buildSortButtonChild` 함수가 동적으로 생성
-                      child: _buildSortButtonChild(),
-                    ),
+                    _buildSortButton("name", "이름"),
+                    _buildSortButton("expiry", "유통기한"),
                   ],
                 ),
               ),
             ),
           ),
+
+          if (_selectedDay != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  children: [
+                    Text(
+                      "${_selectedDay!.month}월 ${_selectedDay!.day}일 재료만 보는 중",
+                      style: const TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedDay = null;
+                          _refreshList();
+                        });
+                      },
+                      child: const Text("전체 보기", style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Divider(height: 10))), // 구분선
 
