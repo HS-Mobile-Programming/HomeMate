@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'favorites_screen.dart';
 import 'login_screen.dart';
 import '../data/help_data.dart';
+import '../services/account_service.dart';
+
 
 class MyPageScreen extends StatefulWidget {
   // const MyPageScreen(...): 위젯 생성자
@@ -32,22 +34,23 @@ class _MyPageScreenState extends State<MyPageScreen> {
             child: const Text("취소", style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await AccountService.instance.signOut();  // Firebase 로그아웃
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("$confirmText 완료되었습니다."),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("$confirmText 완료되었습니다."),
-                      duration: const Duration(seconds: 1),
-                    )
-                );
-
-                // 로그인 화면으로 이동
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-              child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold))
+              // 네비게이션 스택을 정리 후 로그인 화면으로 이동합니다.
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false, // 이전 화면들을 모두 제거
+              );
+            },
+            child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

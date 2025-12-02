@@ -3,6 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+// 로그인 상태에 따른 로그인 / 홈 화면 분기 설정을 위한 import
+import 'package:firebase_auth/firebase_auth.dart';
+import '../main_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   // const LoadingScreen(...): 위젯 생성자
@@ -18,14 +21,31 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAuthAndNavigate();
+  }
 
-    // 5초 뒤에 자동으로 로그인 화면으로 이동하도록 설정
-    Future.delayed(const Duration(seconds: 5), () {
-      // 이미 터치를 하여 화면이 넘어갔는지 확인
-      if (mounted) {
-        _moveToLogin();
-      }
-    });
+  Future<void> _checkAuthAndNavigate() async {
+    // 로딩 화면을 보여주기 위한 화면 지연
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // FirebaseAuth의 로그인 상태를 한 번만 가져옵니다.
+    final user = await FirebaseAuth.instance.authStateChanges().first;
+
+    if (!mounted) return;
+
+    if (user != null) {
+      // 이미 로그인된 상태 → 메인 화면
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    } else {
+      // 로그인 안 된 상태 → 로그인 화면
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   void _moveToLogin() {
@@ -48,35 +68,29 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     // GestureDetector: 자식 위젯(Scaffold)에서 발생하는 '제스처' (터치, 드래그 등)를
     // 감지할 수 있게 해주는 위젯입니다.
-    return GestureDetector(
-      // onTap: 화면의 '어느 곳이든' 탭(터치)하면 실행됩니다.
-      onTap: _moveToLogin, // [추가] 터치 시 이동 함수 호출
+    return Scaffold(
+      // 앱의 공통 배경색 (main.dart에서 설정한 색과 동일)
+      backgroundColor: const Color(0xFFF5F5F5),
 
-      // child: GestureDetector가 감지할 영역 (화면 전체)
-      child: Scaffold(
-        // 앱의 공통 배경색 (main.dart에서 설정한 색과 동일)
-        backgroundColor: const Color(0xFFF5F5F5),
-
-        // body: 화면의 본문 영역
-        body: Center( // 자식 위젯(Column)을 화면 정중앙에 배치
-          child: Column( // 자식 위젯들을 세로(수직)로 배치
-            // mainAxisAlignment: Column의 '세로' 정렬 방식
-            // 'center': 세로 방향으로 정중앙에 배치
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.rice_bowl, size: 100, color: Colors.green), // 로고 아이콘
-              const SizedBox(height: 20), // 아이콘과 텍스트 사이의 수직 간격
-              const Text(
-                "집밥 메이트",
-                style: TextStyle(
-                  color: Colors.black, // 글자 검은색
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+      // body: 화면의 본문 영역
+      body: Center( // 자식 위젯(Column)을 화면 정중앙에 배치
+        child: Column( // 자식 위젯들을 세로(수직)로 배치
+          // mainAxisAlignment: Column의 '세로' 정렬 방식
+          // 'center': 세로 방향으로 정중앙에 배치
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.rice_bowl, size: 100, color: Colors.green), // 로고 아이콘
+            const SizedBox(height: 20), // 아이콘과 텍스트 사이의 수직 간격
+            const Text(
+              "집밥 메이트",
+              style: TextStyle(
+                color: Colors.black, // 글자 검은색
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

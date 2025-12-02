@@ -52,6 +52,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
 
   // 4. 화면에 보여질 리스트
+  // Firestore에서 가져온 현재 로그인한 유저의 전체 재료 목록입니다.
+  List<Ingredient> _allIngredients = [];
+
   // 실제 UI(ListView)에 그려질 필터링 및 정렬이 완료된 재료 목록입니다.
   // _refreshList() 함수가 이 리스트를 최신 상태로 업데이트합니다.
   List<Ingredient> filteredIngredients = [];
@@ -68,30 +71,38 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
   // 이 함수는 화면에 보여질 'filteredIngredients' 목록을 갱신하는 유일한 통로입니다.
   // (1) 재료 추가/수정/삭제 시, (2) 날짜 선택 시, (3) 정렬 변경 시 호출됩니다.
   Future<void> _refreshList() async {
-
+    // (A) Firestore에서 전체 재료 가져오기
+    final allData = await _service.getAllIngredients();
+    // 파이어베이스 방식으로 변경하기 위해서 하단은 주석 처리하고 _refreshList 메서드를 수정했습니다.
     // (A) 서비스에서 '모든' 재료 데이터를 가져옵니다. (비동기)
-    List<Ingredient> allData = await _service.getAllIngredients();
+    // List<Ingredient> allData = await _service.getAllIngredients();
 
-    if (mounted) {
-      setState(() {
-        // (B) 날짜 필터링
-        if (_selectedDay == null) {
-          // _selectedDay가 null이면 (즉, 'X 전체 보기' 상태) 모든 데이터를 보여줍니다.
-          filteredIngredients = allData;
-        } else {
-          // _selectedDay가 선택되어 있으면, 서비스의 'getEventsForDay' 로직을 호출해
-          // 해당 날짜의 재료만 필터링합니다.
-          // (getEventsForDay는 메모리상의 데이터를 필터링하므로 동기 호출 유지)
-          filteredIngredients = _service.getEventsForDay(_selectedDay!);
-        }
+    if (!mounted)
+      return;
 
-        // (C) 정렬
-        // (A) 또는 (B)에서 필터링된 결과를 현재 설정된 `_sortMode` 기준으로 정렬합니다.
-        filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
+    setState(() {
+      // 화면/캘린더에서 공통으로 사용할 전체 목록을 상태에 저장합니다.
+      _allIngredients = allData;
 
+      // (B) 날짜 필터링
+      if (_selectedDay == null) {
+        // _selectedDay가 null이면 (즉, 'X 전체 보기' 상태) 모든 데이터를 보여줍니다.
+        filteredIngredients = List<Ingredient>.from(_allIngredients);
+      } else {
+        // _selectedDay가 선택되어 있으면, 서비스의 'getEventsForDay' 로직을 호출해
+        // 해당 날짜의 재료만 필터링합니다.
+        // (getEventsForDay는 메모리상의 데이터를 필터링하므로 동기 호출 유지)
+        filteredIngredients = _allIngredients.where((ingredient) {
+          final expiryDate = _service.parseDate(ingredient.expiryTime);
+          return expiryDate != null && isSameDay(expiryDate, _selectedDay!);
+        }).toList();
+      }
+
+      // (C) 정렬
+      // (A) 또는 (B)에서 필터링된 결과를 현재 설정된 `_sortMode` 기준으로 정렬합니다.
+      filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
       });
     }
-  }
 
   //  9. UI 관련 헬퍼 함수
   // 사용자에게 빨간색 배경의 에러 메시지(스낵바)를 띄웁니다.
@@ -393,7 +404,12 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   // eventLoader: 각 날짜 하단에 마커(이벤트)를 표시하기 위한 데이터를 제공하는 함수
                   // 서비스의 `getEventsForDay` 로직을 그대로 연결합니다.
                   // 달력이 날짜(예: 11/20)를 그릴 때마다 `_service.getEventsForDay(11/20)`를 호출합니다.
-                  eventLoader: _service.getEventsForDay,
+                  eventLoader: (day) {
+                    return _allIngredients.where((ingredient) {
+                      final expiryDate = _service.parseDate(ingredient.expiryTime);
+                      return expiryDate != null && isSameDay(expiryDate, day);
+                    }).toList();
+                  },
                   //  14. 서비스 함수 호출
 
                   // onDaySelected: 사용자가 특정 날짜를 탭(클릭)했을 때 호출되는 콜백 함수
