@@ -292,7 +292,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     expiryTime: expiryDate,
                   );
                 }
-
+                alarm.value++;  // 알람 전역 변수 증가
                 await _refreshList(); // 서비스 호출 후 화면 갱신
               },
               child: Text(
@@ -586,7 +586,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     onDismissed: (dir) {
                       //  18. 서비스 호출
                       _service.deleteIngredient(item.id); // 서비스에 실제 데이터 삭제 요청
-
+                      alarm.value++;  // 알람 전역 변수 증가
                       // 화면에서도 즉각적인 반응을 보여주기 위해 'filteredIngredients' 목록에서 제거
                       // (주의: _refreshList()를 호출하면 서버/DB에서 다시 읽어오므로,
                       //       즉각적인 UI 반영을 위해 로컬 리스트에서 바로 제거하는 것이 더 빠릅니다.)

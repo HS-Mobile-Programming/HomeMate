@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/ingredient.dart';
 
+// 재료 변경을 알리기 위한 전역 변수
+final ValueNotifier<int> alarm = ValueNotifier(0);
 // 재료 정렬 모드
 enum SortMode { nameAsc, nameDesc, expiryAsc, expiryDesc }
 
