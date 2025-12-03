@@ -9,7 +9,7 @@ class RecommendationService {
   // 여기에 발급받은 Gemini API 키를 입력하세요.
   // 보안을 위해 실제 앱에서는 환경 변수나 별도의 키 관리 서비스를 사용하는 것이 좋습니다.
   // [주의] Git에 올릴 때는 이 키를 지우고 올리는 것이 안전합니다.
-  static const String _apiKey = ""; // <--- 여기에 API 키를 입력하세요
+  static const String _apiKey = "REVOKED_API_KEY"; // <--- 여기에 API 키를 입력하세요
 
   final RecipeService _recipeService = RecipeService();
 
