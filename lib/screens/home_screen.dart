@@ -44,11 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   // [initState]
-  // 이 위젯(화면)이 '처음' 생성될 때 딱 한 번 호출되는 초기화 함수입니다.
+  // 이 위젯(화면)이 화면을 호출하는 함수.
   @override
   void initState() {
     super.initState();
     _refreshIngredients(); // 화면이 처음 뜰 때 데이터를 불러오도록 함수 호출
+    alarm.addListener(_refreshIngredients); // 알람이 울리면 화면 다시 호출
+  }
+
+  @override
+  void dispose() {
+    alarm.removeListener(_refreshIngredients);
+    super.dispose();
   }
 
   // [데이터 새로고침 함수]

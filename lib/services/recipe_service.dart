@@ -1,26 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
+import '../services/favorites_service.dart';
 
 // 레시피 정렬 모드
 enum RecipeSortMode { nameAsc, nameDesc }
 
 class RecipeService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FavoritesService _favoritesService = FavoritesService();
 
   // Firestore에서 불러온 레시피들을 앱 실행 중 캐시해두는 리스트
   List<Recipe>? _cachedRecipes;
 
-  // 내부용 : Firestore에서 전체 레시피 불러오고, 한 번만 캐싱합니다.
   Future<List<Recipe>> _loadAllRecipes() async {
+    // 내부용 : Firestore에서 전체 레시피 불러오고, 한 번만 캐싱합니다.
     if (_cachedRecipes != null) {
       return _cachedRecipes!;
     }
 
+    // 모든 레시피를 불러옵니다.
     final snapshot = await _db.collection('recipes').get();
-    _cachedRecipes = snapshot.docs
+    final recipes = snapshot.docs
         .map((doc) => Recipe.fromJson(doc.data(), doc.id))
         .toList();
 
+    // 로그인 유저의 즐겨찾기 목록을 가져옵니다.
+    final favoriteIds = await _favoritesService.getFavoriteList();
+    final favSet = favoriteIds.toSet(); // contains() 빠르게 하기 위해 Set으로
+
+    // 레시피 리스트에 즐겨찾기 여부를 반영합니다.
+    for (final recipe in recipes) {
+      recipe.isFavorite = favSet.contains(recipe.id);
+    }
+
+    _cachedRecipes = recipes;
     return _cachedRecipes!;
   }
 
@@ -51,36 +64,40 @@ class RecipeService {
 
   // 2. 레시피 정렬 로직
   List<Recipe> sortRecipes(List<Recipe> recipes, RecipeSortMode mode) {
+    List<Recipe> favorites = recipes.where((r) => r.isFavorite).toList();
+    List<Recipe> normal = recipes.where((r) => !r.isFavorite).toList();
+
     switch (mode) {
       case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.name.compareTo(b.name));
+        favorites.sort((a, b) => a.name.compareTo(b.name));
+        normal.sort((a, b) => a.name.compareTo(b.name));
         break;
       case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.name.compareTo(a.name));
+        favorites.sort((a, b) => b.name.compareTo(a.name));
+        normal.sort((a, b) => b.name.compareTo(a.name));
         break;
     }
-    return recipes;
+    return favorites + normal;
   }
 
   // 3. 즐겨찾기 조회 로직
   Future<List<Recipe>> getFavoriteRecipes() async {
-    /*
-    // await Future.delayed(const Duration(milliseconds: 500)); // 가짜 지연
-    // (나중에 여기를 Firebase 'where' 쿼리로 변경)
-    return allRecipes.where((r) => r.isFavorite).toList();
-    */
-
     final recipes = await _loadAllRecipes();
     return recipes.where((r) => r.isFavorite).toList();
   }
 
   // 4. 즐겨찾기 상태 변경 로직
   Future<void> toggleFavorite(Recipe recipe) async {
-    // await Future.delayed(const Duration(milliseconds: 300)); // 가짜 지연
-    // (나중에 여기를 Firebase 'update' 쿼리로 변경)
+    // 현재 상태 기준으로 분기
+    if (recipe.isFavorite) {
+      // 이미 즐겨찾기인 경우 → 해제
+      await _favoritesService.removeFavorite(recipe.id);
+    } else {
+      // 즐겨찾기가 아닌 경우 → 추가
+      await _favoritesService.addFavorite(recipe.id);
+    }
 
-    // 지금은 로컬 객체만 수정합니다.
-    // 나중에 계정/DB 연동 시 여기에서 Firestore 업데이트로 바꿀 예정입니다.
+    // 로컬 객체도 함께 업데이트 (UI 즉각 반영)
     recipe.isFavorite = !recipe.isFavorite;
   }
 }

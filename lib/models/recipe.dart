@@ -14,8 +14,8 @@ class Recipe {
   final List<String> steps;                 // 조리 단계
   final List<String> tasteTags;             // 맛 태그
   final String imageName;                   // 이미지 파일명 (예: "recipe_003.jpg")
-
-  // 앱 내부에서만 사용하는 상태값 (DB에 저장되지 않음)
+  // 계정마다 즐겨찾기는 다르기 때문에 favorite을 레시피 문서 안에 넣지 않습니다.
+  // user 문서에서 favorite을 관리합니다.
   bool isFavorite;
 
   Recipe({
@@ -38,20 +38,26 @@ class Recipe {
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       difficulty: json['difficulty'] ?? '',
-      cookTimeMinutes: json['cookTimeMinutes'] ?? 0,
 
-      // 맛 태그는 Firestore에서 List<String> 형태로 저장됨
-      tasteTags: List<String>.from(json['tasteTags'] ?? []),
+      // Firebase(최신)필드와 JSON(구버전 구조)필드를 하단의 코드들로 모두 지원 가능하도록 설정했습니다.
+      cookTimeMinutes: (json['cookTimeMinutes'] ?? json['cook_time'] ?? 0) as int,
 
-      // 재료 목록(List<Map>) → List<RecipeIngredient>으로 변환
+      // 맛 태그는 Firestore에서 List<String> 형태로 저장합니다.
+      tasteTags: List<String>.from(
+        json['tasteTags'] ?? json['taste_tags'] ?? [],
+      ),
+
+      // 재료 목록(List<Map>) → List<RecipeIngredient>으로 변환합니다.
       ingredients: (json['ingredients'] as List<dynamic>? ?? [])
           .map((e) => RecipeIngredient.fromJson(e))
           .toList(),
 
       // 조리 단계(List<String>)
-      steps: List<String>.from(json['steps'] ?? []),
+      steps: List<String>.from(
+        json['steps'] ?? json['step'] ?? [],
+      ),
 
-      imageName: json['imageName'] ?? '',
+      imageName: (json['imageName'] ?? json['image_name'] ?? '') as String,
     );
   }
 
@@ -138,22 +144,6 @@ class RecipeIngredient {
     };
   }
 
-  /* 클래스 접근이 잘못되서 주석처리하고 상단으로 올리고 수정했습니다.
-  // Recipe 객체를 JSON 맵으로 변환하는 메서드
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'difficulty': difficulty,
-      'cook_time': cookTime, // 모델의 필드명과 일치
-      'ingredients': ingredients,
-      'step': step,         // 모델의 필드명과 일치
-      'taste_tags': tasteTags,
-      'image_name': imageName,
-    };
-  }
-  */
   // AI에 포함할 때도 같은 구조 사용하도록 매핑합니다.
   Map<String, dynamic> toJson() => toMap();
 }

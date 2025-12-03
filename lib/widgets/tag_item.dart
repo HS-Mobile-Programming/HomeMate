@@ -52,8 +52,6 @@ class TagItem extends StatelessWidget {
               // [조건부 스타일링 (Ternary Operator)]
               // 'tag.isSelected ? (A) : (B)'
               // 'tag.isSelected' 값이 'true'이면 (A) 스타일을, 'false'이면 (B) 스타일을 적용합니다.
-
-
               color: tag.isSelected ? Colors.green.shade50 : const Color(0xFFEEEEEE),
 
               // [테두리]

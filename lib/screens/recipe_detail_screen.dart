@@ -124,10 +124,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             // 조리 방법
             _buildInfoSection(
               "조리 방법",
-              /*
-              widget.recipe.stepList.isNotEmpty
-                  ? widget.recipe.stepList.join("\n\n") // 단계별로 간격 두기
-              */
               widget.recipe.steps.isNotEmpty
                   ? widget.recipe.steps.join("\n\n") // 단계별로 간격 두기
                   : "조리 방법 정보 없음",
