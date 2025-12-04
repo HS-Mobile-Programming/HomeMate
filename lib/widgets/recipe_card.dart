@@ -17,19 +17,6 @@ class RecipeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 이미지 영역
-          // ---> 파이어 스토리지 연동에 맞게 주석처리하고 코드 변경했습니다.
-          /*
-          Container(
-            height: 160,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.grey,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            // 나중에 Image.asset('~~~.png')로 변경
-            child: const Icon(Icons.image, size: 50, color: Colors.white),
-          ),
-          */
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: SizedBox(

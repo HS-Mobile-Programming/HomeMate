@@ -52,6 +52,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
 
   // 4. 화면에 보여질 리스트
+  // Firestore에서 가져온 현재 로그인한 유저의 전체 재료 목록입니다.
+  List<Ingredient> _allIngredients = [];
+
   // 실제 UI(ListView)에 그려질 필터링 및 정렬이 완료된 재료 목록입니다.
   // _refreshList() 함수가 이 리스트를 최신 상태로 업데이트합니다.
   List<Ingredient> filteredIngredients = [];
@@ -68,30 +71,35 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
   // 이 함수는 화면에 보여질 'filteredIngredients' 목록을 갱신하는 유일한 통로입니다.
   // (1) 재료 추가/수정/삭제 시, (2) 날짜 선택 시, (3) 정렬 변경 시 호출됩니다.
   Future<void> _refreshList() async {
+    // (A) Firestore에서 전체 재료 가져오기
+    final allData = await _service.getAllIngredients();
 
-    // (A) 서비스에서 '모든' 재료 데이터를 가져옵니다. (비동기)
-    List<Ingredient> allData = await _service.getAllIngredients();
+    if (!mounted)
+      return;
 
-    if (mounted) {
-      setState(() {
-        // (B) 날짜 필터링
-        if (_selectedDay == null) {
-          // _selectedDay가 null이면 (즉, 'X 전체 보기' 상태) 모든 데이터를 보여줍니다.
-          filteredIngredients = allData;
-        } else {
-          // _selectedDay가 선택되어 있으면, 서비스의 'getEventsForDay' 로직을 호출해
-          // 해당 날짜의 재료만 필터링합니다.
-          // (getEventsForDay는 메모리상의 데이터를 필터링하므로 동기 호출 유지)
-          filteredIngredients = _service.getEventsForDay(_selectedDay!);
-        }
+    setState(() {
+      // 화면/캘린더에서 공통으로 사용할 전체 목록을 상태에 저장합니다.
+      _allIngredients = allData;
 
-        // (C) 정렬
-        // (A) 또는 (B)에서 필터링된 결과를 현재 설정된 `_sortMode` 기준으로 정렬합니다.
-        filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
+      // (B) 날짜 필터링
+      if (_selectedDay == null) {
+        // _selectedDay가 null이면 (즉, 'X 전체 보기' 상태) 모든 데이터를 보여줍니다.
+        filteredIngredients = List<Ingredient>.from(_allIngredients);
+      } else {
+        // _selectedDay가 선택되어 있으면, 서비스의 'getEventsForDay' 로직을 호출해
+        // 해당 날짜의 재료만 필터링합니다.
+        // (getEventsForDay는 메모리상의 데이터를 필터링하므로 동기 호출 유지)
+        filteredIngredients = _allIngredients.where((ingredient) {
+          final expiryDate = _service.parseDate(ingredient.expiryTime);
+          return expiryDate != null && isSameDay(expiryDate, _selectedDay!);
+        }).toList();
+      }
 
+      // (C) 정렬
+      // (A) 또는 (B)에서 필터링된 결과를 현재 설정된 `_sortMode` 기준으로 정렬합니다.
+      filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
       });
     }
-  }
 
   //  9. UI 관련 헬퍼 함수
   // 사용자에게 빨간색 배경의 에러 메시지(스낵바)를 띄웁니다.
@@ -217,7 +225,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               child: const Text("취소", style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
-              onPressed: () async { // [수정] async 추가
+              onPressed: () async {
                 // [유효성 검사 (Validation)]
                 final name = nameController.text.trim();
                 final quantityStr = quantityController.text.trim();
@@ -284,7 +292,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     expiryTime: expiryDate,
                   );
                 }
-
+                alarm.value++;  // 알람 전역 변수 증가
                 await _refreshList(); // 서비스 호출 후 화면 갱신
               },
               child: Text(
@@ -300,35 +308,60 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
 //  13. 정렬 버튼 UI
 // 현재 `_sortMode` 상태에 따라 버튼의 아이콘과 텍스트를 동적으로 생성합니다.
-  Widget _buildSortButtonChild() {
-    IconData icon = Icons.swap_vert; // 기본 아이콘
-    String label; // 버튼에 표시될 텍스트
+  Widget _buildSortButton(String type, String label) {
+    bool isActive = false;
+    bool isAsc = true;
 
-    // `_sortMode` 값에 따라 'label' 텍스트를 다르게 설정
-    switch (_sortMode) {
-      case SortMode.nameAsc:
-        label = "이름 (가-힣)";
-        break;
-      case SortMode.nameDesc:
-        label = "이름 (힣-가)";
-        break;
-      case SortMode.expiryAsc:
-        label = "유통기한 임박순";
-        break;
+    // 현재 상태(_sortMode)를 보고 버튼의 상태 결정
+    if (type == "name") {
+      isActive = (_sortMode == SortMode.nameAsc || _sortMode == SortMode.nameDesc);
+      isAsc = (_sortMode == SortMode.nameAsc);
+    }
+    else {
+      isActive = (_sortMode == SortMode.expiryAsc || _sortMode == SortMode.expiryDesc);
+      isAsc = (_sortMode == SortMode.expiryAsc);
     }
 
-    // 아이콘과 텍스트를 가로(Row)로 배치하여 반환
-    return Row(
-      mainAxisSize: MainAxisSize.min, // 자식 위젯 크기만큼만 Row 크기 설정
-      children: [
-        Icon(icon, size: 18, color: Colors.black54), // 아이콘
-        const SizedBox(width: 4), // 아이콘과 텍스트 사이 간격
-        Text(label, style: const TextStyle(color: Colors.black54)), // 텍스트
-      ],
+    return TextButton(
+      onPressed: () {
+        setState(() {
+          // 버튼을 눌렀을 때 정렬 모드 변경 로직
+          if (type == "name") {
+            if (_sortMode == SortMode.nameAsc) {
+              _sortMode = SortMode.nameDesc;
+            } else {
+              _sortMode = SortMode.nameAsc;
+            }
+          } else {
+            if (_sortMode == SortMode.expiryAsc) {
+              _sortMode = SortMode.expiryDesc;
+            } else {
+              _sortMode = SortMode.expiryAsc;
+            }
+          }
+          _refreshList();
+        });
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: isActive ? Colors.black87 : Colors.grey,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
+          if (isActive) ...[
+            const SizedBox(width: 4),
+            Icon(
+              isAsc ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 16,
+            ),
+          ]
+        ],
+      ),
     );
   }
 
-// [build]
+  // [build]
   // 이 위젯의 UI(화면)를 실제로 그리는 메서드입니다.
   // `setState()`가 호출될 때마다 이 `build` 메서드가 다시 실행됩니다.
   @override
@@ -368,7 +401,12 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   // eventLoader: 각 날짜 하단에 마커(이벤트)를 표시하기 위한 데이터를 제공하는 함수
                   // 서비스의 `getEventsForDay` 로직을 그대로 연결합니다.
                   // 달력이 날짜(예: 11/20)를 그릴 때마다 `_service.getEventsForDay(11/20)`를 호출합니다.
-                  eventLoader: _service.getEventsForDay,
+                  eventLoader: (day) {
+                    return _allIngredients.where((ingredient) {
+                      final expiryDate = _service.parseDate(ingredient.expiryTime);
+                      return expiryDate != null && isSameDay(expiryDate, day);
+                    }).toList();
+                  },
                   //  14. 서비스 함수 호출
 
                   // onDaySelected: 사용자가 특정 날짜를 탭(클릭)했을 때 호출되는 콜백 함수
@@ -439,23 +477,22 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
             ),
           ),
 
-          // [버튼 영역] (추가 버튼, 전체 보기 버튼, 정렬 버튼)
+          // [버튼 영역] (추가 버튼, 전체 보기, 그리고 정렬 버튼 2개)
           SliverToBoxAdapter(
             child: Padding(
-              // 기존 SingleChildScrollView의 가로 패딩 적용
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: Row( // 위젯들을 가로로 배치
+                child: Row(
                   children: [
                     // '추가' 버튼
                     ElevatedButton.icon(
                       icon: Icon(Icons.add, color: colorScheme.primary, size: 20),
                       label: Text("추가", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
-                      onPressed: () => _showIngredientDialog(), // _showIngredientDialog() 호출
+                      onPressed: () => _showIngredientDialog(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.surface, // 흰색/밝은색
-                        surfaceTintColor: colorScheme.primary, // 틴트
+                        backgroundColor: colorScheme.surface,
+                        surfaceTintColor: colorScheme.primary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
@@ -464,46 +501,41 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                         ),
                       ),
                     ),
-                    const Spacer(), // '추가' 버튼과 '전체 보기' 버튼 사이의 공간을 모두 차지 (오른쪽으로 밀어냄)
 
-                    // 'X 전체 보기' 버튼
-                    AnimatedOpacity(
-                      // `_selectedDay`가 null이 아닐 때만(즉, 날짜가 선택됐을 때만) 보이도록 처리
-                      opacity: _selectedDay != null ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300), // 0.3초 동안 서서히 나타남/사라짐
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedDay = null; // 날짜 선택 해제
-                            _refreshList(); //  16. 전체 목록 새로고침
-                          });
-                        },
-                        child: const Text("X 전체 보기"),
-                      ),
-                    ),
+                    const Spacer(),
 
-                    // '정렬' 버튼
-                    TextButton(
-                      onPressed: () {
-                        // 정렬 버튼을 누를 때마다 `_sortMode` 상태를 순환시킵니다.
-                        setState(() {
-                          if (_sortMode == SortMode.nameAsc)
-                            _sortMode = SortMode.nameDesc;
-                          else if (_sortMode == SortMode.nameDesc)
-                            _sortMode = SortMode.expiryAsc;
-                          else
-                            _sortMode = SortMode.nameAsc;
-                          _refreshList(); //  17. 정렬 모드가 바뀌었으므로 목록 새로고침
-                        });
-                      },
-                      // 버튼의 내용은 `_buildSortButtonChild` 함수가 동적으로 생성
-                      child: _buildSortButtonChild(),
-                    ),
+                    _buildSortButton("name", "이름"),
+                    _buildSortButton("expiry", "유통기한"),
                   ],
                 ),
               ),
             ),
           ),
+
+          if (_selectedDay != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  children: [
+                    Text(
+                      "${_selectedDay!.month}월 ${_selectedDay!.day}일 재료만 보는 중",
+                      style: const TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedDay = null;
+                          _refreshList();
+                        });
+                      },
+                      child: const Text("전체 보기", style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Divider(height: 10))), // 구분선
 
@@ -554,7 +586,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     onDismissed: (dir) {
                       //  18. 서비스 호출
                       _service.deleteIngredient(item.id); // 서비스에 실제 데이터 삭제 요청
-
+                      alarm.value++;  // 알람 전역 변수 증가
                       // 화면에서도 즉각적인 반응을 보여주기 위해 'filteredIngredients' 목록에서 제거
                       // (주의: _refreshList()를 호출하면 서버/DB에서 다시 읽어오므로,
                       //       즉각적인 UI 반영을 위해 로컬 리스트에서 바로 제거하는 것이 더 빠릅니다.)
