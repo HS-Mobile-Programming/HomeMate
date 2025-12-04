@@ -70,20 +70,22 @@ class TagItem extends StatelessWidget {
               ),
             ),
 
-            // Image: 원형 Container '안'에 표시될 태그 이미지
-            child: Image.asset(
-              _getImagePath(tag.name),
-              width: 32,
-              height: 32,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                // 이미지가 없을 경우 기본 아이콘 표시
-                return Icon(
-                  Icons.collections,
-                  color: tag.isSelected ? Colors.green : Colors.grey[600],
-                  size: 32,
-                );
-              },
+            // Image: 원형 Container '안'에 표시될 태그 이미지 (둥글게 클리핑)
+            child: ClipOval(
+              child: Image.asset(
+                _getImagePath(tag.name),
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // 이미지가 없을 경우 기본 아이콘 표시
+                  return Icon(
+                    Icons.collections,
+                    color: tag.isSelected ? Colors.green : Colors.grey[600],
+                    size: 32,
+                  );
+                },
+              ),
             ),
           ),
         ),
