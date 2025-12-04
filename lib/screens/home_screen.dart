@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_item.dart';
 import '../services/refrigerator_service.dart';
+import '../models/recipe.dart';
+import '../services/recipe_service.dart';
 
 // [StatefulWidget]
 // '홈' 탭 (가장 첫 화면) UI를 정의합니다.
@@ -22,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // 앞으로 재료 데이터를 처리할 때는 이 객체를 사용합니다.
   final RefrigeratorService _service = RefrigeratorService();
 
+  // 레시피 서비스 객체 (랜덤 레시피 로딩용)
+  final RecipeService _recipeService = RecipeService();
+
   // 화면에 표시될 '유통기한 임박' 재료 목록을 담는 리스트입니다.
   List<Ingredient> _expiringSoonIngredients = [];
 
@@ -36,12 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // 양 옆의 다른 페이지가 살짝 보이도록 만드는 효과를 줍니다.
   final PageController _pageController = PageController(viewportFraction: 0.9);
 
-  // '오늘의 레시피' PageView에 보여줄 임시 데이터입니다.
-  final List<Map<String, String>> _recommendedRecipes = [
-    {'name': '김치찌개', 'image': ''},
-    {'name': '된장찌개', 'image': ''},
-    {'name': '계란찜', 'image': ''},
-  ];
+  // '오늘의 레시피' PageView에 보여줄 랜덤 데이터
+  List<Recipe> _randomRecipes = [];
 
   // [initState]
   // 이 위젯(화면)이 화면을 호출하는 함수.
@@ -49,7 +50,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _refreshIngredients(); // 화면이 처음 뜰 때 데이터를 불러오도록 함수 호출
+    _loadRandomRecipes();
     alarm.addListener(_refreshIngredients); // 알람이 울리면 화면 다시 호출
+  }
+
+  Future<void> _loadRandomRecipes() async {
+    final recipes = await _recipeService.getRandomRecipes(3);
+
+    if (mounted) {
+      setState(() {
+        _randomRecipes = recipes;
+      });
+    }
   }
 
   @override
@@ -87,7 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center, // 점들을 가운데 정렬
       // List.generate: _recommendedRecipes의 개수만큼 반복하여 위젯 리스트를 생성합니다.
-      children: List.generate(_recommendedRecipes.length, (index) {
+      // [수정] _randomRecipes의 길이를 사용하도록 변경
+      children: List.generate(_randomRecipes.length, (index) {
         // GestureDetector: 자식 위젯(Container)에 탭 이벤트를 감지할 수 있게 합니다.
         return GestureDetector(
           onTap: () {
@@ -131,11 +144,15 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text("오늘의 레시피", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           // SizedBox로 PageView의 높이를 고정해야 오류가 발생하지 않습니다.
-          SizedBox(
+          // [수정] 데이터 로딩 전 빈 화면 방지
+          _randomRecipes.isEmpty
+              ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()))
+              : SizedBox(
             height: 200,
             child: PageView.builder(
               controller: _pageController, // 위에서 만든 페이지 컨트롤러 연결
-              itemCount: _recommendedRecipes.length, // 페이지의 총 개수
+              // [수정] 고정 리스트 대신 랜덤 레시피 리스트 사용
+              itemCount: _randomRecipes.length, // 페이지의 총 개수
               // onPageChanged: 사용자가 페이지를 스와이프할 때마다 호출됩니다.
               onPageChanged: (int page) {
                 setState(() {
@@ -144,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               // itemBuilder: 각 페이지의 UI를 동적으로 생성합니다.
               itemBuilder: (context, index) {
-                final recipe = _recommendedRecipes[index];
+                final recipe = _randomRecipes[index];
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 8.0), // 페이지 좌우 여백
                   child: Card(
@@ -158,11 +175,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // 이미지가 있으면 표시, 없으면 기본 아이콘 표시
-                          recipe['image']!.isNotEmpty
-                              ? Image.asset('assets/images/${recipe['image']}', height: 120, fit: BoxFit.cover)
-                              : const Icon(Icons.image, size: 100, color: Colors.grey),
+                          // 로컬 이미지(Asset) 대신 네트워크 이미지(Network) 사용
+                          Expanded(
+                            child: recipe.imageName.isNotEmpty
+                                ? Image.network(
+                              recipe.imageName,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.rice_bowl, size: 100, color: Colors.grey);
+                              },
+                            )
+                                : const Icon(Icons.rice_bowl, size: 100, color: Colors.grey),
+                          ),
                           const SizedBox(height: 16),
-                          Text(recipe['name']!, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          // Map 키 접근(['name']) 대신 객체 속성(.name) 사용
+                          Text(recipe.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -172,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           // 페이지 인디케이터 위젯을 추가합니다.
-          _buildPageIndicator(),
+          if (_randomRecipes.isNotEmpty) _buildPageIndicator(),
           const SizedBox(height: 24),
 
           // --- 유통기한 임박 목록 카드 ---
