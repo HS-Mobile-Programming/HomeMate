@@ -5,6 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_item.dart';
 import '../services/refrigerator_service.dart';
+import '../services/notification_service.dart';
 
 // [StatefulWidget]
 // RefrigeratorScreen 위젯을 정의합니다.
@@ -295,6 +296,13 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 }
                 alarm.value++;  // 알람 전역 변수 증가
                 await _refreshList(); // 서비스 호출 후 화면 갱신
+                
+                // 재료 변경 후 유통기한 알림 체크
+                try {
+                  await NotificationService.instance.checkExpiringIngredients();
+                } catch (e) {
+                  // 알림 체크 실패는 조용히 처리
+                }
               },
               child: Text(
                 isEditMode ? "수정" : "추가", // 모드에 따라 버튼 텍스트 변경

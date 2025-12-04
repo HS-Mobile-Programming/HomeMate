@@ -1,15 +1,11 @@
-// [SCREEN CLASS] - StatefulWidget
-// '마이페이지' 탭 (index 4)에 표시되는 화면입니다.
-
 import 'package:flutter/material.dart';
 import 'favorites_screen.dart';
 import 'login_screen.dart';
 import '../data/help_data.dart';
 import '../services/account_service.dart';
-
+import '../services/notification_service.dart';
 
 class MyPageScreen extends StatefulWidget {
-  // const MyPageScreen(...): 위젯 생성자
   const MyPageScreen({super.key});
 
   @override
@@ -35,7 +31,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     }
   }
 
-  // [헬퍼 메서드 1: 액션 확인 다이얼로그]
+  // 로그아웃/탈퇴 확인 다이얼로그
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -53,7 +49,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              await AccountService.instance.signOut();  // Firebase 로그아웃
+              await AccountService.instance.signOut();
               
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -63,10 +59,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   ),
                 );
 
-                // 네비게이션 스택을 정리 후 로그인 화면으로 이동합니다.
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false, // 이전 화면들을 모두 제거
+                  (route) => false,
                 );
               }
             },
@@ -77,11 +72,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [헬퍼 메서드 2: 알림 설정 다이얼로그]
-  void _showNotificationDialog() {
-    bool isPushOn = true;
-    int days = 3;
+  // 알림 설정 다이얼로그
+  void _showNotificationDialog() async {
     final colorScheme = Theme.of(context).colorScheme;
+    final settings = await NotificationService.instance.getNotificationSettings();
+    bool isPushOn = settings['isPushOn'] as bool;
+    int days = settings['days'] as int;
 
     showDialog(
       context: context,
@@ -131,7 +127,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       child: Text("취소", style: TextStyle(color: colorScheme.error))
                   ),
                   TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () async {
+                        await NotificationService.instance.saveNotificationSettings(
+                          isPushOn: isPushOn,
+                          days: days,
+                        );
+                        Navigator.of(context).pop();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("알림 설정이 저장되었습니다."),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
                       child: Text("확인", style: TextStyle(color: colorScheme.primary))
                   ),
                 ],
@@ -142,7 +152,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [헬퍼 메서드 3: 도움말 다이얼로그]
+  // 도움말 다이얼로그
   void _showHelpDialog() {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -188,7 +198,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [build]
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -222,8 +231,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
             const SizedBox(height: 24),
 
-            // 메뉴 버튼 영역
-            // 즐거찾기 버튼
             _buildMenuButton("   즐겨찾기", () {
               Navigator.push(
                 context,
@@ -231,16 +238,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
               );
             }),
 
-            // 알람설정 버튼
             _buildMenuButton("   알림설정", _showNotificationDialog),
-
-            // 도움말 버튼
             _buildMenuButton("   도움말", _showHelpDialog),
-
-            // 로그아웃 버튼
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
-
-            // 계정탈퇴 버튼
             _buildMenuButton("   계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", colorScheme.error)),
           ],
         ),
@@ -248,7 +248,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [헬퍼 메서드 4: 메뉴 버튼 UI]
+  // 메뉴 버튼 위젯
   Widget _buildMenuButton(String text, VoidCallback onTap) {
     final colorScheme = Theme.of(context).colorScheme;
 
