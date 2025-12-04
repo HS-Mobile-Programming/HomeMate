@@ -92,6 +92,7 @@ class RecommendationService {
           .where((recipe) => recommendedIds.contains(recipe.id))
           .toList();
 
+      // AI가 추천한 ID 순서대로 결과를 정렬
       recommendedRecipes.sort((a, b) =>
       recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id));
 

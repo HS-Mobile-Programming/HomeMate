@@ -131,4 +131,31 @@ class AccountService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  // 사용자의 이름을 가져오는 함수
+  Future<String> getName() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      return "사용자 정보 없음";
+    }
+    try {
+      var doc = await _db.collection('users').doc(user.uid).get();
+
+      if (doc.exists) {
+        final data = doc.data();
+
+        if (data != null) {
+          final name = data['nickname'];
+          if (name != null) {
+            return name;
+          }
+        }
+      }
+      return "사용자";
+    }
+    catch (e) {
+      return "오류";
+    }
+  }
 }
