@@ -17,6 +17,23 @@ class MyPageScreen extends StatefulWidget {
 }
 
 class _MyPageScreenState extends State<MyPageScreen> {
+  String myName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    getName();
+  }
+
+  Future<void> getName() async {
+    String name = await AccountService.instance.getName();
+
+    if (mounted) {
+      setState(() {
+        myName = name;
+      });
+    }
+  }
 
   // [헬퍼 메서드 1: 액션 확인 다이얼로그]
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
@@ -193,9 +210,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   children: [
                     Icon(Icons.account_circle, size: 64, color: colorScheme.primary),
                     const SizedBox(width: 16),
-                    const Text(
-                      "사용자 닉네임",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Text(myName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
