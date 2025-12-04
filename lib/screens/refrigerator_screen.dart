@@ -44,7 +44,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   // 달력의 표시 형식 (기본값: month - 월 단위)
   // (이 코드에서는 사용자가 형식을 바꾸는 기능은 없지만, 'week'나 '2weeks'로 변경 가능합니다.)
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  final CalendarFormat _calendarFormat = CalendarFormat.month;
 
   // 재료 목록의 정렬 방식 (기본값: nameAsc - 이름 오름차순)
   // 이 값에 따라 _refreshList()에서 목록을 정렬하는 방식이 달라집니다.
@@ -74,8 +74,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     // (A) Firestore에서 전체 재료 가져오기
     final allData = await _service.getAllIngredients();
 
-    if (!mounted)
+    if (!mounted) {
       return;
+    }
 
     setState(() {
       // 화면/캘린더에서 공통으로 사용할 전체 목록을 상태에 저장합니다.

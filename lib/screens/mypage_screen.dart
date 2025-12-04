@@ -54,18 +54,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
             onPressed: () async {
               Navigator.of(context).pop();
               await AccountService.instance.signOut();  // Firebase 로그아웃
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("$confirmText 완료되었습니다."),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("$confirmText 완료되었습니다."),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
 
-              // 네비게이션 스택을 정리 후 로그인 화면으로 이동합니다.
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false, // 이전 화면들을 모두 제거
-              );
+                // 네비게이션 스택을 정리 후 로그인 화면으로 이동합니다.
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false, // 이전 화면들을 모두 제거
+                );
+              }
             },
             child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold)),
           ),
