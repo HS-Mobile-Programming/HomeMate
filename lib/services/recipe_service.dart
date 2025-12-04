@@ -100,6 +100,25 @@ class RecipeService {
 
     // 로컬 객체도 함께 업데이트 (UI 즉각 반영)
     recipe.isFavorite = !recipe.isFavorite;
+    
+    // 캐시에 있는 동일한 레시피 객체도 업데이트
+    if (_cachedRecipes != null) {
+      final cachedRecipe = _cachedRecipes!.firstWhere(
+        (r) => r.id == recipe.id,
+        orElse: () => recipe,
+      );
+      if (cachedRecipe.id == recipe.id) {
+        cachedRecipe.isFavorite = recipe.isFavorite;
+      }
+    }
+    
+    // 캐시 무효화: 다음 로드 시 최신 즐겨찾기 상태를 반영하기 위해
+    _invalidateCache();
+  }
+
+  // 캐시 무효화 메서드
+  void _invalidateCache() {
+    _cachedRecipes = null;
   }
 
   // 레시피는 랜덤으로 추출하는 로직

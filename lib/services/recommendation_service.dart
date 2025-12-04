@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
@@ -100,20 +101,13 @@ class RecommendationService {
 
     } catch (e) {
       // API 호출 중 오류 발생 시 처리
-      print("AI 호출 에러: $e"); // 디버깅을 위해 에러 로그 출력
+      debugPrint("AI 호출 에러: $e"); // 디버깅을 위해 에러 로그 출력
       return []; // 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환
     }
   }
 
+  // RecipeService의 정렬 메서드를 재사용
   List<Recipe> sortRecipes(List<Recipe> recipes, RecipeSortMode mode) {
-    switch (mode) {
-      case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.name.compareTo(b.name));
-        break;
-      case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.name.compareTo(a.name));
-        break;
-    }
-    return recipes;
+    return _recipeService.sortRecipes(recipes, mode);
   }
 }

@@ -48,19 +48,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
     }
   }
 
-  void _moveToLogin() {
-    // Navigator.pushReplacement(...):
-    // 화면 이동(Navigator)을 담당합니다.
-    // 'pushReplacement' (교체):
-    //   '현재 화면(LoadingScreen)'을 스택(stack)에서 '제거'하고,
-    //   '새 화면(LoginScreen)'을 그 자리에 '대체'합니다.
-    //   -> 이렇게 하면, LoginScreen에서 '뒤로가기' 버튼을 눌렀을 때
-    //      LoadingScreen으로 다시 돌아오는 것을 '방지'할 수 있습니다.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
 
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.

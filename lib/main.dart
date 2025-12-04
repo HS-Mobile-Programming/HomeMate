@@ -1,16 +1,37 @@
 import 'package:flutter/material.dart';
 import 'screens/loading_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:firebase_core/firebase_core.dart';      // Import Firebase Package
-import 'package:cloud_firestore/cloud_firestore.dart';  // Import Firestore Package
-import 'package:firebase_auth/firebase_auth.dart';      // Import Firebase_auth Package
-import 'firebase_options.dart';     // Import flutterfire configure file
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // 알림 서비스 초기화
+  _initializeNotificationService();
+  
   runApp(const HomeMateApp());
+}
+
+// 알림 서비스 초기화
+void _initializeNotificationService() async {
+  // 이미 로그인된 경우 바로 초기화
+  if (FirebaseAuth.instance.currentUser != null) {
+    await NotificationService.instance.initialize();
+    await NotificationService.instance.checkExpiringIngredients();
+  }
+
+  // 로그인 상태 변경 감지
+  FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+    if (user != null) {
+      await NotificationService.instance.initialize();
+      await NotificationService.instance.checkExpiringIngredients();
+    }
+  });
 }
 
 class HomeMateApp extends StatelessWidget {
