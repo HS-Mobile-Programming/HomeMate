@@ -126,9 +126,101 @@ class AccountService {
   }
 
   // 로그아웃
-  // 현재 로그인된 사용자를 로그아웃시킵니다.
-  // (Firebase Auth에서 세션을 종료)
+  // Firebase Auth에서 세션 종료
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  // 계정 탈퇴 -> Firestore 사용자 데이터, Auth 계정 삭제
+  Future<void> deleteAccount(String password) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException('로그인된 사용자가 없습니다.');
+    }
+    if (user.email == null) {
+      throw AuthException('이메일 로그인 계정이 아닙니다.');
+    }
+
+    // 비밀번호 재인증 -> Firebase Auth 계정 삭제 정책 상 필요한
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      String msg;
+      switch (e.code) {
+        case 'wrong-password':
+          msg = '비밀번호가 올바르지 않습니다.';
+          break;
+        case 'user-mismatch':
+        case 'user-not-found':
+          msg = '사용자 정보를 다시 확인해주세요.';
+          break;
+        case 'invalid-credential':
+          msg = '로그인 정보가 유효하지 않습니다. 다시 시도해주세요.';
+          break;
+        default:
+          msg = '재인증 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      }
+      throw AuthException(msg);
+    }
+
+    // Firestore에서 탈퇴할 사용자의 데이터 모두 삭제
+    await _deleteUserData(user.uid);
+
+    // Firebase Auth 계정 삭제
+    await user.delete();
+  }
+
+  // Firestore에서 탈퇴할 사용자의 uid 문서와 하위 컬렉션 삭제
+  Future<void> _deleteUserData(String uid) async {
+    final userDoc = _db.collection('users').doc(uid);
+    final batch = _db.batch();  // 관리할 문서 개수가 많지 않기 때문에 batch 사용
+
+    // favorites 컬렉션 삭제
+    final favSnap = await userDoc.collection('favorites').get();
+    for (final doc in favSnap.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // ingredients 컬렉션 삭제
+    final ingSnap = await userDoc.collection('ingredients').get();
+    for (final doc in ingSnap.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // uid 문서 삭제
+    batch.delete(userDoc);
+
+    await batch.commit();
+  }
+
+  // 사용자의 이름을 가져오는 함수
+  Future<String> getName() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      return "사용자 정보 없음";
+    }
+    try {
+      var doc = await _db.collection('users').doc(user.uid).get();
+
+      if (doc.exists) {
+        final data = doc.data();
+
+        if (data != null) {
+          final name = data['nickname'];
+          if (name != null) {
+            return name;
+          }
+        }
+      }
+      return "사용자";
+    }
+    catch (e) {
+      return "오류";
+    }
   }
 }

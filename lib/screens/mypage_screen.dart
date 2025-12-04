@@ -1,15 +1,11 @@
-// [SCREEN CLASS] - StatefulWidget
-// '마이페이지' 탭 (index 4)에 표시되는 화면입니다.
-
 import 'package:flutter/material.dart';
 import 'favorites_screen.dart';
 import 'login_screen.dart';
 import '../data/help_data.dart';
 import '../services/account_service.dart';
-
+import '../services/notification_service.dart';
 
 class MyPageScreen extends StatefulWidget {
-  // const MyPageScreen(...): 위젯 생성자
   const MyPageScreen({super.key});
 
   @override
@@ -17,6 +13,122 @@ class MyPageScreen extends StatefulWidget {
 }
 
 class _MyPageScreenState extends State<MyPageScreen> {
+  String myName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    getName();
+  }
+
+  Future<void> getName() async {
+    String name = await AccountService.instance.getName();
+
+    if (mounted) {
+      setState(() {
+        myName = name;
+      });
+    }
+  }
+
+  // 계정 탈퇴 진행 메서드
+  Future<void> _onDeleteAccountPressed() async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // 1차 탈퇴 확인
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        title: const Text('계정탈퇴', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text(
+          '탈퇴 후에는 계정과 모든 데이터가 삭제되며,\n'
+              '복구할 수 없습니다.\n\n정말로 탈퇴하시겠습니까?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // 비밀번호 재입력 다이얼로그
+    final password = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          title: const Text('비밀번호 확인', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: '비밀번호를 입력하세요',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('취소', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('확인', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+    // 사용자의 취소 or 비밀번호 미입력 시
+    if (password == null || password.isEmpty) {
+      return;
+    }
+
+    // 삭제 처리
+    try {
+      await AccountService.instance.deleteAccount(password);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('계정이 탈퇴되었습니다. 이용해 주셔서 감사합니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 로그인 화면으로
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+      );
+    } on AuthException catch (e) {  // AuthException 발생 처리
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('계정 삭제 중 알 수 없는 오류가 발생했습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   // [헬퍼 메서드 1: 액션 확인 다이얼로그]
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
@@ -36,19 +148,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              await AccountService.instance.signOut();  // Firebase 로그아웃
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("$confirmText 완료되었습니다."),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
+              await AccountService.instance.signOut();
 
-              // 네비게이션 스택을 정리 후 로그인 화면으로 이동합니다.
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false, // 이전 화면들을 모두 제거
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("$confirmText 완료되었습니다."),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
             child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold)),
           ),
@@ -57,11 +171,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [헬퍼 메서드 2: 알림 설정 다이얼로그]
-  void _showNotificationDialog() {
-    bool isPushOn = true;
-    int days = 3;
+  // 알림 설정 다이얼로그
+  void _showNotificationDialog() async {
     final colorScheme = Theme.of(context).colorScheme;
+    final settings = await NotificationService.instance.getNotificationSettings();
+    bool isPushOn = settings['isPushOn'] as bool;
+    int days = settings['days'] as int;
 
     showDialog(
       context: context,
@@ -111,7 +226,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       child: Text("취소", style: TextStyle(color: colorScheme.error))
                   ),
                   TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () async {
+                        await NotificationService.instance.saveNotificationSettings(
+                          isPushOn: isPushOn,
+                          days: days,
+                        );
+                        Navigator.of(context).pop();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("알림 설정이 저장되었습니다."),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
                       child: Text("확인", style: TextStyle(color: colorScheme.primary))
                   ),
                 ],
@@ -168,7 +297,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // [build]
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -193,9 +321,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   children: [
                     Icon(Icons.account_circle, size: 64, color: colorScheme.primary),
                     const SizedBox(width: 16),
-                    const Text(
-                      "사용자 닉네임",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Text(myName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -204,8 +330,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
             const SizedBox(height: 24),
 
-            // 메뉴 버튼 영역
-            // 즐거찾기 버튼
             _buildMenuButton("   즐겨찾기", () {
               Navigator.push(
                 context,
@@ -213,17 +337,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
               );
             }),
 
-            // 알람설정 버튼
             _buildMenuButton("   알림설정", _showNotificationDialog),
-
-            // 도움말 버튼
             _buildMenuButton("   도움말", _showHelpDialog),
-
-            // 로그아웃 버튼
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
-
-            // 계정탈퇴 버튼
-            _buildMenuButton("   계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", colorScheme.error)),
+            _buildMenuButton("   계정탈퇴", _onDeleteAccountPressed),
           ],
         ),
       ),

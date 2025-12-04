@@ -32,7 +32,7 @@ class RefrigeratorService {
   Future<List<Ingredient>> getAllIngredients() async {
     final snapshot = await _ingredientCol.get();
 
-    return snapshot.docs.map((doc) {
+    final ingredients = snapshot.docs.map((doc) {
       final data = doc.data();
       return Ingredient(
         id: doc.id,
@@ -42,8 +42,9 @@ class RefrigeratorService {
       );
     }).toList();
 
-    // 캐시 복사본 반환
-    return List<Ingredient>.from(_cachedIngredients);
+    // 캐시 업데이트
+    _cachedIngredients = ingredients;
+    return ingredients;
   }
 
   // 2. 재료 추가하기

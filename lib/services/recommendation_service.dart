@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
@@ -13,29 +14,13 @@ class RecommendationService {
 
   final RecipeService _recipeService = RecipeService();
 
-  // [추가] 추천받은 레시피 목록을 임시로 저장할 변수 (캐시)
-  // 태그 조합을 키로 사용하여 태그별로 캐시를 관리합니다.
-  static Map<String, List<Recipe>> _cachedRecipesByTags = {};
-
-  // --- 2. 추천 레시피 조회 로직 ---
-  // [수정] 선택된 태그들을 파라미터로 받도록 수정
   Future<List<Recipe>> getRecommendations({List<String>? selectedTags}) async {
-
-    // 태그를 정렬하여 캐시 키 생성 (순서와 무관하게 동일한 태그 조합은 같은 키)
     final List<String> sortedTags;
     if (selectedTags != null && selectedTags.isNotEmpty) {
       sortedTags = List<String>.from(selectedTags)..sort();
     } else {
       sortedTags = <String>[];
     }
-    final tagKey = sortedTags.join(',');
-
-    // 캐시에 있는 경우 반환
-    if (_cachedRecipesByTags.containsKey(tagKey)) {
-      return List<Recipe>.from(_cachedRecipesByTags[tagKey]!);
-    }
-
-    // --- 캐시가 없다면(null), 아래 AI 호출 로직을 실행합니다 ---
 
     // AI 모델 초기화
     final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
@@ -112,37 +97,17 @@ class RecommendationService {
       recommendedRecipes.sort((a, b) =>
       recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id));
 
-      // [추가] API 호출로 받아온 데이터를 태그별 캐시에 저장
-      _cachedRecipesByTags[tagKey] = recommendedRecipes;
-
       return recommendedRecipes;
 
     } catch (e) {
       // API 호출 중 오류 발생 시 처리
-      print("AI 호출 에러: $e"); // 디버깅을 위해 에러 로그 출력
-      // 오류 발생 시 사용자에게 빈 리스트를 보여주거나, 다른 대체 로직을 수행할 수 있습니다.
-      // throw Exception('레시피 추천을 받아오는 데 실패했습니다.');
-      return []; // 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환으로 변경
+      debugPrint("AI 호출 에러: $e"); // 디버깅을 위해 에러 로그 출력
+      return []; // 에러 발생 시 앱이 죽지 않도록 빈 리스트 반환
     }
   }
 
-  // 캐시 초기화 메서드
-  // 사용자가 '추천' 버튼을 누르거나 '선호도'를 변경했을 때,
-  // 저장된 데이터를 지워서 강제로 새로운 추천을 받도록 할 때 사용합니다.
-  void clearCache() {
-    _cachedRecipesByTags.clear();
-  }
-
-  // --- 3. 추천 레시피 정렬 로직 (기존과 동일) ---
+  // RecipeService의 정렬 메서드를 재사용
   List<Recipe> sortRecipes(List<Recipe> recipes, RecipeSortMode mode) {
-    switch (mode) {
-      case RecipeSortMode.nameAsc:
-        recipes.sort((a, b) => a.name.compareTo(b.name));
-        break;
-      case RecipeSortMode.nameDesc:
-        recipes.sort((a, b) => b.name.compareTo(a.name));
-        break;
-    }
-    return recipes;
+    return _recipeService.sortRecipes(recipes, mode);
   }
 }

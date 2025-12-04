@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../services/favorites_service.dart';
@@ -99,5 +100,45 @@ class RecipeService {
 
     // 로컬 객체도 함께 업데이트 (UI 즉각 반영)
     recipe.isFavorite = !recipe.isFavorite;
+    
+    // 캐시에 있는 동일한 레시피 객체도 업데이트
+    if (_cachedRecipes != null) {
+      final cachedRecipe = _cachedRecipes!.firstWhere(
+        (r) => r.id == recipe.id,
+        orElse: () => recipe,
+      );
+      if (cachedRecipe.id == recipe.id) {
+        cachedRecipe.isFavorite = recipe.isFavorite;
+      }
+    }
+    
+    // 캐시 무효화: 다음 로드 시 최신 즐겨찾기 상태를 반영하기 위해
+    _invalidateCache();
+  }
+
+  // 캐시 무효화 메서드
+  void _invalidateCache() {
+    _cachedRecipes = null;
+  }
+
+  // 레시피는 랜덤으로 추출하는 로직
+  Future<List<Recipe>> getRandomRecipes(int num) async {
+    final all = await getRecipes();
+
+    if (all.length <= num) {
+      return all;
+    }
+
+    final random = Random();
+    final List<Recipe> select = [];
+    final List<Recipe> temp = List.from(all);
+
+    for (int i = 0; i < num; i++) {
+      int randomIndex = random.nextInt(temp.length);
+      select.add(temp[randomIndex]);
+      temp.removeAt(randomIndex);
+    }
+
+    return select;
   }
 }
