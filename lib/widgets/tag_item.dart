@@ -24,6 +24,13 @@ class TagItem extends StatelessWidget {
     required this.onTap, // 'onTap' 함수는 필수
   });
 
+  // 태그 이름을 이미지 파일 경로로 변환하는 헬퍼 메서드
+  String _getImagePath(String tagName) {
+    // "60분 이상" -> "60분이상" (공백 제거)
+    String fileName = tagName.replaceAll(' ', '');
+    return 'assets/images/tags/$fileName.png';
+  }
+
   // [build]
   // 이 위젯의 UI를 실제로 그리는 메서드입니다.
   @override
@@ -63,11 +70,20 @@ class TagItem extends StatelessWidget {
               ),
             ),
 
-            // Icon: 원형 Container '안'에 표시될 아이콘
-            child: Icon(
-              Icons.collections, // (임시 아이콘, '태그' 관련 아이콘으로 변경 가능)
-              color: tag.isSelected ? Colors.green : Colors.grey[600], // 아이콘 색상
-              size: 32, // 아이콘 크기
+            // Image: 원형 Container '안'에 표시될 태그 이미지
+            child: Image.asset(
+              _getImagePath(tag.name),
+              width: 32,
+              height: 32,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // 이미지가 없을 경우 기본 아이콘 표시
+                return Icon(
+                  Icons.collections,
+                  color: tag.isSelected ? Colors.green : Colors.grey[600],
+                  size: 32,
+                );
+              },
             ),
           ),
         ),
