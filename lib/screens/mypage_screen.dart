@@ -31,7 +31,106 @@ class _MyPageScreenState extends State<MyPageScreen> {
     }
   }
 
-  // 로그아웃/탈퇴 확인 다이얼로그
+  // 계정 탈퇴 진행 메서드
+  Future<void> _onDeleteAccountPressed() async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // 1차 탈퇴 확인
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        title: const Text('계정탈퇴', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text(
+          '탈퇴 후에는 계정과 모든 데이터가 삭제되며,\n'
+              '복구할 수 없습니다.\n\n정말로 탈퇴하시겠습니까?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // 비밀번호 재입력 다이얼로그
+    final password = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          title: const Text('비밀번호 확인', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: '비밀번호를 입력하세요',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('취소', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('확인', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+    // 사용자의 취소 or 비밀번호 미입력 시
+    if (password == null || password.isEmpty) {
+      return;
+    }
+
+    // 삭제 처리
+    try {
+      await AccountService.instance.deleteAccount(password);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('계정이 탈퇴되었습니다. 이용해 주셔서 감사합니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 로그인 화면으로
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+      );
+    } on AuthException catch (e) {  // AuthException 발생 처리
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('계정 삭제 중 알 수 없는 오류가 발생했습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // [헬퍼 메서드 1: 액션 확인 다이얼로그]
   void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -50,7 +149,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             onPressed: () async {
               Navigator.of(context).pop();
               await AccountService.instance.signOut();
-              
+
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -152,7 +251,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // 도움말 다이얼로그
+  // [헬퍼 메서드 3: 도움말 다이얼로그]
   void _showHelpDialog() {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -241,14 +340,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
             _buildMenuButton("   알림설정", _showNotificationDialog),
             _buildMenuButton("   도움말", _showHelpDialog),
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
-            _buildMenuButton("   계정탈퇴", () => _showActionDialog("계정탈퇴", "탈퇴 후 계정을 복원할 수 없습니다.", "계정탈퇴", colorScheme.error)),
+            _buildMenuButton("   계정탈퇴", _onDeleteAccountPressed),
           ],
         ),
       ),
     );
   }
 
-  // 메뉴 버튼 위젯
+  // [헬퍼 메서드 4: 메뉴 버튼 UI]
   Widget _buildMenuButton(String text, VoidCallback onTap) {
     final colorScheme = Theme.of(context).colorScheme;
 
