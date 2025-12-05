@@ -5,6 +5,7 @@ import '../services/refrigerator_service.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
 import '../widgets/recipe_image.dart';
+import 'recipe_detail_screen.dart'; // [추가] 레시피 상세 화면을 import 합니다.
 
 // [StatefulWidget]
 // '홈' 탭 (가장 첫 화면) UI를 정의합니다.
@@ -52,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _refreshIngredients(); // 화면이 처음 뜰 때 데이터를 불러오도록 함수 호출
     _loadRandomRecipes();
-    alarm.addListener(_refreshIngredients); // 알람이 울리면 화면 다시 호출
+     alarm.addListener(_refreshIngredients);
   }
 
   Future<void> _loadRandomRecipes() async {
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    alarm.removeListener(_refreshIngredients);
+     alarm.removeListener(_refreshIngredients);
     super.dispose();
   }
 
@@ -163,31 +164,43 @@ class _HomeScreenState extends State<HomeScreen> {
               // itemBuilder: 각 페이지의 UI를 동적으로 생성합니다.
               itemBuilder: (context, index) {
                 final recipe = _randomRecipes[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0), // 페이지 좌우 여백
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3), width: 2),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // 이미지가 있으면 표시, 없으면 기본 아이콘 표시
-                          // 로컬 이미지(Asset) 대신 네트워크 이미지(Network) 사용
-                          Expanded(
-                            child: RecipeImage(
-                              imageName: recipe.imageName,
-                              width: double.infinity,
-                              height: 120, // 카드 높이에 맞게 적당히
+                // [수정] GestureDetector로 감싸서 탭 이벤트를 추가합니다.
+                return GestureDetector(
+                  onTap: () {
+                    // [수정] 탭하면 RecipeDetailScreen으로 이동하고, 선택된 recipe 객체를 전달합니다.
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipeDetailScreen(recipe: recipe),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8.0), // 페이지 좌우 여백
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // 이미지가 있으면 표시, 없으면 기본 아이콘 표시
+                            // 로컬 이미지(Asset) 대신 네트워크 이미지(Network) 사용
+                            Expanded(
+                              child: RecipeImage(
+                                imageName: recipe.imageName,
+                                width: double.infinity,
+                                height: 120, // 카드 높이에 맞게 적당히
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Map 키 접근(['name']) 대신 객체 속성(.name) 사용
-                          Text(recipe.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        ],
+                            const SizedBox(height: 16),
+                            // Map 키 접근(['name']) 대신 객체 속성(.name) 사용
+                            Text(recipe.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
