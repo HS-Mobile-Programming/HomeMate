@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../widgets/recipe_image.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -49,10 +50,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 이미지 영역
-            Container(
+            SizedBox(
               height: 250,
-              color: Colors.grey[300],
-              child: const Icon(Icons.rice_bowl, size: 100, color: Colors.white),
+              child: RecipeImage(
+                imageName: widget.recipe.imageName,
+                width: double.infinity,
+                height: 250,
+              ),
             ),
 
             // 제목과 정보 영역

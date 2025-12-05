@@ -58,7 +58,8 @@ class RecipeImage extends StatelessWidget {
             url,
             width: width,
             height: height,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
+            //fit: BoxFit.cover,
           ),
         );
       },
