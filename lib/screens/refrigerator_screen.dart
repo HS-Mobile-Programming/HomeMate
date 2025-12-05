@@ -603,6 +603,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     // 아이템이 삭제/추가될 때 목록이 꼬이지 않게 해줍니다.
                     key: Key(item.id),
 
+                    direction: DismissDirection.endToStart,
+
                     // confirmDismiss: 스와이프가 완료되기 '직전'에 호출됩니다.
                     // 사용자에게 "정말 삭제하시겠습니까?"라고 물어볼 기회를 줍니다.
                     confirmDismiss: (direction) async {
@@ -639,23 +641,9 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                       });
                     },
 
-                    // background: 왼쪽 -> 오른쪽 스와이프 시 배경
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerLeft, // 아이콘을 왼쪽에 배치
-                      padding: const EdgeInsets.symmetric(horizontal: 20), // 여백
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(Icons.delete, color: Colors.white), // 휴지통 아이콘
-                          SizedBox(width: 8),
-                          Text("삭제", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
 
                     // secondaryBackground: 오른쪽 -> 왼쪽 스와이프 시 배경
-                    secondaryBackground: Container(
+                    background: Container(
                       color: Colors.red,
                       alignment: Alignment.centerRight, // 아이콘을 오른쪽에 배치
                       padding: const EdgeInsets.symmetric(horizontal: 20), // 여백
