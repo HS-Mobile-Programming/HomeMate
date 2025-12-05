@@ -4,6 +4,7 @@ import '../widgets/ingredient_item.dart';
 import '../services/refrigerator_service.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../widgets/recipe_image.dart';
 
 // [StatefulWidget]
 // '홈' 탭 (가장 첫 화면) UI를 정의합니다.
@@ -177,15 +178,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           // 이미지가 있으면 표시, 없으면 기본 아이콘 표시
                           // 로컬 이미지(Asset) 대신 네트워크 이미지(Network) 사용
                           Expanded(
-                            child: recipe.imageName.isNotEmpty
-                                ? Image.network(
-                              recipe.imageName,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.rice_bowl, size: 100, color: Colors.grey);
-                              },
-                            )
-                                : const Icon(Icons.rice_bowl, size: 100, color: Colors.grey),
+                            child: RecipeImage(
+                              imageName: recipe.imageName,
+                              width: double.infinity,
+                              height: 120, // 카드 높이에 맞게 적당히
+                            ),
                           ),
                           const SizedBox(height: 16),
                           // Map 키 접근(['name']) 대신 객체 속성(.name) 사용
