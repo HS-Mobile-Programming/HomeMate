@@ -51,6 +51,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
   // 이 값에 따라 _refreshList()에서 목록을 정렬하는 방식이 달라집니다.
   SortMode _sortMode = SortMode.expiryAsc;
 
+  // 검색을 위한 변수
+  String _search = "";
 
   // 4. 화면에 보여질 리스트
   // Firestore에서 가져온 현재 로그인한 유저의 전체 재료 목록입니다.
@@ -83,25 +85,40 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
       // 화면/캘린더에서 공통으로 사용할 전체 목록을 상태에 저장합니다.
       _allIngredients = allData;
 
-      // (B) 날짜 필터링
+      List<Ingredient> temp = List.from(_allIngredients); // [수정] 필터링을 위한 임시 리스트 생성
+
+      // 검색어 필터링
+      if (_search.isNotEmpty) {
+        temp = temp.where((ingredient) =>
+            ingredient.name.contains(_search)).toList();
+      }
+
+      // 날짜 필터링
       if (_selectedDay == null) {
-        // _selectedDay가 null이면 (즉, 'X 전체 보기' 상태) 모든 데이터를 보여줍니다.
-        filteredIngredients = List<Ingredient>.from(_allIngredients);
+        // 검색 결과가 반영된 리스트 사용
+        filteredIngredients = temp;
       } else {
         // _selectedDay가 선택되어 있으면, 서비스의 'getEventsForDay' 로직을 호출해
         // 해당 날짜의 재료만 필터링합니다.
         // (getEventsForDay는 메모리상의 데이터를 필터링하므로 동기 호출 유지)
-        filteredIngredients = _allIngredients.where((ingredient) {
+        filteredIngredients = temp.where((ingredient) {
           final expiryDate = _service.parseDate(ingredient.expiryTime);
           return expiryDate != null && isSameDay(expiryDate, _selectedDay!);
         }).toList();
       }
-
       // (C) 정렬
       // (A) 또는 (B)에서 필터링된 결과를 현재 설정된 `_sortMode` 기준으로 정렬합니다.
       filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
-      });
-    }
+    });
+  }
+
+  // 검색어 입력 시 호출되는 함수
+  void _onSearchChanged(String keyword) {
+    setState(() {
+      _search = keyword;
+    });
+    _refreshList();
+  }
 
   //  9. UI 관련 헬퍼 함수
   // 사용자에게 빨간색 배경의 에러 메시지(스낵바)를 띄웁니다.
@@ -382,6 +399,24 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
       // 성능 최적화를 위해 리스트 부분을 SliverList로 처리합니다.
       body: CustomScrollView(
         slivers: [
+          // 검색창
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: TextField(
+                onChanged: _onSearchChanged,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30)
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+              ),
+            ),
+          ),
           // [달력 위젯]
           SliverToBoxAdapter(
             child: Padding(
