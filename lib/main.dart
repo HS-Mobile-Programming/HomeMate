@@ -46,8 +46,8 @@ class HomeMateApp extends StatelessWidget {
         // 색상 체계를 중앙에서 관리합니다.
         // seedColor를 지정하면 어울리는 색상 팔레트가 자동 생성됩니다.
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green, // 메인 색상
-          primary: Colors.green,   // 주요 버튼, 활성 상태 색상
+          seedColor: const Color(0xFF4CAF50), // 메인 색상
+          primary: const Color(0xFF4CAF50),   // 주요 버튼, 활성 상태 색상
           // surface: 카드나 시트의 배경색
           surface: Colors.white,
           // background: 앱 전체 배경색
@@ -61,6 +61,20 @@ class HomeMateApp extends StatelessWidget {
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           margin: EdgeInsets.zero,
+        ),
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
 
