@@ -6,10 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/ingredient.dart';
 import 'refrigerator_service.dart';
 
-// 백그라운드에서 푸시 알림을 받을 때 실행되는 핸들러
+// 앱이 꺼져있을 때 푸시 알림 받으면 실행되는 함수
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // 백그라운드 알림 처리 로직은 여기에 추가 가능
+  // 필요하면 여기서 처리하면 됨
 }
 
 class NotificationService {
@@ -40,7 +40,7 @@ class NotificationService {
     if (_isInitialized) return;
 
     try {
-      // 로컬 알림 초기화
+      // 로컬 알림 셋업
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
@@ -54,7 +54,7 @@ class NotificationService {
 
       await _localNotifications.initialize(initSettings);
 
-      // Android 알림 채널 생성
+      // 안드로이드 알림 채널 만들기
       const androidChannel = AndroidNotificationChannel(
         'expiry_channel',
         '유통기한 알림',
@@ -65,7 +65,7 @@ class NotificationService {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-      // 알림 권한 요청
+      // 알림 권한 물어보기
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -76,19 +76,19 @@ class NotificationService {
         return;
       }
 
-      // FCM 토큰 가져오기 및 저장
+      // FCM 토큰 받아서 저장
       _fcmToken = await _messaging.getToken();
       if (_fcmToken != null) {
         await _userDoc.update({'fcmToken': _fcmToken});
       }
 
-      // 토큰 갱신 시 자동 업데이트
+      // 토큰 바뀌면 자동으로 업데이트
       _messaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
         _userDoc.update({'fcmToken': newToken});
       });
 
-      // 포그라운드에서 알림 수신 시 로컬 알림으로 표시
+      // 앱 켜져있을 때 알림 오면 바로 보여주기
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _showLocalNotification(
           message.notification?.title ?? '알림',
@@ -97,6 +97,10 @@ class NotificationService {
       });
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      // 앱 켜면 바로 재료 체크
+      await checkExpiringIngredients();
+
       _isInitialized = true;
     } catch (e) {
       debugPrint('알림 초기화 오류: $e');
@@ -142,7 +146,7 @@ class NotificationService {
       final ingredients = await _refrigeratorService.getAllIngredients();
       final todayOnly = _getDateOnly(DateTime.now());
 
-      // 유통기한이 임박한 재료 찾기
+      // 유통기한 얼마 안 남은 재료 골라내기
       final expiringIngredients = ingredients.where((ingredient) {
         final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
         if (expiryDate == null) return false;
@@ -154,53 +158,18 @@ class NotificationService {
 
       if (expiringIngredients.isEmpty) return;
 
-      // 이미 알림을 보낸 재료 제외
-      final sentAlarms = await _getSentAlarms();
-      final ingredientsToNotify = expiringIngredients.where((ingredient) {
-        final alarmKey = '${ingredient.id}_${ingredient.expiryTime}';
-        return !sentAlarms.contains(alarmKey);
-      }).toList();
-
-      if (ingredientsToNotify.isEmpty) return;
-
-      // 알림 전송
-      for (final ingredient in ingredientsToNotify) {
+      // 임박한 재료들 알림 보내기
+      for (final ingredient in expiringIngredients) {
         await _sendNotification(ingredient);
-        await _markAlarmAsSent(ingredient);
       }
     } catch (e) {
       debugPrint('유통기한 체크 오류: $e');
     }
   }
 
-  // 날짜에서 시간 부분 제거 (년/월/일만)
+  // 날짜만 남기고 시간은 버리기
   DateTime _getDateOnly(DateTime date) {
     return DateTime(date.year, date.month, date.day);
-  }
-
-  Future<Set<String>> _getSentAlarms() async {
-    try {
-      final doc = await _userDoc.get();
-      if (doc.exists) {
-        final sentAlarms = doc.data()?['sentAlarms'] as List<dynamic>?;
-        if (sentAlarms != null) {
-          return Set<String>.from(sentAlarms);
-        }
-      }
-      return <String>{};
-    } catch (e) {
-      return <String>{};
-    }
-  }
-
-  Future<void> _markAlarmAsSent(Ingredient ingredient) async {
-    try {
-      final sentAlarms = await _getSentAlarms();
-      sentAlarms.add('${ingredient.id}_${ingredient.expiryTime}');
-      await _userDoc.update({'sentAlarms': sentAlarms.toList()});
-    } catch (e) {
-      debugPrint('알림 기록 저장 오류: $e');
-    }
   }
 
   Future<void> _sendNotification(Ingredient ingredient) async {
@@ -226,6 +195,7 @@ class NotificationService {
       debugPrint('알림 전송 오류: $e');
     }
   }
+
 
   Future<void> _showLocalNotification(String title, String body) async {
     const androidDetails = AndroidNotificationDetails(
@@ -255,7 +225,7 @@ class NotificationService {
     );
   }
 
-  // 테스트용 알림 전송 (마이페이지에서 사용)
+  // 마이페이지에서 테스트할 때 쓰는 함수
   Future<void> sendTestNotification() async {
     try {
       final ingredients = await _refrigeratorService.getAllIngredients();
@@ -266,6 +236,8 @@ class NotificationService {
       debugPrint('테스트 알림 오류: $e');
     }
   }
+
 }
+
 
 
