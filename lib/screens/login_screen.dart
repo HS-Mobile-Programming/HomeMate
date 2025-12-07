@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import '../main_screen.dart';
 import '../services/account_service.dart';
+import '../widgets/text_field.dart';
 
 // StatelessWidget → StatefulWidget 수정
 class LoginScreen extends StatefulWidget {
@@ -117,20 +118,19 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 48),
 
             // ID 입력
-            // '_buildTextField'는 이 클래스 내부에 정의된 '헬퍼 함수(Helper Method)'입니다.
-            // (코드가 중복되는 것을 방지하기 위함)
-            _buildTextField(
-              hint: "ID (이메일)",
-              controller: _idController, // ID(이메일) 입력값을 이 컨트롤러로 관리합니다.
+            CustomTextField(
+              controller: _idController,
+              hintText: "ID (이메일)",
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
 
             // PW 입력
-            _buildTextField(
-              hint: "PW",
+            CustomTextField(
+              controller: _pwController,
+              hintText: "PW",
               isObscure: true,
-              controller: _pwController, // 비밀번호 입력값을 이 컨트롤러로 관리합니다.
-            ), // 'isObscure: true' 전달
+            ),
             const SizedBox(height: 32),
 
             // 로그인 실패 시 에러 메시지 표시 영역

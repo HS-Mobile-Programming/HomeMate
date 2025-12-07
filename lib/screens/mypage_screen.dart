@@ -171,7 +171,31 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // 알림 설정 다이얼로그
+  // 알림 테스트 눌렀을 때
+  Future<void> _testNotification() async {
+    try {
+      await NotificationService.instance.checkExpiringIngredients();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("알림 테스트가 실행되었습니다. 유통기한이 임박한 재료가 있으면 알림이 표시됩니다."),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("알림 테스트 오류: $e"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // 알림 설정 창 띄우기
   void _showNotificationDialog() async {
     final colorScheme = Theme.of(context).colorScheme;
     final settings = await NotificationService.instance.getNotificationSettings();
@@ -338,6 +362,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             }),
 
             _buildMenuButton("   알림설정", _showNotificationDialog),
+            //_buildMenuButton("   알림 테스트", _testNotification),
             _buildMenuButton("   도움말", _showHelpDialog),
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
             _buildMenuButton("   계정탈퇴", _onDeleteAccountPressed),
