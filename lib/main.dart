@@ -19,17 +19,15 @@ void main() async {
 
 // 알림 서비스 초기화
 void _initializeNotificationService() async {
-  // 이미 로그인된 경우 바로 초기화
+  // 이미 로그인된 경우 바로 초기화 (앱 시작 시 재료 체크는 initialize 내부에서 한 번만 실행)
   if (FirebaseAuth.instance.currentUser != null) {
     await NotificationService.instance.initialize();
-    await NotificationService.instance.checkExpiringIngredients();
   }
 
   // 로그인 상태 변경 감지
   FirebaseAuth.instance.authStateChanges().listen((User? user) async {
     if (user != null) {
       await NotificationService.instance.initialize();
-      await NotificationService.instance.checkExpiringIngredients();
     }
   });
 }
