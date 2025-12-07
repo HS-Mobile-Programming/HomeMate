@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,23 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/ingredient.dart';
 import 'refrigerator_service.dart';
 
-// 앱이 꺼져있을 때 푸시 알림 받으면 실행되는 함수
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // 필요하면 여기서 처리하면 됨
-}
-
 class NotificationService {
   NotificationService._internal();
   static final NotificationService instance = NotificationService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final RefrigeratorService _refrigeratorService = RefrigeratorService();
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
-  String? _fcmToken;
+  Future<void>? _initFuture;
   bool _isInitialized = false;
 
   String get _uid {
@@ -38,7 +30,15 @@ class NotificationService {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
+    if (_initFuture != null) {
+      return _initFuture;
+    }
+    _initFuture = _initializeInternal();
+    await _initFuture;
+    _initFuture = null;
+  }
 
+  Future<void> _initializeInternal() async {
     try {
       // 로컬 알림 셋업
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -65,41 +65,21 @@ class NotificationService {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-      // 알림 권한 물어보기
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-        return;
+      // 로컬 알림 권한 요청
+      final androidImplementation = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        await androidImplementation.requestNotificationsPermission();
       }
-
-      // FCM 토큰 받아서 저장
-      _fcmToken = await _messaging.getToken();
-      if (_fcmToken != null) {
-        await _userDoc.update({'fcmToken': _fcmToken});
-      }
-
-      // 토큰 바뀌면 자동으로 업데이트
-      _messaging.onTokenRefresh.listen((newToken) {
-        _fcmToken = newToken;
-        _userDoc.update({'fcmToken': newToken});
-      });
-
-      // 앱 켜져있을 때 알림 오면 바로 보여주기
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        _showLocalNotification(
-          message.notification?.title ?? '알림',
-          message.notification?.body ?? '',
+      final iosImplementation = _localNotifications
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      if (iosImplementation != null) {
+        await iosImplementation.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
         );
-      });
-
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-      // 앱 켜면 바로 재료 체크
-      await checkExpiringIngredients();
+      }
 
       _isInitialized = true;
     } catch (e) {
@@ -150,6 +130,7 @@ class NotificationService {
       final todayOnly = _getDateOnly(DateTime.now());
 
       // 유통기한 얼마 안 남은 재료 골라내기
+      // 남은 일수가 설정값 이하이거나 이미 지난 재료까지 포함
       final expiringIngredients = ingredients.where((ingredient) {
         final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
         if (expiryDate == null) {
@@ -158,7 +139,7 @@ class NotificationService {
         
         final expiryOnly = _getDateOnly(expiryDate);
         final remainingDays = expiryOnly.difference(todayOnly).inDays;
-        return remainingDays <= days;
+        return remainingDays <= days; // 이미 지난 경우(음수)도 포함됨
       }).toList();
 
       if (expiringIngredients.isEmpty) return;
@@ -236,7 +217,7 @@ class NotificationService {
   Future<void> sendTestNotification() async {
     try {
       final ingredients = await _refrigeratorService.getAllIngredients();
-      if (ingredients.isEmpty) return;
+      if (ingredients.isEmpty) return;  
 
       await _sendNotification(ingredients.first);
     }

@@ -6,11 +6,8 @@ import '../services/recipe_service.dart';
 
 class RecommendationService {
 
-  // --- 1. Gemini AI 설정 ---
-  // 여기에 발급받은 Gemini API 키를 입력하세요.
-  // 보안을 위해 실제 앱에서는 환경 변수나 별도의 키 관리 서비스를 사용하는 것이 좋습니다.
-  // [주의] Git에 올릴 때는 이 키를 지우고 올리는 것이 안전합니다.
-  static const String _apiKey = ""; // <--- 여기에 API 키를 입력하세요
+// Gemini API 키
+static const String _apiKey = "";
 
   final RecipeService _recipeService = RecipeService();
 
@@ -25,10 +22,10 @@ class RecommendationService {
     // AI 모델 초기화
     final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
 
-    // Firestore에서 전체 레시피 불러옵니다.
+    // 전체 레시피 조회
     final allRecipes = await _recipeService.getRecipes();
 
-    // AI에게 전달할 전체 레시피 목록을 JSON 형식의 문자열로 변환
+    // 레시피 전체 목록을 JSON 문자열로 변환
     final allRecipesJsonString = jsonEncode(allRecipes.map((r) => r.toJson()).toList());
 
     // 태그 정보를 프롬프트에 포함
