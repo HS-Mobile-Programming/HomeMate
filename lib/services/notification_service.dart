@@ -132,7 +132,8 @@ class NotificationService {
         'notificationEnabled': isPushOn,
         'notificationDays': days,
       });
-    } catch (e) {
+    }
+    catch (e) {
       debugPrint('알림 설정 저장 오류: $e');
     }
   }
@@ -140,7 +141,9 @@ class NotificationService {
   Future<void> checkExpiringIngredients() async {
     try {
       final settings = await getNotificationSettings();
-      if (!settings['isPushOn']) return;
+      if (!settings['isPushOn']) {
+        return;
+      }
 
       final days = settings['days'] as int;
       final ingredients = await _refrigeratorService.getAllIngredients();
@@ -149,11 +152,13 @@ class NotificationService {
       // 유통기한 얼마 안 남은 재료 골라내기
       final expiringIngredients = ingredients.where((ingredient) {
         final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
-        if (expiryDate == null) return false;
+        if (expiryDate == null) {
+          return false;
+        }
         
         final expiryOnly = _getDateOnly(expiryDate);
         final remainingDays = expiryOnly.difference(todayOnly).inDays;
-        return remainingDays >= 0 && remainingDays <= days;
+        return remainingDays <= days;
       }).toList();
 
       if (expiringIngredients.isEmpty) return;
@@ -162,7 +167,8 @@ class NotificationService {
       for (final ingredient in expiringIngredients) {
         await _sendNotification(ingredient);
       }
-    } catch (e) {
+    }
+    catch (e) {
       debugPrint('유통기한 체크 오류: $e');
     }
   }
@@ -184,18 +190,19 @@ class NotificationService {
       String body;
       if (remainingDays == 0) {
         body = '${ingredient.name}의 유통기한이 오늘입니다!';
-      } else if (remainingDays < 0) {
+      }
+      else if (remainingDays < 0) {
         body = '${ingredient.name}의 유통기한이 지났습니다!';
-      } else {
+      }
+      else {
         body = '${ingredient.name}의 유통기한이 ${remainingDays}일 남았습니다.';
       }
-
       await _showLocalNotification('유통기한 알림', body);
-    } catch (e) {
+    }
+    catch (e) {
       debugPrint('알림 전송 오류: $e');
     }
   }
-
 
   Future<void> _showLocalNotification(String title, String body) async {
     const androidDetails = AndroidNotificationDetails(
@@ -232,12 +239,9 @@ class NotificationService {
       if (ingredients.isEmpty) return;
 
       await _sendNotification(ingredients.first);
-    } catch (e) {
+    }
+    catch (e) {
       debugPrint('테스트 알림 오류: $e');
     }
   }
-
 }
-
-
-

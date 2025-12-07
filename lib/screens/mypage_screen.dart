@@ -362,7 +362,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             }),
 
             _buildMenuButton("   알림설정", _showNotificationDialog),
-            _buildMenuButton("   알림 테스트", _testNotification),
+            //_buildMenuButton("   알림 테스트", _testNotification),
             _buildMenuButton("   도움말", _showHelpDialog),
             _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
             _buildMenuButton("   계정탈퇴", _onDeleteAccountPressed),
