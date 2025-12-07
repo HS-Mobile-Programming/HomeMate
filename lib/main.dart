@@ -5,12 +5,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+  await Hive.initFlutter();                   // Hive 초기화
+  await Hive.openBox('recipes_box');          // 로컬 레시피 목록
+  await Hive.openBox('ingredient_dict_box');  // 로컬 재료 사전
+  await Hive.openBox('meta_box');             // 로컬 메타데이터
+  await Hive.openBox('user_data_box');        // 로컬 사용자 냉장고/즐겨찾기
+
   // 알림 서비스 초기화
   _initializeNotificationService();
   
