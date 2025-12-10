@@ -1,79 +1,90 @@
+// 사용자 재료 목록의 로컬 캐시 관리: Hive 박스를 사용한 오프라인 데이터 저장소
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/ingredient.dart';
 
 class LocalUserIngredientsCache {
+  // Hive 박스 이름 상수
   static const String userBoxName = 'user_data_box';
 
+  // Hive 박스 참조 반환 (열려 있지 않으면 null)
   Box? get _boxOrNull =>
       Hive.isBoxOpen(userBoxName) ? Hive.box(userBoxName) : null;
 
-  Future<void> saveIngredients(String uid, List<Ingredient> items) async {
+  // 사용자 재료 목록을 로컬 캐시에 JSON 형식으로 저장
+  Future<void> saveIngredientsToLocalCache(
+    String _uid,
+    List<Ingredient> _ingredientsList,
+  ) async {
     try {
-      final box = _boxOrNull;
-      if (box == null) {
-        return;
-      }
+      final _localBox = _boxOrNull;
+      if (_localBox == null) return;
 
-      final list = items
-          .map((i) => {
-        'id': i.id,
-        'name': i.name,
-        'quantity': i.quantity,
-        'expiryTime': i.expiryTime,
-      })
+      final _mappedIngredients = _ingredientsList
+          .map(
+            (_ingredient) => {
+              'id': _ingredient.id,
+              'name': _ingredient.name,
+              'quantity': _ingredient.quantity,
+              'expiryTime': _ingredient.expiryTime,
+            },
+          )
           .toList();
 
-      final jsonString = jsonEncode(list);
-      await box.put('ingredients_$uid', jsonString);
-    } catch (e, st) {
-    }
+      final _jsonString = jsonEncode(_mappedIngredients);
+      await _localBox.put('ingredients_$_uid', _jsonString);
+    } catch (e) {}
   }
 
-  List<Ingredient> loadIngredients(String uid) {
+  // 로컬 캐시에서 사용자 재료 목록을 조회하여 Ingredient 객체로 변환
+  List<Ingredient> loadIngredientsFromLocalCache(String _uid) {
     try {
-      final box = _boxOrNull;
-      if (box == null) return [];
+      final _localBox = _boxOrNull;
+      if (_localBox == null) return [];
 
-      final raw = box.get('ingredients_$uid');
-      if (raw is! String) return [];
+      final _rawData = _localBox.get('ingredients_$_uid');
+      if (_rawData is! String) return [];
 
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return [];
+      final _decodedList = jsonDecode(_rawData);
+      if (_decodedList is! List) return [];
 
-      final List<Ingredient> result = [];
+      final List<Ingredient> _ingredients = [];
 
-      for (final item in decoded) {
-        if (item is Map<String, dynamic>) {
-          result.add(Ingredient(
-            id: item['id'] as String? ?? '',
-            name: item['name'] as String? ?? '',
-            quantity: (item['quantity'] ?? 1) as int,
-            expiryTime: item['expiryTime'] as String? ?? '',
-          ));
-        } else if (item is Map) {
-          final map = Map<String, dynamic>.from(item as Map);
-          result.add(Ingredient(
-            id: map['id'] as String? ?? '',
-            name: map['name'] as String? ?? '',
-            quantity: (map['quantity'] ?? 1) as int,
-            expiryTime: map['expiryTime'] as String? ?? '',
-          ));
+      for (final _item in _decodedList) {
+        if (_item is Map<String, dynamic>) {
+          _ingredients.add(
+            Ingredient(
+              id: _item['id'] as String? ?? '',
+              name: _item['name'] as String? ?? '',
+              quantity: (_item['quantity'] ?? 1) as int,
+              expiryTime: _item['expiryTime'] as String? ?? '',
+            ),
+          );
+        } else if (_item is Map) {
+          final _map = Map<String, dynamic>.from(_item);
+          _ingredients.add(
+            Ingredient(
+              id: _map['id'] as String? ?? '',
+              name: _map['name'] as String? ?? '',
+              quantity: (_map['quantity'] ?? 1) as int,
+              expiryTime: _map['expiryTime'] as String? ?? '',
+            ),
+          );
         }
       }
 
-      return result;
-    } catch (e, st) {
+      return _ingredients;
+    } catch (e) {
       return [];
     }
   }
 
-  Future<void> clearIngredients(String uid) async {
+  // 로컬 캐시에서 사용자 재료 목록 삭제
+  Future<void> clearIngredientsFromLocalCache(String _uid) async {
     try {
-      final box = _boxOrNull;
-      if (box == null) return;
-      await box.delete('ingredients_$uid');
-    } catch (e, st) {
-    }
+      final _localBox = _boxOrNull;
+      if (_localBox == null) return;
+      await _localBox.delete('ingredients_$_uid');
+    } catch (e) {}
   }
 }

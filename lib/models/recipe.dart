@@ -1,21 +1,25 @@
-// Recipe 모델
-// Firestore의 레시피 문서와 1:1로 연결되는 데이터 모델입니다.
-// 앱에서 레시피 목록 / 상세 화면을 표시할 때 사용합니다.
-// 레시피의 원본 데이터는 Firestore에서 가져옵니다.
+// 레시피 데이터 모델: Firestore recipes 컬렉션 문서와 1:1 매핑되는 레시피 정보 및 사용자별 즐겨찾기 상태 관리
 
 class Recipe {
-  // Firestore에 저장된 필드
-  final String id;                          // Firestore 문서 ID (예: "recipe_001")
-  final String name;                        // 레시피 이름
-  final String description;                 // 레시피 설명 (짧은 소개)
-  final String difficulty;                  // 난이도 (초급/중급/고급)
-  final int cookTimeMinutes;                // 조리 시간(분 단위)
-  final List<RecipeIngredient> ingredients; // 재료 목록
-  final List<String> steps;                 // 조리 단계
-  final List<String> tasteTags;             // 맛 태그
-  final String imageName;                   // 이미지 파일명 (예: "recipe_003.jpg")
-  // 계정마다 즐겨찾기는 다르기 때문에 favorite을 레시피 문서 안에 넣지 않습니다.
-  // user 문서에서 favorite을 관리합니다.
+  // Firestore 문서 ID
+  final String id;
+  // 레시피 이름
+  final String name;
+  // 레시피 설명
+  final String description;
+  // 난이도 (초급/중급/고급)
+  final String difficulty;
+  // 조리 시간 (분 단위)
+  final int cookTimeMinutes;
+  // 필요 재료 목록
+  final List<RecipeIngredient> ingredients;
+  // 조리 단계 설명 목록
+  final List<String> steps;
+  // 맛 태그 목록 (사용자 선호도 매칭용)
+  final List<String> tasteTags;
+  // Firebase Storage 이미지 파일명
+  final String imageName;
+  // 사용자별 즐겨찾기 상태 (Firestore users/{uid}/favorites에서 관리)
   bool isFavorite;
 
   Recipe({
@@ -31,37 +35,50 @@ class Recipe {
     this.isFavorite = false,
   });
 
-  // Firestore → Recipe 변환
+  // Firestore 문서 데이터를 Recipe 객체로 변환 (구버전 필드명 호환 포함)
+  factory Recipe.fromFirestoreDocument(
+    Map<String, dynamic> _data,
+    String _documentId,
+  ) {
+    return Recipe(
+      id: _documentId,
+      name: _data['name'] ?? '',
+      description: _data['description'] ?? '',
+      difficulty: _data['difficulty'] ?? '',
+      cookTimeMinutes:
+          (_data['cookTimeMinutes'] ?? _data['cook_time'] ?? 0) as int,
+      tasteTags: List<String>.from(
+        _data['tasteTags'] ?? _data['taste_tags'] ?? [],
+      ),
+      ingredients: (_data['ingredients'] as List<dynamic>? ?? [])
+          .map((_item) => RecipeIngredient.fromFirestoreDocument(_item))
+          .toList(),
+      steps: List<String>.from(_data['steps'] ?? _data['step'] ?? []),
+      imageName: (_data['imageName'] ?? _data['image_name'] ?? '') as String,
+    );
+  }
+
+  // 로컬 캐시 데이터를 Recipe 객체로 변환
   factory Recipe.fromJson(Map<String, dynamic> json, String id) {
     return Recipe(
       id: id,
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       difficulty: json['difficulty'] ?? '',
-
-      // Firebase(최신)필드와 JSON(구버전 구조)필드를 하단의 코드들로 모두 지원 가능하도록 설정했습니다.
-      cookTimeMinutes: (json['cookTimeMinutes'] ?? json['cook_time'] ?? 0) as int,
-
-      // 맛 태그는 Firestore에서 List<String> 형태로 저장합니다.
+      cookTimeMinutes:
+          (json['cookTimeMinutes'] ?? json['cook_time'] ?? 0) as int,
       tasteTags: List<String>.from(
         json['tasteTags'] ?? json['taste_tags'] ?? [],
       ),
-
-      // 재료 목록(List<Map>) → List<RecipeIngredient>으로 변환합니다.
       ingredients: (json['ingredients'] as List<dynamic>? ?? [])
           .map((e) => RecipeIngredient.fromJson(e))
           .toList(),
-
-      // 조리 단계(List<String>)
-      steps: List<String>.from(
-        json['steps'] ?? json['step'] ?? [],
-      ),
-
+      steps: List<String>.from(json['steps'] ?? json['step'] ?? []),
       imageName: (json['imageName'] ?? json['image_name'] ?? '') as String,
     );
   }
 
-  // 앱 내부 저장용(캐시 및 오프라인 모드)
+  // 로컬 캐시 저장용 Map 변환
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -70,29 +87,27 @@ class Recipe {
       'difficulty': difficulty,
       'cookTimeMinutes': cookTimeMinutes,
       'tasteTags': tasteTags,
-      'ingredients': ingredients.map((e) => e.toMap()).toList(),
+      'ingredients': ingredients.map((_item) => _item.toMap()).toList(),
       'steps': steps,
       'imageName': imageName,
       'isFavorite': isFavorite,
     };
   }
 
-  // getter
-    // 표시용 문자열 (예 : "30분")
+  // UI 표시용 조리 시간 문자열
   String get cookTime => '$cookTimeMinutes분';
 
-    // 재료의 rawText 리스트 (예: ["감자 2개", "버터 1큰술", ...])
+  // UI 표시용 재료 텍스트 리스트
   List<String> get ingredientList =>
-      ingredients.map((e) => e.rawText).toList();
+      ingredients.map((_item) => _item.rawText).toList();
 
-    // 조리 단계 리스트 (원본으로 출력)
+  // UI 표시용 조리 단계 리스트
   List<String> get stepList => steps;
 
-    // 맛 태그 리스트 (원본으로 출력)
+  // UI 표시용 맛 태그 리스트
   List<String> get tagList => tasteTags;
 
-  // AI(Gemini)에게 넘길 JSON
-  // 필요하다면 키 이름을 바꿔도 괜찮습니다.
+  // AI 추천 요청용 JSON 변환
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -101,34 +116,31 @@ class Recipe {
       'difficulty': difficulty,
       'cookTimeMinutes': cookTimeMinutes,
       'tasteTags': tasteTags,
-      'ingredients': ingredients.map((e) => e.toJson()).toList(),
+      'ingredients': ingredients.map((_item) => _item.toJson()).toList(),
       'steps': steps,
       'imageName': imageName,
     };
   }
 }
 
-// RecipeIngredient
-// 레시피 내 "각 재료 1개"에 해당하는 구조입니다.
-// Firestore 문서의 ingredients 배열 안의 한 아이템과 연결됩니다.
-// 예:
-// {
-//    "rawText": "감자 2개",
-//    "ingredientName": "감자"
-// }
+// 레시피 재료 데이터 모델: 레시피 내 개별 재료 정보 및 표준 재료명 매핑
 class RecipeIngredient {
-  final String rawText; // 레시피 원문 재료 표현 (예: "감자 2개")
-
-  // Firestore ingredients 사전에서 사용할 재료 이름
-  // 레시피 추천, 냉장고 비교 등에 사용
+  // 레시피 원문 재료 표현 (예: "감자 2개", "간장 1큰술")
+  final String rawText;
+  // 표준화된 재료명 (냉장고 재료 비교 및 추천 시스템용)
   final String ingredientName;
 
-  RecipeIngredient({
-    required this.rawText,
-    required this.ingredientName,
-  });
+  RecipeIngredient({required this.rawText, required this.ingredientName});
 
-  // JSON → RecipeIngredient
+  // Firestore 문서 데이터를 RecipeIngredient 객체로 변환
+  factory RecipeIngredient.fromFirestoreDocument(Map<String, dynamic> _data) {
+    return RecipeIngredient(
+      rawText: _data['rawText'] ?? '',
+      ingredientName: _data['ingredientName'] ?? '',
+    );
+  }
+
+  // 로컬 캐시 데이터를 RecipeIngredient 객체로 변환
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
     return RecipeIngredient(
       rawText: json['rawText'] ?? '',
@@ -136,14 +148,11 @@ class RecipeIngredient {
     );
   }
 
-  // RecipeIngredient → JSON
+  // 로컬 캐시 저장용 Map 변환
   Map<String, dynamic> toMap() {
-    return {
-      'rawText': rawText,
-      'ingredientName': ingredientName,
-    };
+    return {'rawText': rawText, 'ingredientName': ingredientName};
   }
 
-  // AI에 포함할 때도 같은 구조 사용하도록 매핑합니다.
+  // AI 추천 요청용 JSON 변환
   Map<String, dynamic> toJson() => toMap();
 }

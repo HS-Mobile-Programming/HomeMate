@@ -1,72 +1,73 @@
-// IngredientDictionaryRepository
-// Firestore "ingredients" 컬렉션에서 재료 사전 데이터를 읽어오는 역할입니다.
-// AI 추천 로직, 매핑 로직 작업에서 사용을 위한 목적으로 만들었습니다.
-
+// 재료 사전 저장소: Firestore ingredients 컬렉션에서 표준 재료명 사전 데이터 조회 및 로컬 캐싱
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/ingredient_dictionary.dart';
 import '../services/local_ingredient_dict_cache.dart';
 
 class IngredientDictionaryRepository {
-  final FirebaseFirestore _db;
-  final LocalIngredientDictCache _cache = LocalIngredientDictCache();
+  // Firestore 데이터베이스 인스턴스
+  final FirebaseFirestore _firestore;
+  // 로컬 재료 사전 캐시
+  final LocalIngredientDictCache _localCache = LocalIngredientDictCache();
 
   IngredientDictionaryRepository({FirebaseFirestore? db})
-      : _db = db ?? FirebaseFirestore.instance;
+    : _firestore = db ?? FirebaseFirestore.instance;
 
-  // 전체 재료 사전 가져오기 (1순위.로컬 2순위.Firestore 동기화)
-  Future<List<IngredientDictionary>> fetchAllDictionaries() async {
-    List<IngredientDictionary> list = [];
+  // 모든 재료 사전 조회 (로컬 캐시 우선, 필요 시 Firestore 동기화)
+  Future<List<IngredientDictionary>> fetchAllDictionariesFromCache() async {
+    List<IngredientDictionary> _dictionaries = [];
 
-    // 1순위.로컬 -> Hive에서 시도
     try {
-      list = _cache.getAll();
-    } catch (e, st) {
-      list = [];
+      _dictionaries = _localCache.getAll();
+    } catch (e) {
+      _dictionaries = [];
     }
 
-    final needServerSync =
-        list.isEmpty || !_cache.isSyncedToday();
+    final _needSync = _dictionaries.isEmpty || !_localCache.isSyncedToday();
 
-    // 2순위.Firestore 동기화 -> 로컬X or 당일 동기화X -> Firestore에서 새로 가져오기 시도
-    if (needServerSync) {
+    if (_needSync) {
       try {
-        final snapshot = await _db.collection('ingredients').get();
-        final fetched = snapshot.docs
-            .map((doc) => IngredientDictionary.fromJson(doc.data(), doc.id))
+        final _snapshot = await _firestore.collection('ingredients').get();
+        final _fetched = _snapshot.docs
+            .map(
+              (_doc) => IngredientDictionary.fromFirestoreDocument(
+                _doc.data(),
+                _doc.id,
+              ),
+            )
             .toList();
 
-        await _cache.saveAll(fetched);
-        list = fetched;
-      } catch (e, st) {
-      }
+        await _localCache.saveAll(_fetched);
+        _dictionaries = _fetched;
+      } catch (e) {}
     }
 
-    return list;
+    return _dictionaries;
   }
 
-  // id 기준의 재료 가져오기
-  Future<IngredientDictionary?> fetchById(String id) async {
-    // 1순위.로컬 캐시 검색
+  // 특정 ID의 재료 사전 조회 (로컬 캐시 우선, 실패 시 Firestore 조회)
+  Future<IngredientDictionary?> fetchDictionaryByIdFromCache(
+    String _dictionaryId,
+  ) async {
     try {
-      final all = _cache.getAll();
-      final local = all.firstWhere(
-            (e) => e.id == id,
+      final _all = _localCache.getAll();
+      final _local = _all.firstWhere(
+        (_dict) => _dict.id == _dictionaryId,
         orElse: () => IngredientDictionary(id: '', name: '', rawVariants: []),
       );
-      if (local.id.isNotEmpty) {
-        return local;
+      if (_local.id.isNotEmpty) {
+        return _local;
       }
-    } catch (_) {
-      // 무시한 후 서버 쪽으로 진행
-    }
+    } catch (_) {}
 
-    // 2순위.Firestore 직접 조회(온라인 상태에서 가능)
     try {
-      final doc = await _db.collection('ingredients').doc(id).get();
-      if (!doc.exists) return null;
-      final data = doc.data()!;
-      return IngredientDictionary.fromJson(data, doc.id);
-    } catch (e, st) {
+      final _doc = await _firestore
+          .collection('ingredients')
+          .doc(_dictionaryId)
+          .get();
+      if (!_doc.exists) return null;
+      final _data = _doc.data()!;
+      return IngredientDictionary.fromFirestoreDocument(_data, _doc.id);
+    } catch (e) {
       return null;
     }
   }

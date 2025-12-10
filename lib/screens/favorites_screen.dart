@@ -1,20 +1,11 @@
-// [SCREEN CLASS] - StatefulWidget
-// '즐겨찾기 목록'을 보여주는 화면입니다.
-// '마이페이지' 탭에서 '즐겨찾기' 메뉴를 누르면 이 화면으로 이동합니다.
-// 'StatefulWidget':
-// '즐겨찾기 목록(_favoriteRecipes)'을 '서비스'로부터 '불러와서'
-// '상태'로 '스스로' 관리해야 하고,
-// '상세' 화면에서 '돌아왔을 때' 이 목록을 '갱신'해야 하므로
-// StatefulWidget으로 선언되었습니다.
-
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import '../services/recipe_service.dart';
 
+// 즐겨찾기 레시피 목록 화면을 보여주는 StatefulWidget
 class FavoritesScreen extends StatefulWidget {
-  // const FavoritesScreen(...): 위젯 생성자
   const FavoritesScreen({super.key});
 
   @override
@@ -22,50 +13,41 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  // [상태 변수 (State Variables)]
+  // 즐겨찾기 관련 로직을 담당하는 서비스
+  final RecipeService _recipeService = RecipeService();
 
-  //  2. 서비스 객체
-  // '레시피' 로직(즐겨찾기 조회)을 담당하는 서비스 객체를 생성합니다.
-  final RecipeService _service = RecipeService();
-
-  // 화면에 표시될 '즐겨찾기된' 레시피 목록입니다.
+  // 화면에 표시할 즐겨찾기 레시피 목록 상태
   List<Recipe> _favoriteRecipes = [];
 
-  // 로딩 상태 변수
+  // 데이터 로딩 여부 상태
   bool _isLoading = false;
 
-  // [initState]
-  // 화면이 '처음' 생성될 때 딱 한 번 호출됩니다.
+  // 화면 최초 생성 시 즐겨찾기 목록을 불러오는 초기화 로직
   @override
   void initState() {
     super.initState();
-    _refreshList(); //  3. 초기 로드 (처음 즐겨찾기 목록을 불러옴)
+    _refreshList();
   }
 
-  //  4. 중앙 갱신 함수
-  // (RecipeScreen, RecommendationScreen의 _refreshList와 유사한 역할)
+  // 즐겨찾기 목록을 새로 불러와 상태를 갱신하는 함수
   Future<void> _refreshList() async {
-    setState(() => _isLoading = true); // 로딩 시작
+    setState(() => _isLoading = true);
 
-    // 'RecipeService'의 'getFavoriteRecipes' 로직을 호출하여
-    // 'isFavorite == true'인 레시피 목록만 가져와서
-    // '_favoriteRecipes' (상태 변수)에 '업데이트'합니다.
-    var favorites = await _service.getFavoriteRecipes();
+    final favoriteList = await _recipeService.getFavoriteRecipes();
 
     if (mounted) {
       setState(() {
-        _favoriteRecipes = favorites;
-        _isLoading = false; // 로딩 종료
+        _favoriteRecipes = favoriteList;
+        _isLoading = false;
       });
     }
   }
 
-  // [build]
-  // 이 위젯의 UI를 실제로 그리는 메서드입니다.
+  // 즐겨찾기 화면 UI를 구성하는 빌드 메서드
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar: 화면 상단 바 (MainScreen의 AppBar와 별개로 '새로' 가짐)
+      // 상단 앱바 구성
       appBar: AppBar(
         title: const Text("즐겨찾기 목록"),
         leading: IconButton(
@@ -73,48 +55,48 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      backgroundColor: const Color(0xFFF5F5F5), // 앱 공통 배경색
+      backgroundColor: const Color(0xFFF5F5F5),
 
-      // body: 화면 본문 영역
-      // '_favoriteRecipes' (상태 변수)가 '비어있으면' (true) -> Center
-      // '비어있지 않으면' (false) -> ListView
+      // 본문: 로딩 중, 비어 있음, 목록 존재 3가지 상태 분기
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _favoriteRecipes.isEmpty
-          ? const Center( // [즐겨찾기가 없을 때 UI]
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // 세로 중앙 정렬
-          children: [
-            Icon(Icons.star_border, size: 64, color: Colors.grey), // 빈 별 아이콘
-            SizedBox(height: 16),
-            Text("아직 즐겨찾기한 레시피가 없어요.", style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      )
-          : ListView.builder( // [즐겨찾기가 있을 때 UI]
-        padding: const EdgeInsets.all(16), // 목록 전체의 바깥쪽 여백
-        itemCount: _favoriteRecipes.length,
-        itemBuilder: (context, index) {
-          final recipe = _favoriteRecipes[index];
-          // GestureDetector: '탭' 이벤트 처리
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  // 'recipe' 파라미터로 '탭한 즐겨찾기 레시피' 전달
-                  builder: (context) => RecipeDetailScreen(recipe: recipe),
-                ),
-              ).then((_) {
-                // 6. 돌아왔을 때 갱신
-                _refreshList();
-              });
-            },
-            // 'RecipeCard' 위젯을 재사용합니다.
-            child: RecipeCard(recipe: recipe),
-          );
-        },
-      ),
+          ? const Center(
+              // 즐겨찾기가 없을 때 안내 UI
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.star_border, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    "아직 즐겨찾기한 레시피가 없어요.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              // 즐겨찾기 목록 UI
+              padding: const EdgeInsets.all(16),
+              itemCount: _favoriteRecipes.length,
+              itemBuilder: (context, index) {
+                final recipe = _favoriteRecipes[index];
+
+                // 레시피 카드 탭 시 상세 화면으로 이동 후 돌아오면 목록 갱신
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RecipeDetailScreen(recipe: recipe),
+                      ),
+                    ).then((_) => _refreshList());
+                  },
+                  child: RecipeCard(recipe: recipe),
+                );
+              },
+            ),
     );
   }
 }

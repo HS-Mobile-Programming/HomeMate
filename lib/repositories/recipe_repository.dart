@@ -1,33 +1,31 @@
-// RecipeRepository
-// Firestore의 "recipes" 컬렉션에서 레시피 데이터를 읽어오는 역할만 담당합니다.
-// 전체 레시피 목록 가져올 수 있습니다.
-// 개별 레시피 가져올 수 있습니다.
-
+// 레시피 저장소: Firestore recipes 컬렉션에서 레시피 데이터 조회 전담
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 
 class RecipeRepository {
-  final FirebaseFirestore _db;
+  // Firestore 데이터베이스 인스턴스
+  final FirebaseFirestore _firestore;
 
-  RecipeRepository({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
+  RecipeRepository({FirebaseFirestore? db})
+    : _firestore = db ?? FirebaseFirestore.instance;
 
-  // 전체 레시피 가져오기
-  Future<List<Recipe>> fetchAllRecipes() async {
-    final snapshot = await _db.collection('recipes').get();
+  // Firestore에서 모든 레시피 조회
+  Future<List<Recipe>> fetchAllRecipesFromFirestore() async {
+    final _snapshot = await _firestore.collection('recipes').get();
 
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return Recipe.fromJson(data, doc.id);
+    return _snapshot.docs.map((_doc) {
+      final _data = _doc.data();
+      return Recipe.fromFirestoreDocument(_data, _doc.id);
     }).toList();
   }
 
-  // ID로 단일 레시피 가져오기
-  Future<Recipe?> fetchRecipeById(String id) async {
-    final doc = await _db.collection('recipes').doc(id).get();
+  // Firestore에서 특정 ID의 레시피 조회
+  Future<Recipe?> fetchRecipeByIdFromFirestore(String _recipeId) async {
+    final _doc = await _firestore.collection('recipes').doc(_recipeId).get();
 
-    if (!doc.exists) return null;
+    if (!_doc.exists) return null;
 
-    final data = doc.data()!;
-    return Recipe.fromJson(data, doc.id);
+    final _data = _doc.data()!;
+    return Recipe.fromFirestoreDocument(_data, _doc.id);
   }
 }

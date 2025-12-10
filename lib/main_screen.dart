@@ -1,12 +1,4 @@
-// [SCREEN CLASS] - StatefulWidget
-// 로그인 '후'의 메인 화면입니다.
-// 하단 네비게이션 바(BottomNavigationBar)를 가지고 있으며,
-// 5개의 서로 다른 탭(화면)을 전환하는 '컨테이너' 역할을 합니다.
-//
-// 'StatefulWidget':
-// 사용자가 '어떤 탭을 선택했는지(currentIndex)'를 '상태(State)'로
-// 기억하고 변경해야 하므로 StatefulWidget으로 선언되었습니다.
-
+// 메인 화면 컨테이너: 로그인 후 하단 네비게이션 바를 통한 5개 탭 화면 전환 관리
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/refrigerator_screen.dart';
@@ -15,17 +7,17 @@ import 'screens/recommendation_screen.dart';
 import 'screens/mypage_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  // const MainScreen(...): 위젯 생성자
   const MainScreen({super.key});
 
-  // createState() : 이 위젯이 관리할 '상태(_MainScreenState)' 객체를 생성합니다.
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // 현재 선택된 탭 인덱스
   int _currentIndex = 0;
 
+  // 탭별 화면 위젯 목록 (홈, 냉장고, 레시피, 추천, 마이페이지)
   final List<Widget> _screens = [
     const HomeScreen(),
     const RefrigeratorScreen(),
@@ -45,17 +37,18 @@ class _MainScreenState extends State<MainScreen> {
             const SizedBox(width: 8),
             const Text(
               "집밥 메이트",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Colors.black,
+              ),
             ),
           ],
         ),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
