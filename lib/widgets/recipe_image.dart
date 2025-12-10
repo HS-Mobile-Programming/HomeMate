@@ -26,8 +26,7 @@ class RecipeImage extends StatelessWidget {
       );
     }
 
-    final ref =
-    FirebaseStorage.instance.ref().child('recipes/$imageName'); // Storage 경로
+    final ref = FirebaseStorage.instance.ref().child('recipes/$imageName'); // Storage 경로
 
     return FutureBuilder<String>(
       future: ref.getDownloadURL(),

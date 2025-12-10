@@ -5,7 +5,8 @@ import '../services/refrigerator_service.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
 import '../widgets/recipe_image.dart';
-import 'recipe_detail_screen.dart'; // [추가] 레시피 상세 화면을 import 합니다.
+import 'recipe_detail_screen.dart';
+import '../services/notification_service.dart';
 
 // [StatefulWidget]
 // '홈' 탭 (가장 첫 화면) UI를 정의합니다.
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _refreshIngredients(); // 화면이 처음 뜰 때 데이터를 불러오도록 함수 호출
     _loadRandomRecipes();
-     alarm.addListener(_refreshIngredients);
+    alarm.addListener(_refreshIngredients);
   }
 
   Future<void> _loadRandomRecipes() async {
@@ -68,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-     alarm.removeListener(_refreshIngredients);
+    alarm.removeListener(_refreshIngredients);
     super.dispose();
   }
 
@@ -81,9 +82,31 @@ class _HomeScreenState extends State<HomeScreen> {
     // setState를 호출하여 _isLoading을 true로 변경 -> 화면에 로딩 스피너 표시
     setState(() => _isLoading = true);
 
-    // 서비스로부터 모든 재료를 가져온 후, 유통기한 순으로 정렬합니다.
+    // 알림 설정값(일수)을 가져옵니다. (설정이 없으면 기본값 3일)
+    final settings = await NotificationService.instance.getNotificationSettings();
+    final int notifyDays = settings['days'] ?? 3;
+
+    // 서비스로부터 모든 재료를 가져온 후 (기존 코드에서 변수 선언이 빠져서 추가함)
     var all = await _service.getAllIngredients();
-    var sorted = _service.sortList(all, SortMode.expiryAsc);
+
+    // 오늘 날짜 구하기 (시간 제외)
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    // 설정한 기간 내에 있는 재료만 필터링
+    var filtered = all.where((ingredient) {
+      final expiryDate = _service.parseDate(ingredient.expiryTime);
+      if (expiryDate == null) return false;
+
+      final expiryOnly = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+      final remainingDays = expiryOnly.difference(todayOnly).inDays;
+
+      // 남은 일수가 설정한 일수보다 작거나 같으면 포함 (지난 날짜도 포함됨)
+      return remainingDays <= notifyDays;
+    }).toList();
+
+    // 필터링된 목록을 유통기한 순으로 정렬합니다.
+    var sorted = _service.sortList(filtered, SortMode.expiryAsc);
 
     // 위젯이 아직 화면에 있다면, 상태를 업데이트합니다.
     if (mounted) {
@@ -101,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center, // 점들을 가운데 정렬
       // List.generate: _recommendedRecipes의 개수만큼 반복하여 위젯 리스트를 생성합니다.
-      // [수정] _randomRecipes의 길이를 사용하도록 변경
+      // _randomRecipes의 길이를 사용하도록 변경
       children: List.generate(_randomRecipes.length, (index) {
         // GestureDetector: 자식 위젯(Container)에 탭 이벤트를 감지할 수 있게 합니다.
         return GestureDetector(
@@ -146,14 +169,14 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text("오늘의 레시피", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           // SizedBox로 PageView의 높이를 고정해야 오류가 발생하지 않습니다.
-          // [수정] 데이터 로딩 전 빈 화면 방지
+          // 데이터 로딩 전 빈 화면 방지
           _randomRecipes.isEmpty
               ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()))
               : SizedBox(
             height: 200,
             child: PageView.builder(
               controller: _pageController, // 위에서 만든 페이지 컨트롤러 연결
-              // [수정] 고정 리스트 대신 랜덤 레시피 리스트 사용
+              // 고정 리스트 대신 랜덤 레시피 리스트 사용
               itemCount: _randomRecipes.length, // 페이지의 총 개수
               // onPageChanged: 사용자가 페이지를 스와이프할 때마다 호출됩니다.
               onPageChanged: (int page) {
@@ -164,10 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // itemBuilder: 각 페이지의 UI를 동적으로 생성합니다.
               itemBuilder: (context, index) {
                 final recipe = _randomRecipes[index];
-                // [수정] GestureDetector로 감싸서 탭 이벤트를 추가합니다.
+                // GestureDetector로 감싸서 탭 이벤트를 추가합니다.
                 return GestureDetector(
                   onTap: () {
-                    // [수정] 탭하면 RecipeDetailScreen으로 이동하고, 선택된 recipe 객체를 전달합니다.
+                    // 탭하면 RecipeDetailScreen으로 이동하고, 선택된 recipe 객체를 전달합니다.
                     Navigator.push(
                       context,
                       MaterialPageRoute(

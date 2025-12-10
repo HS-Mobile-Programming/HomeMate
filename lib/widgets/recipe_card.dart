@@ -82,8 +82,7 @@ class _RecipeImage extends StatelessWidget {
     }
 
     // Firebase Storage에서 이미지 URL 가져오기
-    final ref =
-    FirebaseStorage.instance.ref().child('recipes/$imageName'); // 파이어 스토리지 경로
+    final ref = FirebaseStorage.instance.ref().child('recipes/$imageName'); // 파이어 스토리지 경로
 
     return FutureBuilder<String>(
       future: ref.getDownloadURL(),
