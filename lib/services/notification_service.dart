@@ -230,15 +230,4 @@ class NotificationService {
     );
   }
 
-  // 테스트용 알림 발송 (마이페이지용)
-  Future<void> sendTestNotification() async {
-    try {
-      final _ingredients = await _refrigeratorService.getAllIngredients();
-      if (_ingredients.isEmpty) return;
-
-      await _sendNotification(_ingredients.first);
-    } catch (e) {
-      debugPrint('테스트 알림 오류: $e');
-    }
-  }
 }

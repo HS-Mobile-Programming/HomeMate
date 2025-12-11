@@ -1,5 +1,6 @@
 // 재료 사전 저장소: Firestore ingredients 컬렉션에서 표준 재료명 사전 데이터 조회 및 로컬 캐싱
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/ingredient_dictionary.dart';
 import '../services/local_ingredient_dict_cache.dart';
 
@@ -41,7 +42,7 @@ class IngredientDictionaryRepository {
         _dictionaries = _fetched;
       }
       catch (e) {
-
+        debugPrint('[IngredientDictionaryRepository] Firestore 동기화 오류: $e');
       }
     }
 
@@ -62,8 +63,8 @@ class IngredientDictionaryRepository {
         return _local;
       }
     }
-    catch (_) {
-
+    catch (e) {
+      debugPrint('[IngredientDictionaryRepository] 로컬 캐시 조회 오류: $e');
     }
 
     try {

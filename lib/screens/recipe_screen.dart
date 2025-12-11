@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../models/recipe.dart';
+import '../models/recipe_sort_mode.dart';
 import '../services/recipe_service.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';

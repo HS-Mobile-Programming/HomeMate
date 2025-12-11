@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
+import '../models/recipe_sort_mode.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import 'tags_screen.dart';
@@ -41,7 +42,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
       final recipes = await _recommendationService.getRecommendations(
         selectedTags: _savedTags.isEmpty ? null : _savedTags,
       );
-      final sortedRecipes = _recommendationService.sortRecipes(
+      final sortedRecipes = RecipeService().sortRecipes(
         recipes,
         _sortMode,
       );
@@ -68,7 +69,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
       _sortMode = _sortMode == RecipeSortMode.nameAsc
           ? RecipeSortMode.nameDesc
           : RecipeSortMode.nameAsc;
-      _recommendedRecipes = _recommendationService.sortRecipes(
+      _recommendedRecipes = RecipeService().sortRecipes(
         _recommendedRecipes,
         _sortMode,
       );

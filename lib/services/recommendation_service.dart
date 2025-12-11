@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../models/recipe_sort_mode.dart';
 
 class RecommendationService {
   // Gemini API 키
@@ -95,10 +96,5 @@ class RecommendationService {
       debugPrint("AI 호출 오류: $e");
       return [];
     }
-  }
-
-  // RecipeService의 정렬 메서드 재사용
-  List<Recipe> sortRecipes(List<Recipe> _recipes, RecipeSortMode _mode) {
-    return _recipeService.sortRecipes(_recipes, _mode);
   }
 }
