@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# API 키 파일 (보안상 git에 포함하지 않음)
+assets/config/api_key.txt
