@@ -288,10 +288,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.add_circle_outline, color: Colors.grey.shade400, size: 18),
+                                      Icon(Icons.not_interested, color: Colors.grey.shade400, size: 18),
                                       const SizedBox(width: 8),
                                       Text(
-                                        "재료를 추가해 보세요",
+                                        "임박한 재료가 없습니다",
                                         style: TextStyle(color: Colors.grey.shade600),
                                       ),
                                     ],
