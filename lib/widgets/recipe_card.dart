@@ -1,8 +1,10 @@
+// 레시피 카드 위젯: 레시피 목록 화면에서 사용되는 개별 레시피 카드 UI 구성
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
+  // 표시할 레시피 데이터
   final Recipe recipe;
 
   const RecipeCard({super.key, required this.recipe});
@@ -17,19 +19,6 @@ class RecipeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 이미지 영역
-          // ---> 파이어 스토리지 연동에 맞게 주석처리하고 코드 변경했습니다.
-          /*
-          Container(
-            height: 160,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.grey,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            // 나중에 Image.asset('~~~.png')로 변경
-            child: const Icon(Icons.image, size: 50, color: Colors.white),
-          ),
-          */
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: SizedBox(
@@ -62,11 +51,17 @@ class RecipeCard extends StatelessWidget {
                   children: [
                     Icon(Icons.timer, size: 14, color: Colors.grey),
                     //Text(" ${recipe.cookTime}  ", style: TextStyle(color: Colors.grey)),
-                    Text(" ${recipe.cookTimeMinutes}  ", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      " ${recipe.cookTimeMinutes}  ",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                     Icon(Icons.restaurant, size: 14, color: Colors.grey),
-                    Text(" ${recipe.difficulty}", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      " ${recipe.difficulty}",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -76,57 +71,61 @@ class RecipeCard extends StatelessWidget {
   }
 }
 
-// Firebase Storage에서 이미지 불러오는 위젯
+// Firebase Storage에서 레시피 이미지 비동기 로드
 class _RecipeImage extends StatelessWidget {
-  final String imageName; // 예: "recipe_001.jpg"
+  // Firebase Storage 이미지 파일명
+  final String imageName;
 
   const _RecipeImage({required this.imageName});
 
   @override
   Widget build(BuildContext context) {
-    // imageName이 비어 있으면 기본 플레이스홀더
     if (imageName.isEmpty) {
       return Container(
         color: Colors.grey,
+        // 이미지가 없을 때 밥그릇 아이콘 표시
         child: const Center(
-          child: Icon(Icons.image_not_supported, size: 50, color: Colors.white),
+          child: Icon(Icons.rice_bowl, size: 80, color: Colors.white),
         ),
       );
     }
 
-    // Firebase Storage에서 이미지 URL 가져오기
-    final ref =
-    FirebaseStorage.instance.ref().child('recipes/$imageName'); // 파이어 스토리지 경로
+    final _storageRef = FirebaseStorage.instance.ref().child(
+      'recipes/$imageName',
+    );
 
     return FutureBuilder<String>(
-      future: ref.getDownloadURL(),
-      builder: (context, snapshot) {
-        // 로딩 중
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      future: _storageRef.getDownloadURL(),
+      builder: (context, _snapshot) {
+        // 로딩 중인지 확인
+        if (_snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             color: Colors.grey[200],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // [수정] 로딩 중에 연한 회색 밥그릇 아이콘 표시
+            child: Center(
+              child: Icon(
+                Icons.rice_bowl,
+                size: 50,
+                color: Colors.grey.shade400,
+              ),
             ),
           );
         }
 
-        // 에러 또는 데이터 없음
-        if (snapshot.hasError || !snapshot.hasData) {
+        // 에러가 있는지 확인
+        if (_snapshot.hasError || !_snapshot.hasData) {
           return Container(
             color: Colors.grey,
+            // 에러 발생 시 밥그릇 아이콘 표시
             child: const Center(
-              child: Icon(Icons.error, size: 50, color: Colors.white),
+              child: Icon(Icons.rice_bowl, size: 80, color: Colors.white),
             ),
           );
         }
 
-        // 정상적으로 URL을 받아온 경우
-        final url = snapshot.data!;
-        return Image.network(
-          url,
-          fit: BoxFit.cover,
-        );
+        // 데이터 가져오기
+        final _imageUrl = _snapshot.data!;
+        return Image.network(_imageUrl, fit: BoxFit.cover);
       },
     );
   }

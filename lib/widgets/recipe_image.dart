@@ -1,10 +1,13 @@
-// lib/widgets/recipe_image.dart
+// 레시피 이미지 위젯: Firebase Storage에서 레시피 이미지 비동기 로드 및 표시
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class RecipeImage extends StatelessWidget {
-  final String imageName; // 예: "recipe_001.jpg"
+  // Firebase Storage 이미지 파일명
+  final String imageName;
+  // 이미지 가로 크기
   final double width;
+  // 이미지 세로 크기
   final double height;
 
   const RecipeImage({
@@ -17,48 +20,57 @@ class RecipeImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageName.isEmpty) {
-      // imageName이 비어 있으면 기본 아이콘 표시
       return Container(
         width: width,
         height: height,
         color: Colors.grey[200],
-        child: const Icon(Icons.image_not_supported),
+        // 이미지가 없을 때 밥그릇 아이콘 표시
+        child: const Icon(Icons.rice_bowl, color: Colors.grey),
       );
     }
 
-    final ref =
-    FirebaseStorage.instance.ref().child('recipes/$imageName'); // Storage 경로
+    final _storageRef = FirebaseStorage.instance.ref().child(
+      'recipes/$imageName',
+    );
 
     return FutureBuilder<String>(
-      future: ref.getDownloadURL(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      future: _storageRef.getDownloadURL(),
+      builder: (context, _snapshot) {
+        // 먼저 로딩 중인지 확인합니다.
+        if (_snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
             width: width,
             height: height,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // 로딩 중에 연한 회색 밥그릇 아이콘 표시
+            child: Center(
+              child: Icon(
+                Icons.rice_bowl,
+                color: Colors.grey.shade300,
+                size: 80,
+              ),
             ),
           );
         }
 
-        if (snapshot.hasError || !snapshot.hasData) {
+        if (_snapshot.hasError || !_snapshot.hasData) {
           return Container(
             width: width,
             height: height,
             color: Colors.grey[200],
-            child: const Icon(Icons.error),
+            child: const Icon(Icons.rice_bowl, color: Colors.grey),
           );
         }
 
-        final url = snapshot.data!;
+        // 데이터 가져오기
+        final _imageUrl = _snapshot.data!;
+
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.network(
-            url,
+            _imageUrl,
             width: width,
             height: height,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
           ),
         );
       },
