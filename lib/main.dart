@@ -5,12 +5,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+  await Hive.initFlutter();                   // Hive 초기화
+  await Hive.openBox('recipes_box');          // 로컬 레시피 목록
+  await Hive.openBox('ingredient_dict_box');  // 로컬 재료 사전
+  await Hive.openBox('meta_box');             // 로컬 메타데이터
+  await Hive.openBox('user_data_box');        // 로컬 사용자 냉장고/즐겨찾기
+
   // 알림 서비스 초기화
   _initializeNotificationService();
   
@@ -19,13 +25,7 @@ void main() async {
 
 // 알림 서비스 초기화
 void _initializeNotificationService() async {
-  // 이미 로그인된 경우 바로 초기화
-  if (FirebaseAuth.instance.currentUser != null) {
-    await NotificationService.instance.initialize();
-    await NotificationService.instance.checkExpiringIngredients();
-  }
-
-  // 로그인 상태 변경 감지
+  // 로그인 상태 변경 감지 (첫 이벤트로 현재 로그인 유저 전달)
   FirebaseAuth.instance.authStateChanges().listen((User? user) async {
     if (user != null) {
       await NotificationService.instance.initialize();
@@ -46,8 +46,8 @@ class HomeMateApp extends StatelessWidget {
         // 색상 체계를 중앙에서 관리합니다.
         // seedColor를 지정하면 어울리는 색상 팔레트가 자동 생성됩니다.
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green, // 메인 색상
-          primary: Colors.green,   // 주요 버튼, 활성 상태 색상
+          seedColor: const Color(0xFF4CAF50), // 메인 색상
+          primary: const Color(0xFF4CAF50),   // 주요 버튼, 활성 상태 색상
           // surface: 카드나 시트의 배경색
           surface: Colors.white,
           // background: 앱 전체 배경색
@@ -61,6 +61,20 @@ class HomeMateApp extends StatelessWidget {
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           margin: EdgeInsets.zero,
+        ),
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
 

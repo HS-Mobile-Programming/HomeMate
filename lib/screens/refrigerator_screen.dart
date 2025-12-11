@@ -143,14 +143,14 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     // '수정' 모드일 경우, 기존 재료의 값으로 초기화합니다.
     final nameController = TextEditingController(text: ingredient?.name ?? "");
     final quantityController = TextEditingController(
-        text: isEditMode ? ingredient.quantity.toString() : "1");
+        text: isEditMode ? ingredient!.quantity.toString() : "1");
 
     // '수정' 모드일 때, 기존 유통기한(예: "2025.11.20")을 파싱하여
     // 년/월/일 컨트롤러에 각각 초기값(예: "2025", "11", "20")을 설정합니다.
     String year = '', month = '', day = '';
     if (isEditMode) {
-      // 날짜 파싱 로직을 서비스에 위임합니다.
-      DateTime? date = _service.parseDate(ingredient.expiryTime);
+      // 날짜 파싱 로직을 서비스에 위임
+      DateTime? date = _service.parseDate(ingredient!.expiryTime);
       if (date != null) {
         year = date.year.toString();
         month = date.month.toString();
@@ -298,22 +298,50 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 Navigator.pop(context); // 다이얼로그 닫기
 
                 // 로직 대신 서비스 호출
+                // 서비스에서 반환한 최신 리스트로 화면 상태 직접 갱신
+                List<Ingredient> updatedList;
                 if (isEditMode) {
-                  await _service.updateIngredient(ingredient.id,
+                  updatedList = await _service.updateIngredient(
+                    ingredient!.id,
                     name: name,
                     quantity: quantity,
                     expiryTime: expiryDate,
                   );
                 } else {
-                  await _service.addIngredient(
+                  updatedList = await _service.addIngredient(
                     name: name,
                     quantity: quantity,
                     expiryTime: expiryDate,
                   );
                 }
                 alarm.value++;  // 알람 전역 변수 증가
-                await _refreshList(); // 서비스 호출 후 화면 갱신
-                
+
+                if (!mounted) return;
+
+                setState(() {
+                  _allIngredients = updatedList;
+
+                  // 검색어 필터링
+                  List<Ingredient> temp = List.from(_allIngredients);
+                  if (_search.isNotEmpty) {
+                    temp = temp.where((ing) => ing.name.contains(_search)).toList();
+                  }
+
+                  // 날짜 필터링
+                  if (_selectedDay == null) {
+                    filteredIngredients = temp;
+                  } else {
+                    filteredIngredients = temp.where((ing) {
+                      final expiryDateParsed = _service.parseDate(ing.expiryTime);
+                      return expiryDateParsed != null &&
+                          isSameDay(expiryDateParsed, _selectedDay!);
+                    }).toList();
+                  }
+
+                  // 정렬
+                  filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
+                });
+
                 // 재료 변경 후 유통기한 알림 체크
                 try {
                   await NotificationService.instance.checkExpiringIngredients();
@@ -549,7 +577,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     const Spacer(),
 
                     _buildSortButton("name", "이름"),
-                    _buildSortButton("expiry", "유통기한"),
+                    _buildSortButton("유통기한", "유통기한"),
                   ],
                 ),
               ),
@@ -628,16 +656,36 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                       return confirm ?? false;
                     },
 
-                    // onDismissed: 'confirmDismiss'가 true를 반환하여 스와이프가 '완료'되었을 때 호출됩니다.
-                    onDismissed: (dir) {
+                    // confirmDismiss가 true를 반환하여 스와이프가 완료되었을 때 호출
+                    onDismissed: (dir) async {
                       //  18. 서비스 호출
-                      _service.deleteIngredient(item.id); // 서비스에 실제 데이터 삭제 요청
+                      final updatedList = await _service.deleteIngredient(item.id); // 서비스에 실제 데이터 삭제 요청
                       alarm.value++;  // 알람 전역 변수 증가
-                      // 화면에서도 즉각적인 반응을 보여주기 위해 'filteredIngredients' 목록에서 제거
-                      // (주의: _refreshList()를 호출하면 서버/DB에서 다시 읽어오므로,
-                      //       즉각적인 UI 반영을 위해 로컬 리스트에서 바로 제거하는 것이 더 빠릅니다.)
+
+                      if (!mounted) return;
+
                       setState(() {
-                        filteredIngredients.removeAt(index);
+                        _allIngredients = updatedList;
+
+                        // 검색어 필터링
+                        List<Ingredient> temp = List.from(_allIngredients);
+                        if (_search.isNotEmpty) {
+                          temp = temp.where((ing) => ing.name.contains(_search)).toList();
+                        }
+
+                        // 날짜 필터링
+                        if (_selectedDay == null) {
+                          filteredIngredients = temp;
+                        } else {
+                          filteredIngredients = temp.where((ing) {
+                            final expiryDateParsed = _service.parseDate(ing.expiryTime);
+                            return expiryDateParsed != null &&
+                                isSameDay(expiryDateParsed, _selectedDay!);
+                          }).toList();
+                        }
+
+                        // 정렬
+                        filteredIngredients = _service.sortList(filteredIngredients, _sortMode);
                       });
                     },
 

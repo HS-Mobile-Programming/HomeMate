@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'tos_screen.dart';
 import '../services/account_service.dart';
+import '../widgets/text_field.dart';
 
 class SignupScreen extends StatefulWidget {
   // const SignupScreen(...): 위젯 생성자
@@ -149,28 +150,30 @@ class _SignupScreenState extends State<SignupScreen> {
             const Icon(Icons.rice_bowl, size: 80, color: Colors.green), // 로고
             const SizedBox(height: 32),
 
-            // '_buildTextField' 헬퍼 메서드(LoginScreen과 유사)를 사용하여
-            // 중복되는 텍스트 필드 UI를 생성합니다.
-            _buildTextField(
-              "ID 입력 (이메일)",
-              controller: _emailController,     //이메일 입력값 관리
+            CustomTextField(
+              controller: _emailController,
+              hintText: "ID 입력 (이메일)",
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
-            _buildTextField(
-              "비밀번호 입력",
+
+            CustomTextField(
+              controller: _pwController,
+              hintText: "비밀번호 입력",
               isObscure: true,
-              controller: _pwController,        //비밀번호 입력값 관리
             ),
             const SizedBox(height: 16),
-            _buildTextField(
-              "비밀번호 확인",
+
+            CustomTextField(
+              controller: _pwConfirmController,
+              hintText: "비밀번호 확인",
               isObscure: true,
-              controller: _pwConfirmController, //비밀번호 확인 입력값 관리
             ),
             const SizedBox(height: 16),
-            _buildTextField(
-              "이름 (닉네임)",
-              controller: _nameController,      //닉네임 입력값 관리
+
+            CustomTextField(
+              controller: _nameController,
+              hintText: "이름 (닉네임)",
             ),
 
             const SizedBox(height: 24),
