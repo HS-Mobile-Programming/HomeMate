@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: BoxShape.circle,
               color: _currentPage == index
                   ? Theme.of(context).colorScheme.primary
-                  : Colors.grey.withValues(alpha: 0.5),
+                  : Colors.grey.withOpacity(0.5),
             ),
           ),
         );
@@ -187,9 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                         side: BorderSide(
-                          color: colorScheme.primary.withValues(
-                            alpha: 0.3,
-                          ),
+                          color: colorScheme.primary.withOpacity(0.3),
                           width: 2,
                         ),
                       ),
@@ -227,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 24),
           // 임박 재료 카드
           Card(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+            color: colorScheme.primaryContainer.withOpacity(0.5),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -263,19 +261,47 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: CircularProgressIndicator(),
                       ),
                     )
-                  else if (_expiringSoonIngredients.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(child: Text("임박한 재료가 없습니다!")),
-                    )
                   else
                     Column(
-                      children: _expiringSoonIngredients.map((ingredient) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: IngredientItem(ingredient: ingredient),
-                        );
-                      }).toList(),
+                      children: List.generate(5, (index) {
+                        //  표시할 실제 재료가 있는지 확인합니다.
+                        if (index < _expiringSoonIngredients.length) {
+                          // 재료가 있으면: 기존 IngredientItem 위젯을 표시
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: IngredientItem(ingredient: _expiringSoonIngredients[index]),
+                          );
+                        } else {
+                          //  재료가 없으면: 빈 카드 위젯을 표시
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Colors.grey.shade300, width: 1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              color: Colors.grey.shade50.withOpacity(0.5),
+                              child: SizedBox(
+                                height: 60,
+                                child: Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_circle_outline, color: Colors.grey.shade400, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "재료를 추가해 보세요",
+                                        style: TextStyle(color: Colors.grey.shade600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      }),
                     ),
                 ],
               ),
