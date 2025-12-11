@@ -376,10 +376,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
               leading: const Icon(Icons.person, color: Colors.green),
               title: Text(myName.isEmpty ? "이름 불러오는 중..." : myName),
               subtitle: const Text("계정 정보"),
-              trailing: IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadUserName,
-              ),
             ),
           ),
           const SizedBox(height: 12),
