@@ -1,3 +1,4 @@
+// 재료 유통기한 알림 서비스: 로컬 알림 플러그인과 Firestore 알림 설정을 통한 유통기한 푸시 알림 관리
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,75 +7,89 @@ import '../models/ingredient.dart';
 import 'refrigerator_service.dart';
 
 class NotificationService {
+  // 싱글톤 생성자
   NotificationService._internal();
   static final NotificationService instance = NotificationService._internal();
 
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // Firestore 데이터베이스 인스턴스
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Firebase 인증 인스턴스
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  // 재료 관리 서비스
   final RefrigeratorService _refrigeratorService = RefrigeratorService();
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  // 로컬 알림 플러그인
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
+  // 초기화 Future 중복 방지용
   Future<void>? _initFuture;
+  // 초기화 완료 플래그
   bool _isInitialized = false;
 
+  // 현재 로그인 사용자 uid
   String get _uid {
-    final user = _auth.currentUser;
-    if (user == null) {
+    final _user = _auth.currentUser;
+    if (_user == null) {
       throw Exception('로그인된 사용자가 없습니다.');
     }
-    return user.uid;
+    return _user.uid;
   }
 
-  DocumentReference<Map<String, dynamic>> get _userDoc =>
-      _db.collection('users').doc(_uid);
+  // Firestore 사용자 문서 참조
+  DocumentReference<Map<String, dynamic>> get _userDocument =>
+      _firestore.collection('users').doc(_uid);
 
+  // 알림 서비스 초기화 (중복 호출 방지)
   Future<void> initialize() async {
     if (_isInitialized) return;
-    if (_initFuture != null) {
-      return _initFuture;
-    }
+    if (_initFuture != null) return _initFuture;
     _initFuture = _initializeInternal();
     await _initFuture;
     _initFuture = null;
   }
 
+  // 내부 초기화 로직: 플러그인 설정 및 권한 요청
   Future<void> _initializeInternal() async {
     try {
-      // 로컬 알림 셋업
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const iosSettings = DarwinInitializationSettings(
+      const _androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
+      const _iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
-      const initSettings = InitializationSettings(
-        android: androidSettings,
-        iOS: iosSettings,
+      const _initSettings = InitializationSettings(
+        android: _androidSettings,
+        iOS: _iosSettings,
       );
+      await _localNotifications.initialize(_initSettings);
 
-      await _localNotifications.initialize(initSettings);
-
-      // 안드로이드 알림 채널 만들기
-      const androidChannel = AndroidNotificationChannel(
+      const _androidChannel = AndroidNotificationChannel(
         'expiry_channel',
         '유통기한 알림',
         description: '재료의 유통기한이 임박했을 때 알림을 받습니다.',
         importance: Importance.high,
       );
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(androidChannel);
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(_androidChannel);
 
-      // 로컬 알림 권한 요청
-      final androidImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImplementation != null) {
-        await androidImplementation.requestNotificationsPermission();
+      final _androidImpl = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (_androidImpl != null) {
+        await _androidImpl.requestNotificationsPermission();
       }
-      final iosImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-      if (iosImplementation != null) {
-        await iosImplementation.requestPermissions(
+      final _iosImpl = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (_iosImpl != null) {
+        await _iosImpl.requestPermissions(
           alert: true,
           badge: true,
           sound: true,
@@ -87,14 +102,15 @@ class NotificationService {
     }
   }
 
-  Future<Map<String, dynamic>> getNotificationSettings() async {
+  // Firestore에서 사용자 알림 설정 조회
+  Future<Map<String, dynamic>> getNotificationSettingsFromFirestore() async {
     try {
-      final doc = await _userDoc.get();
-      if (doc.exists) {
-        final data = doc.data();
+      final _doc = await _userDocument.get();
+      if (_doc.exists) {
+        final _data = _doc.data();
         return {
-          'isPushOn': data?['notificationEnabled'] ?? true,
-          'days': data?['notificationDays'] ?? 3,
+          'isPushOn': _data?['notificationEnabled'] ?? true,
+          'days': _data?['notificationDays'] ?? 3,
         };
       }
       return {'isPushOn': true, 'days': 3};
@@ -103,50 +119,52 @@ class NotificationService {
     }
   }
 
-  Future<void> saveNotificationSettings({
+  // Firestore에 사용자 알림 설정 저장
+  Future<void> saveNotificationSettingsToFirestore({
     required bool isPushOn,
     required int days,
   }) async {
     try {
-      await _userDoc.update({
+      await _userDocument.update({
         'notificationEnabled': isPushOn,
         'notificationDays': days,
       });
-    }
-    catch (e) {
+    } catch (e) {
       debugPrint('알림 설정 저장 오류: $e');
     }
   }
 
+  // 유통기한이 임박한 재료를 확인하여 알림 발송
   Future<void> checkExpiringIngredients() async {
     try {
-      final settings = await getNotificationSettings();
-      if (!settings['isPushOn']) {
+      final _settings = await getNotificationSettingsFromFirestore();
+      if (!_settings['isPushOn']) {
         return;
       }
 
-      final days = settings['days'] as int;
-      final ingredients = await _refrigeratorService.getAllIngredients();
-      final todayOnly = _getDateOnly(DateTime.now());
+      final _days = _settings['days'] as int;
+      final _ingredients = await _refrigeratorService.getAllIngredients();
+      final _todayOnly = _getDateOnly(DateTime.now());
 
-      // 유통기한 얼마 안 남은 재료 골라내기
-      // 남은 일수가 설정값 이하이거나 이미 지난 재료까지 포함
-      final expiringIngredients = ingredients.where((ingredient) {
-        final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
-        if (expiryDate == null) {
+      final _expiringIngredients = _ingredients.where((_ingredient) {
+        final _expiryDate = _refrigeratorService.parseDate(
+          _ingredient.expiryTime,
+        );
+        if (_expiryDate == null) {
           return false;
         }
-        
-        final expiryOnly = _getDateOnly(expiryDate);
-        final remainingDays = expiryOnly.difference(todayOnly).inDays;
-        return remainingDays <= days; // 이미 지난 경우(음수)도 포함됨
+
+        final _expiryOnly = _getDateOnly(_expiryDate);
+        final _remainingDays = _expiryOnly.difference(_todayOnly).inDays;
+        return _remainingDays <= _days;
       }).toList();
 
-      if (expiringIngredients.isEmpty) return;
+      if (_expiringIngredients.isEmpty) {
+        return;
+      }
 
-      // 임박한 재료들 알림 보내기
-      for (final ingredient in expiringIngredients) {
-        await _sendNotification(ingredient);
+      for (final _ingredient in _expiringIngredients) {
+        await _sendNotification(_ingredient);
       }
     }
     catch (e) {
@@ -154,39 +172,38 @@ class NotificationService {
     }
   }
 
-  // 날짜만 남기고 시간은 버리기
-  DateTime _getDateOnly(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+  // 날짜의 시간 정보를 제거하여 날짜만 반환
+  DateTime _getDateOnly(DateTime _date) {
+    return DateTime(_date.year, _date.month, _date.day);
   }
 
-  Future<void> _sendNotification(Ingredient ingredient) async {
+  // 단일 재료에 대한 유통기한 알림 발송
+  Future<void> _sendNotification(Ingredient _ingredient) async {
     try {
-      final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
-      if (expiryDate == null) return;
+      final _expiryDate = _refrigeratorService.parseDate(
+        _ingredient.expiryTime,
+      );
+      if (_expiryDate == null) return;
 
-      final todayOnly = _getDateOnly(DateTime.now());
-      final expiryOnly = _getDateOnly(expiryDate);
-      final remainingDays = expiryOnly.difference(todayOnly).inDays;
+      final _todayOnly = _getDateOnly(DateTime.now());
+      final _expiryOnly = _getDateOnly(_expiryDate);
+      final _remainingDays = _expiryOnly.difference(_todayOnly).inDays;
 
-      String body;
-      if (remainingDays == 0) {
-        body = '${ingredient.name}의 유통기한이 오늘입니다!';
-      }
-      else if (remainingDays < 0) {
-        body = '${ingredient.name}의 유통기한이 지났습니다!';
-      }
-      else {
-        body = '${ingredient.name}의 유통기한이 ${remainingDays}일 남았습니다.';
-      }
-      await _showLocalNotification('유통기한 알림', body);
+      final _body = _remainingDays == 0
+          ? '${_ingredient.name}의 유통기한이 오늘입니다!'
+          : _remainingDays < 0
+          ? '${_ingredient.name}의 유통기한이 지났습니다!'
+          : '${_ingredient.name}의 유통기한이 ${_remainingDays}일 남았습니다.';
+      await _showLocalNotification('유통기한 알림', _body);
     }
     catch (e) {
       debugPrint('알림 전송 오류: $e');
     }
   }
 
-  Future<void> _showLocalNotification(String title, String body) async {
-    const androidDetails = AndroidNotificationDetails(
+  // 로컬 알림 표시
+  Future<void> _showLocalNotification(String _title, String _body) async {
+    const _androidDetails = AndroidNotificationDetails(
       'expiry_channel',
       '유통기한 알림',
       channelDescription: '재료의 유통기한이 임박했을 때 알림을 받습니다.',
@@ -194,34 +211,33 @@ class NotificationService {
       priority: Priority.high,
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    const _iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
 
-    const notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
+    const _notificationDetails = NotificationDetails(
+      android: _androidDetails,
+      iOS: _iosDetails,
     );
 
     await _localNotifications.show(
       DateTime.now().millisecondsSinceEpoch % 100000,
-      title,
-      body,
-      notificationDetails,
+      _title,
+      _body,
+      _notificationDetails,
     );
   }
 
-  // 마이페이지에서 테스트할 때 쓰는 함수
+  // 테스트용 알림 발송 (마이페이지용)
   Future<void> sendTestNotification() async {
     try {
-      final ingredients = await _refrigeratorService.getAllIngredients();
-      if (ingredients.isEmpty) return;  
+      final _ingredients = await _refrigeratorService.getAllIngredients();
+      if (_ingredients.isEmpty) return;
 
-      await _sendNotification(ingredients.first);
-    }
-    catch (e) {
+      await _sendNotification(_ingredients.first);
+    } catch (e) {
       debugPrint('테스트 알림 오류: $e');
     }
   }

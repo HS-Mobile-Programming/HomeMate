@@ -1,10 +1,13 @@
-// lib/widgets/recipe_image.dart
+// 레시피 이미지 위젯: Firebase Storage에서 레시피 이미지 비동기 로드 및 표시
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class RecipeImage extends StatelessWidget {
+  // Firebase Storage 이미지 파일명
   final String imageName;
+  // 이미지 가로 크기
   final double width;
+  // 이미지 세로 크기
   final double height;
 
   const RecipeImage({
@@ -17,7 +20,6 @@ class RecipeImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageName.isEmpty) {
-      // imageName이 비어 있으면 기본 아이콘 표시
       return Container(
         width: width,
         height: height,
@@ -26,13 +28,16 @@ class RecipeImage extends StatelessWidget {
       );
     }
 
-    final ref =
-    FirebaseStorage.instance.ref().child('recipes/$imageName'); // Storage 경로
+    final _storageRef = FirebaseStorage.instance.ref().child(
+      'recipes/$imageName',
+    );
 
     return FutureBuilder<String>(
-      future: ref.getDownloadURL(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      future: _storageRef.getDownloadURL(),
+      builder: (context, _snapshot) {
+        final _imageUrl = _snapshot.data!;
+
+        if (_snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
             width: width,
             height: height,
@@ -42,7 +47,7 @@ class RecipeImage extends StatelessWidget {
           );
         }
 
-        if (snapshot.hasError || !snapshot.hasData) {
+        if (_snapshot.hasError || !_snapshot.hasData) {
           return Container(
             width: width,
             height: height,
@@ -51,15 +56,13 @@ class RecipeImage extends StatelessWidget {
           );
         }
 
-        final url = snapshot.data!;
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.network(
-            url,
+            _imageUrl,
             width: width,
             height: height,
             fit: BoxFit.contain,
-            //fit: BoxFit.cover,
           ),
         );
       },
