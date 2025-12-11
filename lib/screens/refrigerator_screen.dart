@@ -128,7 +128,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               hintText: hint,
               counterText: '',
               filled: true,
-              fillColor: colorScheme.primary.withValues(alpha: 0.1),
+              fillColor: colorScheme.primary.withOpacity(0.1),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
@@ -600,6 +600,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 final item = filteredIngredients[index];
                 return Dismissible(
                   key: Key(item.id),
+                  direction: DismissDirection.endToStart,
                   confirmDismiss: (direction) async {
                     final confirm = await showDialog<bool>(
                       context: context,
@@ -658,25 +659,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     });
                   },
                   background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Icon(Icons.delete, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          "삭제",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  secondaryBackground: Container(
                     color: Colors.red,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
