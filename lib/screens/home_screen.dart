@@ -175,7 +175,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(
                         builder: (context) => RecipeDetailScreen(recipe: recipe),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    });
                   },
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8.0),

@@ -10,6 +10,11 @@ import 'local_recipe_cache.dart';
 enum RecipeSortMode { nameAsc, nameDesc }
 
 class RecipeService {
+  // 캐싱 -> 싱글톤 객체
+  RecipeService._internal();
+  static final RecipeService _instance = RecipeService._internal();
+  factory RecipeService() => _instance;
+
   // Firestore 데이터베이스 인스턴스
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   // 즐겨찾기 관리 서비스
