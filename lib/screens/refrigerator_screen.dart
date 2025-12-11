@@ -395,170 +395,159 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // 검색창
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-              child: TextField(
-                onChanged: _onSearchChanged,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // -- 1. 고정 영역 --
+
+            // 검색창
+            TextField(
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
               ),
             ),
-          ),
-          // 달력
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 16.0,
-                left: 16.0,
-                right: 16.0,
+            const SizedBox(height: 16.0),
+
+            // 달력
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+              child: TableCalendar(
+                locale: 'ko_KR',
+                rowHeight: 45,
+                firstDay: DateTime.utc(2000, 1, 1),
+                lastDay: DateTime.utc(2099, 12, 31),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
                 ),
-                child: TableCalendar(
-                  locale: 'ko_KR',
-                  firstDay: DateTime.utc(2000, 1, 1),
-                  lastDay: DateTime.utc(2099, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  headerStyle: const HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
+                eventLoader: (day) {
+                  return _allIngredients.where((ingredient) {
+                    final expiryDate = _refrigeratorService.parseDate(
+                      ingredient.expiryTime,
+                    );
+                    return expiryDate != null && isSameDay(expiryDate, day);
+                  }).toList();
+                },
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    if (isSameDay(_selectedDay, selectedDay)) {
+                      _selectedDay = null;
+                      _focusedDay = focusedDay;
+                    } else {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    }
+                    _refreshList();
+                  });
+                },
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                calendarStyle: CalendarStyle(
+                  todayDecoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    shape: BoxShape.circle,
                   ),
-                  eventLoader: (day) {
-                    return _allIngredients.where((ingredient) {
-                      final expiryDate = _refrigeratorService.parseDate(
-                        ingredient.expiryTime,
-                      );
-                      return expiryDate != null && isSameDay(expiryDate, day);
-                    }).toList();
-                  },
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      if (isSameDay(_selectedDay, selectedDay)) {
-                        _selectedDay = null;
-                        _focusedDay = focusedDay;
-                      } else {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      }
-                      _refreshList();
-                    });
-                  },
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: Colors.green.shade300,
-                      shape: BoxShape.circle,
-                    ),
+                  selectedDecoration: BoxDecoration(
+                    color: Colors.green.shade300,
+                    shape: BoxShape.circle,
                   ),
-                  calendarBuilders: CalendarBuilders(
-                    markerBuilder: (context, day, events) {
-                      if (events.isEmpty) return null;
-                      final now = DateTime.now();
-                      final today = DateTime(now.year, now.month, now.day);
-                      final target = DateTime(day.year, day.month, day.day);
-                      final difference = target.difference(today).inDays;
+                ),
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (context, day, events) {
+                    if (events.isEmpty) return null;
+                    final now = DateTime.now();
+                    final today = DateTime(now.year, now.month, now.day);
+                    final target = DateTime(day.year, day.month, day.day);
+                    final difference = target.difference(today).inDays;
 
-                      Color dotColor = Colors.black;
-                      if (difference < 0) {
-                        dotColor = Colors.red;
-                      } else if (difference == 0) {
-                        dotColor = Colors.orange;
-                      } else if (difference <= 3) {
-                        dotColor = Colors.yellow;
-                      }
+                    Color dotColor = Colors.black;
+                    if (difference < 0) {
+                      dotColor = Colors.red;
+                    } else if (difference == 0) {
+                      dotColor = Colors.orange;
+                    } else if (difference <= 3) {
+                      dotColor = Colors.yellow;
+                    }
 
-                      return Positioned(
-                        bottom: 1,
-                        child: Container(
-                          width: 7.0,
-                          height: 7.0,
-                          decoration: BoxDecoration(
-                            color: dotColor,
-                            shape: BoxShape.circle,
-                          ),
+                    return Positioned(
+                      bottom: 1,
+                      child: Container(
+                        width: 7.0,
+                        height: 7.0,
+                        decoration: BoxDecoration(
+                          color: dotColor,
+                          shape: BoxShape.circle,
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
-          ),
-          // 상단 버튼들
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                  vertical: 4.0,
-                ),
-                child: Row(
-                  children: [
-                    ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.add,
+
+            // 상단 버튼들
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.add,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
+                    label: Text(
+                      "추가",
+                      style: TextStyle(
                         color: colorScheme.primary,
-                        size: 20,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
-                      label: Text(
-                        "추가",
-                        style: TextStyle(
+                    ),
+                    onPressed: () => _showIngredientDialog(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.surface,
+                      surfaceTintColor: colorScheme.primary,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
                           color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      onPressed: () => _showIngredientDialog(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        surfaceTintColor: colorScheme.primary,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: colorScheme.primary,
-                            width: 1,
-                          ),
+                          width: 1,
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    _buildSortButton("name", "이름"),
-                    _buildSortButton("유통기한", "유통기한"),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  _buildSortButton("name", "이름"),
+                  _buildSortButton("유통기한", "유통기한"),
+                ],
               ),
             ),
-          ),
-          // 선택 날짜 안내
-          if (_selectedDay != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+
+            // 선택 날짜 안내
+            if (_selectedDay != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Row(
                   children: [
                     Text(
@@ -581,111 +570,102 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   ],
                 ),
               ),
-            ),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Divider(height: 10),
-            ),
-          ),
-          // 재료 목록
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              left: 16.0,
-              right: 16.0,
-              bottom: 16.0,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final item = filteredIngredients[index];
-                return Dismissible(
-                  key: Key(item.id),
-                  direction: DismissDirection.endToStart,
-                  confirmDismiss: (direction) async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("삭제 확인"),
-                          content: Text("재료 '${item.name}'을(를) 삭제하시겠습니까?"),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text("취소"),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text(
-                                "삭제",
-                                style: TextStyle(color: Colors.red),
+
+            const Divider(height: 10),
+
+            // -- 2. 스크롤 영역 --
+            Expanded(
+              child: ListView.builder(
+                itemCount: filteredIngredients.length,
+                itemBuilder: (context, index) {
+                  final item = filteredIngredients[index];
+                  return Dismissible(
+                    key: Key(item.id),
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (direction) async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("삭제 확인"),
+                            content: Text("재료 '${item.name}'을(를) 삭제하시겠습니까?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text("취소"),
                               ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    return confirm ?? false;
-                  },
-                  onDismissed: (dir) async {
-                    final updatedList = await _refrigeratorService
-                        .deleteIngredient(item.id);
-                    alarm.value++;
-
-                    if (!mounted) return;
-
-                    setState(() {
-                      _allIngredients = updatedList;
-                      List<Ingredient> temp = List.from(_allIngredients);
-
-                      if (_search.isNotEmpty) {
-                        temp = temp
-                            .where((ing) => ing.name.contains(_search))
-                            .toList();
-                      }
-
-                      if (_selectedDay != null) {
-                        temp = temp.where((ing) {
-                          final expiryDateParsed = _refrigeratorService
-                              .parseDate(ing.expiryTime);
-                          return expiryDateParsed != null &&
-                              isSameDay(expiryDateParsed, _selectedDay!);
-                        }).toList();
-                      }
-
-                      filteredIngredients = _refrigeratorService.sortList(
-                        temp,
-                        _sortMode,
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  "삭제",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
-                    });
-                  },
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          "삭제",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      return confirm ?? false;
+                    },
+                    onDismissed: (dir) async {
+                      final updatedList = await _refrigeratorService.deleteIngredient(item.id);
+                      alarm.value++;
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        _allIngredients = updatedList;
+                        List<Ingredient> temp = List.from(_allIngredients);
+
+                        if (_search.isNotEmpty) {
+                          temp = temp
+                              .where((ing) => ing.name.contains(_search))
+                              .toList();
+                        }
+
+                        if (_selectedDay != null) {
+                          temp = temp.where((ing) {
+                            final expiryDateParsed = _refrigeratorService.parseDate(ing.expiryTime);
+                            return expiryDateParsed != null &&
+                                isSameDay(expiryDateParsed, _selectedDay!);
+                          }).toList();
+                        }
+
+                        filteredIngredients = _refrigeratorService.sortList(
+                          temp,
+                          _sortMode,
+                        );
+                      });
+                    },
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            "삭제",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.delete, color: Colors.white),
-                      ],
+                          SizedBox(width: 8),
+                          Icon(Icons.delete, color: Colors.white),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: IngredientItem(
-                    ingredient: item,
-                    onEdit: () => _showIngredientDialog(ingredient: item),
-                  ),
-                );
-              }, childCount: filteredIngredients.length),
+                    child: IngredientItem(
+                      ingredient: item,
+                      onEdit: () => _showIngredientDialog(ingredient: item),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
