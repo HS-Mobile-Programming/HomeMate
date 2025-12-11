@@ -1,48 +1,53 @@
+// 즐겨찾기 로컬 캐시: Hive를 사용한 사용자별 즐겨찾기 레시피 ID 목록 저장 및 조회
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalFavoritesCache {
+  // Hive 박스 이름 상수
   static const String userBoxName = 'user_data_box';
 
-  Box? get _boxOrNull =>
+  // Hive 박스 참조 (열려있지 않으면 null)
+  Box? get _localBox =>
       Hive.isBoxOpen(userBoxName) ? Hive.box(userBoxName) : null;
 
-  Future<void> saveFavorites(String uid, List<String> recipeIds) async {
+  // 즐겨찾기 목록을 로컬 캐시에 저장
+  Future<void> saveFavoritesToLocalCache(
+    String _uid,
+    List<String> _recipeIds,
+  ) async {
     try {
-      final box = _boxOrNull;
-      if (box == null) {
-        return;
-      }
+      final _box = _localBox;
+      if (_box == null) return;
 
-      final jsonString = jsonEncode(recipeIds);
-      await box.put('favorites_$uid', jsonString);
-    } catch (e, st) {
-    }
+      final _jsonString = jsonEncode(_recipeIds);
+      await _box.put('favorites_$_uid', _jsonString);
+    } catch (e) {}
   }
 
-  List<String> loadFavorites(String uid) {
+  // 로컬 캐시에서 즐겨찾기 목록 조회
+  List<String> loadFavoritesFromLocalCache(String _uid) {
     try {
-      final box = _boxOrNull;
-      if (box == null) return [];
+      final _box = _localBox;
+      if (_box == null) return [];
 
-      final raw = box.get('favorites_$uid');
-      if (raw is! String) return [];
+      final _raw = _box.get('favorites_$_uid');
+      if (_raw is! String) return [];
 
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return [];
+      final _decoded = jsonDecode(_raw);
+      if (_decoded is! List) return [];
 
-      return decoded.map((e) => e.toString()).toList();
-    } catch (e, st) {
+      return _decoded.map((_item) => _item.toString()).toList();
+    } catch (e) {
       return [];
     }
   }
 
-  Future<void> clearFavorites(String uid) async {
+  // 로컬 캐시에서 즐겨찾기 목록 삭제 (로그아웃 시 사용)
+  Future<void> clearFavoritesFromLocalCache(String _uid) async {
     try {
-      final box = _boxOrNull;
-      if (box == null) return;
-      await box.delete('favorites_$uid');
-    } catch (e, st) {
-    }
+      final _box = _localBox;
+      if (_box == null) return;
+      await _box.delete('favorites_$_uid');
+    } catch (e) {}
   }
 }

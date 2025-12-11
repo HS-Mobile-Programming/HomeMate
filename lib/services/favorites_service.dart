@@ -1,74 +1,88 @@
+// 즐겨찾기 관리 서비스: 로컬 캐시와 Firestore 간 즐겨찾기 레시피 ID 동기화 및 CRUD
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'local_favorites_cache.dart';
 
 class FavoritesService {
+  // Firebase 인증 인스턴스
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // Firestore 데이터베이스 인스턴스
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // 로컬 즐겨찾기 캐시
   final LocalFavoritesCache _localCache = LocalFavoritesCache();
 
+  // 현재 로그인 사용자 uid
   String get _uid => _auth.currentUser!.uid;
 
-  CollectionReference<Map<String, dynamic>> get _favCol =>
-      _db.collection('users').doc(_uid).collection('favorites');
+  // Firestore 즐겨찾기 컬렉션 참조
+  CollectionReference<Map<String, dynamic>> get _favoritesCollection =>
+      _firestore.collection('users').doc(_uid).collection('favorites');
 
-  // 즐겨찾기 추가 (1순위.로컬, 2순위.Firestore 시도)
-  Future<void> addFavorite(String recipeId) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    final uid = user.uid;
-
-    // 1순위.로컬 업데이트
-    final current = _localCache.loadFavorites(uid);
-    if (!current.contains(recipeId)) {
-      current.add(recipeId);
-      await _localCache.saveFavorites(uid, current);
-    }
-
-    // 2순위.Firestore 반영 시도 (실패해도 로컬 유지)
-    try {
-      await _favCol.doc(recipeId).set({"saved": true});
-    } catch (e, st) {
-    }
+  // Firestore에 즐겨찾기 저장
+  Future<void> _saveFavoriteToFirestore(String _recipeId) async {
+    await _favoritesCollection.doc(_recipeId).set({"saved": true});
   }
 
-  // 즐겨찾기 제거 (위와 동일)
-  Future<void> removeFavorite(String recipeId) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    final uid = user.uid;
-
-    // 1순위.로컬 업데이트
-    final current = _localCache.loadFavorites(uid);
-    current.remove(recipeId);
-    await _localCache.saveFavorites(uid, current);
-
-    // 2순위.Firestore 반영 시도
-    try {
-      await _favCol.doc(recipeId).delete();
-    } catch (e, st) {
-    }
+  // Firestore에서 즐겨찾기 삭제
+  Future<void> _deleteFavoriteFromFirestore(String _recipeId) async {
+    await _favoritesCollection.doc(_recipeId).delete();
   }
 
-  // 즐겨찾기 전체 리스트 가져오기 (1순위.로컬, 2순위.Firestore 동기화)
+  // Firestore에서 즐겨찾기 목록 로드 (성공 시 로컬 캐시에 동기화)
+  Future<List<String>> _loadFavoritesFromFirestore() async {
+    final _snapshot = await _favoritesCollection.get();
+    return _snapshot.docs.map((_doc) => _doc.id).toList();
+  }
+
+  // 즐겨찾기 추가 (로컬 캐시 반영 후 Firestore 동기화 시도)
+  Future<void> addFavorite(String _recipeId) async {
+    final _user = _auth.currentUser;
+    if (_user == null) return;
+    final _uid = _user.uid;
+
+    final _current = _localCache.loadFavoritesFromLocalCache(_uid);
+    if (!_current.contains(_recipeId)) {
+      _current.add(_recipeId);
+      await _localCache.saveFavoritesToLocalCache(_uid, _current);
+    }
+
+    try {
+      await _saveFavoriteToFirestore(_recipeId);
+    } catch (_) {}
+  }
+
+  // 즐겨찾기 제거 (로컬 캐시 반영 후 Firestore 동기화 시도)
+  Future<void> removeFavorite(String _recipeId) async {
+    final _user = _auth.currentUser;
+    if (_user == null) return;
+    final _uid = _user.uid;
+
+    final _current = _localCache.loadFavoritesFromLocalCache(_uid);
+    _current.remove(_recipeId);
+    await _localCache.saveFavoritesToLocalCache(_uid, _current);
+
+    try {
+      await _deleteFavoriteFromFirestore(_recipeId);
+    } catch (_) {}
+  }
+
+  // 즐겨찾기 목록 조회 (로컬 우선, 비어있으면 Firestore 로드 후 저장)
   Future<List<String>> getFavoriteList() async {
-    final user = _auth.currentUser;
-    if (user == null) return [];
-    final uid = user.uid;
+    final _user = _auth.currentUser;
+    if (_user == null) return [];
+    final _uid = _user.uid;
 
-    // 1순위.로컬 먼저 시도
-    var list = _localCache.loadFavorites(uid);
-    if (list.isNotEmpty) {
-      return list;
+    var _list = _localCache.loadFavoritesFromLocalCache(_uid);
+    if (_list.isNotEmpty) {
+      return _list;
     }
 
-    // 2순위.Firestore 동기화 -> 로컬X -> Firestore에서 로컬로 저장
     try {
-      final snapshot = await _favCol.get();
-      list = snapshot.docs.map((doc) => doc.id).toList();
-      await _localCache.saveFavorites(uid, list);
-      return list;
-    } catch (e, st) {
+      _list = await _loadFavoritesFromFirestore();
+      await _localCache.saveFavoritesToLocalCache(_uid, _list);
+      return _list;
+    }
+    catch (_) {
       return [];
     }
   }

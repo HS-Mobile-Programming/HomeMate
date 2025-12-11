@@ -1,8 +1,10 @@
+// 레시피 카드 위젯: 레시피 목록 화면에서 사용되는 개별 레시피 카드 UI 구성
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
+  // 표시할 레시피 데이터
   final Recipe recipe;
 
   const RecipeCard({super.key, required this.recipe});
@@ -49,11 +51,17 @@ class RecipeCard extends StatelessWidget {
                   children: [
                     Icon(Icons.timer, size: 14, color: Colors.grey),
                     //Text(" ${recipe.cookTime}  ", style: TextStyle(color: Colors.grey)),
-                    Text(" ${recipe.cookTimeMinutes}  ", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      " ${recipe.cookTimeMinutes}  ",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                     Icon(Icons.restaurant, size: 14, color: Colors.grey),
-                    Text(" ${recipe.difficulty}", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      " ${recipe.difficulty}",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -63,15 +71,15 @@ class RecipeCard extends StatelessWidget {
   }
 }
 
-// Firebase Storage에서 이미지 불러오는 위젯
+// Firebase Storage에서 레시피 이미지 비동기 로드
 class _RecipeImage extends StatelessWidget {
-  final String imageName; // 예: "recipe_001.jpg"
+  // Firebase Storage 이미지 파일명
+  final String imageName;
 
   const _RecipeImage({required this.imageName});
 
   @override
   Widget build(BuildContext context) {
-    // imageName이 비어 있으면 기본 플레이스홀더
     if (imageName.isEmpty) {
       return Container(
         color: Colors.grey,
@@ -81,14 +89,16 @@ class _RecipeImage extends StatelessWidget {
       );
     }
 
-    // Firebase Storage에서 이미지 URL 가져오기
-    final ref = FirebaseStorage.instance.ref().child('recipes/$imageName'); // 파이어 스토리지 경로
+    final _storageRef = FirebaseStorage.instance.ref().child(
+      'recipes/$imageName',
+    );
 
     return FutureBuilder<String>(
-      future: ref.getDownloadURL(),
-      builder: (context, snapshot) {
-        // 로딩 중
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      future: _storageRef.getDownloadURL(),
+      builder: (context, _snapshot) {
+        final _imageUrl = _snapshot.data!;
+
+        if (_snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             color: Colors.grey[200],
             child: const Center(
@@ -97,8 +107,7 @@ class _RecipeImage extends StatelessWidget {
           );
         }
 
-        // 에러 또는 데이터 없음
-        if (snapshot.hasError || !snapshot.hasData) {
+        if (_snapshot.hasError || !_snapshot.hasData) {
           return Container(
             color: Colors.grey,
             child: const Center(
@@ -107,12 +116,7 @@ class _RecipeImage extends StatelessWidget {
           );
         }
 
-        // 정상적으로 URL을 받아온 경우
-        final url = snapshot.data!;
-        return Image.network(
-          url,
-          fit: BoxFit.cover,
-        );
+        return Image.network(_imageUrl, fit: BoxFit.cover);
       },
     );
   }

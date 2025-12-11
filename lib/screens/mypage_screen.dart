@@ -1,9 +1,10 @@
+// 마이페이지: 계정 정보, 알림 설정, 도움말
 import 'package:flutter/material.dart';
-import 'favorites_screen.dart';
-import 'login_screen.dart';
 import '../data/help_data.dart';
 import '../services/account_service.dart';
 import '../services/notification_service.dart';
+import 'favorites_screen.dart';
+import 'login_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -13,37 +14,41 @@ class MyPageScreen extends StatefulWidget {
 }
 
 class _MyPageScreenState extends State<MyPageScreen> {
+  // 사용자 이름 상태
   String myName = "";
 
   @override
   void initState() {
     super.initState();
-    getName();
+    _loadUserName();
   }
 
-  Future<void> getName() async {
-    String name = await AccountService.instance.getName();
-
-    if (mounted) {
-      setState(() {
-        myName = name;
-      });
+  // 사용자 이름 로드
+  Future<void> _loadUserName() async {
+    final fetchedName = await AccountService.instance.getName();
+    if (!mounted) {
+      return;
     }
+    setState(() {
+      myName = fetchedName;
+    });
   }
 
-  // 계정 탈퇴 진행 메서드
+  // 계정 탈퇴 플로우
   Future<void> _onDeleteAccountPressed() async {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // 1차 탈퇴 확인
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: const Text('계정탈퇴', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          '계정탈퇴',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: const Text(
           '탈퇴 후에는 계정과 모든 데이터가 삭제되며,\n'
-              '복구할 수 없습니다.\n\n정말로 탈퇴하시겠습니까?',
+          '복구할 수 없습니다.\n\n정말로 탈퇴하시겠습니까?',
         ),
         actions: [
           TextButton(
@@ -52,28 +57,31 @@ class _MyPageScreenState extends State<MyPageScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text(
+              '탈퇴',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true) { return; }
 
-    // 비밀번호 재입력 다이얼로그
     final password = await showDialog<String>(
       context: context,
       builder: (context) {
-        final controller = TextEditingController();
+        final passwordController = TextEditingController();
         return AlertDialog(
           backgroundColor: colorScheme.surface,
-          title: const Text('비밀번호 확인', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            '비밀번호 확인',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
-            controller: controller,
+            controller: passwordController,
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: '비밀번호를 입력하세요',
-            ),
+            decoration: const InputDecoration(labelText: '비밀번호를 입력하세요'),
           ),
           actions: [
             TextButton(
@@ -81,23 +89,23 @@ class _MyPageScreenState extends State<MyPageScreen> {
               child: const Text('취소', style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('확인', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () =>
+                  Navigator.of(context).pop(passwordController.text),
+              child: const Text(
+                '확인',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
       },
     );
-    // 사용자의 취소 or 비밀번호 미입력 시
-    if (password == null || password.isEmpty) {
-      return;
-    }
 
-    // 삭제 처리
+    if (password == null || password.isEmpty) { return; }
+
     try {
       await AccountService.instance.deleteAccount(password);
-
-      if (!mounted) return;
+      if (!mounted) { return; }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -106,21 +114,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ),
       );
 
-      // 로그인 화면으로
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
+        (route) => false,
       );
-    } on AuthException catch (e) {  // AuthException 발생 처리
-      if (!mounted) return;
+    }
+    on AuthException catch (e) {
+      if (!mounted) { return; }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
           duration: const Duration(seconds: 2),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
+    }
+    catch (_) {
+      if (!mounted) { return; }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('계정 삭제 중 알 수 없는 오류가 발생했습니다.'),
@@ -130,8 +139,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
     }
   }
 
-  // [헬퍼 메서드 1: 액션 확인 다이얼로그]
-  void _showActionDialog(String title, String content, String confirmText, Color confirmColor) {
+  // 확인이 필요한 액션 다이얼로그
+  void _showActionDialog(
+    String title,
+    String content,
+    String confirmText,
+    Color confirmColor,
+  )
+  {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
@@ -164,118 +179,147 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 );
               }
             },
-            child: Text(confirmText, style: TextStyle(color: confirmColor, fontWeight: FontWeight.bold)),
+            child: Text(
+              confirmText,
+              style: TextStyle(
+                color: confirmColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // 알림 테스트 눌렀을 때
+  // 알림 테스트
   Future<void> _testNotification() async {
     try {
       await NotificationService.instance.checkExpiringIngredients();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("알림 테스트가 실행되었습니다. 유통기한이 임박한 재료가 있으면 알림이 표시됩니다."),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("알림 테스트가 실행되었습니다. 유통기한이 임박한 재료가 있으면 알림이 표시됩니다."),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("알림 테스트 오류: $e"),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("알림 테스트 오류: $e"),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
-  // 알림 설정 창 띄우기
-  void _showNotificationDialog() async {
+  // 알림 설정 다이얼로그
+  Future<void> _showNotificationDialog() async {
     final colorScheme = Theme.of(context).colorScheme;
-    final settings = await NotificationService.instance.getNotificationSettings();
+    final settings = await NotificationService.instance
+        .getNotificationSettingsFromFirestore();
     bool isPushOn = settings['isPushOn'] as bool;
     int days = settings['days'] as int;
 
-    showDialog(
+    if (!mounted) return;
+
+    await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                backgroundColor: Colors.white,
-                title: const Center(child: Text("알림설정", style: TextStyle(fontSize: 18))),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("푸시 알림", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Checkbox(
-                            value: isPushOn,
-                            activeColor: colorScheme.primary,
-                            onChanged: (val) => setState(() => isPushOn = val!)
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Text("재료의 유통기한이", style: TextStyle(fontSize: 14)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed: () => setState(() { if(days>1) days--; })
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Center(
+                child: Text("알림설정", style: TextStyle(fontSize: 18)),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "푸시 알림",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        Text("$days", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () => setState(() => days++)
-                        ),
-                        const Text("일"),
-                      ],
-                    ),
-                    const Text("남았을 때 알리기"),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text("취소", style: TextStyle(color: colorScheme.error))
+                      ),
+                      Checkbox(
+                        value: isPushOn,
+                        activeColor: colorScheme.primary,
+                        onChanged: (val) => setState(() => isPushOn = val!),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                      onPressed: () async {
-                        await NotificationService.instance.saveNotificationSettings(
+                  const SizedBox(height: 16),
+                  const Text("재료의 유통기한이", style: TextStyle(fontSize: 14)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: () => setState(() {
+                          if (days > 1) days--;
+                        }),
+                      ),
+                      Text(
+                        "$days",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => setState(() => days++),
+                      ),
+                      const Text("일"),
+                    ],
+                  ),
+                  const Text("남았을 때 알리기"),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text("취소", style: TextStyle(color: colorScheme.error)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await NotificationService.instance
+                        .saveNotificationSettingsToFirestore(
                           isPushOn: isPushOn,
                           days: days,
                         );
-                        Navigator.of(context).pop();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("알림 설정이 저장되었습니다."),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text("확인", style: TextStyle(color: colorScheme.primary))
+                    Navigator.of(context).pop();
+                    if (!context.mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("알림 설정이 저장되었습니다."),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "확인",
+                    style: TextStyle(color: colorScheme.primary),
                   ),
-                ],
-              );
-            }
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  // [헬퍼 메서드 3: 도움말 다이얼로그]
+  // 도움말 다이얼로그
   void _showHelpDialog() {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -283,38 +327,26 @@ class _MyPageScreenState extends State<MyPageScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Center(child: Text("도움말", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                helpTitle1,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                helpContent1,
-                style: TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
-              ),
-              SizedBox(height: 16),
-              Text(
-                helpTitle2,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                helpContent2,
-                style: TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
-              ),
-            ],
-          ),
+        title: const Center(
+          child: Text("도움말", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(helpTitle1, style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text(helpContent1),
+            SizedBox(height: 12),
+            Text(helpTitle2, style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text(helpContent2),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("닫기", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)),
+            child: Text("닫기", style: TextStyle(color: colorScheme.primary)),
           ),
         ],
       ),
@@ -326,73 +358,104 @@ class _MyPageScreenState extends State<MyPageScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: SingleChildScrollView(
+      appBar: AppBar(
+        title: const Text("마이페이지"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("마이페이지", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-
-            // 프로필 카드
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.account_circle, size: 64, color: colorScheme.primary),
-                    const SizedBox(width: 16),
-                    Text(myName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
+        children: [
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.person, color: Colors.green),
+              title: Text(myName.isEmpty ? "이름 불러오는 중..." : myName),
+              subtitle: const Text("계정 정보"),
+              trailing: IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadUserName,
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            _buildMenuButton("   즐겨찾기", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FavoritesScreen()),
-              );
-            }),
-
-            _buildMenuButton("   알림설정", _showNotificationDialog),
-            //_buildMenuButton("   알림 테스트", _testNotification),
-            _buildMenuButton("   도움말", _showHelpDialog),
-            _buildMenuButton("   로그아웃", () => _showActionDialog("로그아웃", "로그아웃 하시겠습니까?", "로그아웃", colorScheme.error)),
-            _buildMenuButton("   계정탈퇴", _onDeleteAccountPressed),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // [헬퍼 메서드 4: 메뉴 버튼 UI]
-  Widget _buildMenuButton(String text, VoidCallback onTap) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          alignment: Alignment.centerLeft,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
-            side: BorderSide(color: Colors.green.withValues(alpha: 1.0), width: 2),
           ),
-        ),
-        child: Text(text, style: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 16)),
+          const SizedBox(height: 12),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.star, color: Colors.amber),
+                  title: const Text("즐겨찾기"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FavoritesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.notifications_active,
+                    color: Colors.green,
+                  ),
+                  title: const Text("알림 설정"),
+                  onTap: _showNotificationDialog,
+                ),
+                //ListTile(
+                //  leading: const Icon(Icons.notifications, color: Colors.blue),
+                //  title: const Text("알림 테스트"),
+                //  onTap: _testNotification,
+                //),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.redAccent),
+                  title: const Text("로그아웃"),
+                  onTap: () => _showActionDialog(
+                    "로그아웃",
+                    "로그아웃하시겠습니까?",
+                    "로그아웃",
+                    colorScheme.primary,
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever, color: Colors.red),
+                  title: const Text("계정 탈퇴"),
+                  onTap: _onDeleteAccountPressed,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.help_outline, color: Colors.indigo),
+              title: const Text("도움말"),
+              onTap: _showHelpDialog,
+            ),
+          ),
+        ],
       ),
     );
   }
