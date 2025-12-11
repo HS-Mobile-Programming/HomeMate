@@ -107,15 +107,29 @@ class RefrigeratorService {
       _cachedIngredients = _localCache.loadIngredientsFromLocalCache(_uid);
     }
 
-    final _newIngredient = Ingredient(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      quantity: quantity,
-      expiryTime: expiryTime,
-    );
+    try {
+      final existingIngredient = _cachedIngredients.firstWhere(
+            (ing) => ing.name == name && ing.expiryTime == expiryTime,
+      );
+      final updatedIngredient = Ingredient(
+        id: existingIngredient.id,
+        name: existingIngredient.name,
+        expiryTime: existingIngredient.expiryTime,
+        quantity: existingIngredient.quantity + quantity,
+      );
+      final index = _cachedIngredients.indexOf(existingIngredient);
+      _cachedIngredients[index] = updatedIngredient;
+    } catch (e) {
+      final _newIngredient = Ingredient(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        quantity: quantity,
+        expiryTime: expiryTime,
+      );
+      _cachedIngredients = List<Ingredient>.from(_cachedIngredients)
+        ..add(_newIngredient);
+    }
 
-    _cachedIngredients = List<Ingredient>.from(_cachedIngredients)
-      ..add(_newIngredient);
     await _localCache.saveIngredientsToLocalCache(_uid, _cachedIngredients);
     _syncIngredientsToFirestore(_uid);
     alarm.value++;
