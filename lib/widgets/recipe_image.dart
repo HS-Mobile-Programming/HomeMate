@@ -24,7 +24,8 @@ class RecipeImage extends StatelessWidget {
         width: width,
         height: height,
         color: Colors.grey[200],
-        child: const Icon(Icons.image_not_supported),
+        // 이미지가 없을 때 밥그릇 아이콘 표시
+        child: const Icon(Icons.rice_bowl, color: Colors.grey),
       );
     }
 
@@ -35,14 +36,18 @@ class RecipeImage extends StatelessWidget {
     return FutureBuilder<String>(
       future: _storageRef.getDownloadURL(),
       builder: (context, _snapshot) {
-        final _imageUrl = _snapshot.data!;
-
+        // 먼저 로딩 중인지 확인합니다.
         if (_snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
             width: width,
             height: height,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // 로딩 중에 연한 회색 밥그릇 아이콘 표시
+            child: Center(
+              child: Icon(
+                Icons.rice_bowl,
+                color: Colors.grey.shade300,
+                size: 80,
+              ),
             ),
           );
         }
@@ -52,9 +57,12 @@ class RecipeImage extends StatelessWidget {
             width: width,
             height: height,
             color: Colors.grey[200],
-            child: const Icon(Icons.error),
+            child: const Icon(Icons.rice_bowl, color: Colors.grey),
           );
         }
+
+        // 데이터 가져오기
+        final _imageUrl = _snapshot.data!;
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),

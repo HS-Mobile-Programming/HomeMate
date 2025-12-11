@@ -83,8 +83,9 @@ class _RecipeImage extends StatelessWidget {
     if (imageName.isEmpty) {
       return Container(
         color: Colors.grey,
+        // 이미지가 없을 때 밥그릇 아이콘 표시
         child: const Center(
-          child: Icon(Icons.image_not_supported, size: 50, color: Colors.white),
+          child: Icon(Icons.rice_bowl, size: 80, color: Colors.white),
         ),
       );
     }
@@ -96,26 +97,34 @@ class _RecipeImage extends StatelessWidget {
     return FutureBuilder<String>(
       future: _storageRef.getDownloadURL(),
       builder: (context, _snapshot) {
-        final _imageUrl = _snapshot.data!;
-
+        // 로딩 중인지 확인
         if (_snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             color: Colors.grey[200],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // [수정] 로딩 중에 연한 회색 밥그릇 아이콘 표시
+            child: Center(
+              child: Icon(
+                Icons.rice_bowl,
+                size: 50,
+                color: Colors.grey.shade400,
+              ),
             ),
           );
         }
 
+        // 에러가 있는지 확인
         if (_snapshot.hasError || !_snapshot.hasData) {
           return Container(
             color: Colors.grey,
+            // 에러 발생 시 밥그릇 아이콘 표시
             child: const Center(
-              child: Icon(Icons.error, size: 50, color: Colors.white),
+              child: Icon(Icons.rice_bowl, size: 80, color: Colors.white),
             ),
           );
         }
 
+        // 데이터 가져오기
+        final _imageUrl = _snapshot.data!;
         return Image.network(_imageUrl, fit: BoxFit.cover);
       },
     );
