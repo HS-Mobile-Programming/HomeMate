@@ -1,6 +1,7 @@
 // 레시피 검색·정렬 목록 화면
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../services/recommendation_service.dart';
 import '../models/recipe.dart';
 import '../models/recipe_sort_mode.dart';
 import '../services/recipe_service.dart';
@@ -17,6 +18,8 @@ class RecipeScreen extends StatefulWidget {
 class _RecipeScreenState extends State<RecipeScreen> {
   // 레시피 서비스
   final RecipeService _recipeService = RecipeService();
+  final RecommendationService _recommendationService = RecommendationService();
+
   // 검색·정렬 결과 목록
   List<Recipe> _foundRecipes = [];
   // 정렬 모드 상태
@@ -25,6 +28,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
   String _searchKeyword = "";
   // 로딩 상태
   bool _isLoading = false;
+  // ai 로딩 상태
+  bool _isAiLoading = false;
 
   @override
   void initState() {
@@ -43,6 +48,47 @@ class _RecipeScreenState extends State<RecipeScreen> {
         _foundRecipes = sortedRecipes;
         _isLoading = false;
       });
+    }
+  }
+
+  // ai 검색
+  Future<void> _onAiSearchPressed() async {
+    if (_searchKeyword.isEmpty) return;
+
+    setState(() {
+      _isAiLoading = true;
+    });
+
+    try {
+      // AI에게 레시피 생성 요청
+      final aiRecipes = await _recommendationService.getAiRecipesFromKeyword(_searchKeyword);
+
+      if (mounted) {
+        if (aiRecipes.isNotEmpty) {
+          setState(() {
+            _foundRecipes = aiRecipes; // 결과 목록을 AI 결과로 교체
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("AI가 새로운 레시피를 만들었습니다! 🤖")),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("AI가 레시피를 생성하지 못했습니다.")),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("오류가 발생했습니다.")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAiLoading = false;
+        });
+      }
     }
   }
 
@@ -71,7 +117,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
           ? RecipeSortMode.nameDesc
           : RecipeSortMode.nameAsc;
     });
-    _refreshList();
+    final sorted = _recipeService.sortRecipes(_foundRecipes, _sortMode);
+    setState(() {
+      _foundRecipes = sorted;
+    });
   }
 
   // 정렬 버튼 UI
@@ -88,19 +137,21 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
-  // 검색 결과 없음 안내 포인트
   Widget _buildSuggestionPoint(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(" • ", style: TextStyle(color: Colors.black54, height: 1.5)),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(color: Colors.black54, height: 1.5),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(" • ", style: TextStyle(color: Colors.black54, height: 1.5)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.black54, height: 1.5),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -142,65 +193,139 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ),
             // 목록/로딩/빈 상태
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+              child: _isLoading || _isAiLoading
+                  ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (_isAiLoading) ...[
+                    const SizedBox(height: 16),
+                    const Text("AI가 레시피를 생성 중입니다..."),
+                  ]
+                ],
+              )
                   : _foundRecipes.isNotEmpty
                   ? ListView.builder(
-                      itemCount: _foundRecipes.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RecipeDetailScreen(
-                                  recipe: _foundRecipes[index],
+                itemCount: _foundRecipes.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecipeDetailScreen(
+                            recipe: _foundRecipes[index],
+                          ),
+                        ),
+                      );
+                    },
+                    child: RecipeCard(recipe: _foundRecipes[index]),
+                  );
+                },
+              ) : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // 검색 결과 없음 안내
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9F9F9),
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // [수정] 왼쪽 정렬
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.info_outline, color: Colors.black54),
+                              SizedBox(width: 8),
+                              Text(
+                                "검색 결과가 없습니다.",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                            ).then((_) => _refreshList());
-                          },
-                          child: RecipeCard(recipe: _foundRecipes[index]),
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Container(
-                        margin: const EdgeInsets.all(16.0),
-                        padding: const EdgeInsets.all(24.0),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9F9F9),
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.info_outline, color: Colors.black54),
-                                SizedBox(width: 8),
-                                Text(
-                                  "검색 결과가 없습니다.",
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildSuggestionPoint("단어의 철자가 정확한지 다시 확인 바랍니다."),
-                            const SizedBox(height: 8),
-                            _buildSuggestionPoint("단어의 수를 줄이거나 표준어인지 확인 바랍니다."),
-                            const SizedBox(height: 8),
-                            _buildSuggestionPoint("보다 일반적인 단어로 검색 바랍니다."),
-                          ],
-                        ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSuggestionPoint("단어의 철자가 정확한지 다시 확인 바랍니다."),
+                          _buildSuggestionPoint("보다 일반적인 단어로 검색 바랍니다."),
+                        ],
                       ),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // AI 검색 제안
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.shade50,
+                        border: Border.all(color: Colors.deepPurple.shade100),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // [수정] 왼쪽 정렬
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 28),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "AI 레시피 추천",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "찾으시는 레시피가 없다면,\n'$_searchKeyword' 재료로 AI에게 새로운 레시피를 물어보세요.",
+                            style: TextStyle(
+                              color: Colors.deepPurple.shade700,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _searchKeyword.isNotEmpty
+                                  ? _onAiSearchPressed
+                                  : null,
+                              icon: const Icon(Icons.search, color: Colors.white),
+                              label: const Text(
+                                "AI 검색 시작하기",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurpleAccent,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 50),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
