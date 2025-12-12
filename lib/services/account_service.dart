@@ -1,6 +1,8 @@
 // 계정 인증·프로필 저장을 담당하는 서비스: Firebase Auth 세션 관리, Firestore 사용자 문서 CRUD
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -31,6 +33,9 @@ class AccountService {
         email: email,
         password: password,
       );
+
+      await _syncFcmTokenToUserDocument();
+
     } on FirebaseAuthException catch (e) {
       final msg = _mapSignInError(e.code);
       throw AuthException(msg);
@@ -60,6 +65,9 @@ class AccountService {
         email: user.email,
         nickname: nickname,
       );
+
+      await _syncFcmTokenToUserDocument();
+
     }
     on FirebaseAuthException catch (e) {
       final msg = _mapSignUpError(e.code);
@@ -72,6 +80,30 @@ class AccountService {
 
   // 로그아웃
   Future<void> signOut() async {
+    final user = _firebaseAuth.currentUser;
+
+    // FCM 토큰 제거
+    if (user != null && !kIsWeb) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        final userRef = _firestore.collection('users').doc(user.uid);
+        final snap = await userRef.get();
+        final saved = snap.data()?['fcmToken'] as String?;
+
+        if (saved != null && token != null && saved == token) {
+          await userRef.set(
+            {
+              'fcmToken': FieldValue.delete(),
+              'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      } catch (_) {
+        // 로그아웃 방지 무시
+      }
+    }
+
     await _firebaseAuth.signOut();
   }
 
@@ -134,6 +166,30 @@ class AccountService {
       'nickname': nickname,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // 로그인 사용자의 FCM 토큰을 Firestore users/{uid} 문서에 저장 및 갱신
+  Future<void> _syncFcmTokenToUserDocument() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    if (kIsWeb) return;
+
+    try {
+      await FirebaseMessaging.instance.requestPermission();
+
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+
+      await _firestore.collection('users').doc(user.uid).set(
+        {
+          'fcmToken': token,
+          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // 토큰 저장 실패로 인한 로그인/회원가입 방지 무시
+    }
   }
 
   // Firestore에 저장된 사용자 데이터(문서+하위 컬렉션) 삭제

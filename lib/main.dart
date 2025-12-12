@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/loading_screen.dart';
 import 'firebase_options.dart';
@@ -13,6 +16,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  _setupFcmTokenRefreshListener();
   await Hive.initFlutter();
   await Hive.openBox('recipes_box');
   await Hive.openBox('ingredient_dict_box');
@@ -22,6 +26,28 @@ void main() async {
   _initializeNotificationService();
 
   runApp(const HomeMateApp());
+}
+
+// 기기 변경 및 재설치에 따른 FCM 토큰 갱신
+void _setupFcmTokenRefreshListener() {
+  if (kIsWeb) return;
+
+  FirebaseMessaging.instance.requestPermission();
+
+  FirebaseMessaging.instance.onTokenRefresh.listen((String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || token.isEmpty) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+        {
+          'fcmToken': token,
+          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {}
+  });
 }
 
 // 사용자 로그인 상태 변경 감지 및 알림 서비스 초기화
