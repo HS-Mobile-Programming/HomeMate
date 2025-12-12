@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../models/ingredient.dart';
 import '../services/notification_service.dart';
 import '../services/refrigerator_service.dart';
@@ -72,6 +73,18 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
   // 검색어 변경
   void _onSearchChanged(String keyword) {
+    if (RegExp(r'[^가-힣ㄱ-ㅎㅏ-ㅣ\s]').hasMatch(keyword)) {
+      Fluttertoast.showToast(
+        msg: "잘못된 입력입니다. 검색어에 영어나 숫자, 특수문자 등이 들어가지 않았는지 확인 바랍니다.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 14.0,
+      );
+      return;
+    }
+
     setState(() {
       _search = keyword;
     });
@@ -171,7 +184,25 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("이름", style: TextStyle(fontWeight: FontWeight.bold)),
-                TextField(controller: nameController),
+                TextField(
+                  controller: nameController,
+                  onChanged: (value) {
+                    if (RegExp(r'[^가-힣ㄱ-ㅎㅏ-ㅣ\s]').hasMatch(value)) {
+                      Fluttertoast.showToast(
+                        msg: "잘못된 입력입니다. 재료 이름에 영어나 숫자, 특수문자 등이 들어가지 않았는지 확인 바랍니다.",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    hintText: "한글 입력 (예: 계란)",
+                    hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const Text("수량", style: TextStyle(fontWeight: FontWeight.bold)),
                 TextField(
@@ -233,6 +264,19 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                   return;
                 }
 
+                // 한글 검사 및 토스트 출력
+                if (RegExp(r'[^가-힣ㄱ-ㅎㅏ-ㅣ\s]').hasMatch(name)) {
+                  Fluttertoast.showToast(
+                    msg: "잘못된 입력입니다. 재료 이름에 영어나 숫자, 특수문자 등이 들어가지 않았는지 확인 바랍니다.",
+                    toastLength: Toast.LENGTH_LONG,
+                    gravity: ToastGravity.CENTER,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 14.0,
+                  );
+                  return;
+                }
+
                 final quantity = int.tryParse(quantityStr) ?? 0;
                 if (quantity <= 0) {
                   _showErrorSnackBar("수량을 1 이상 입력해주세요.");
@@ -247,6 +291,13 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                 String expiryDate;
                 try {
                   final y = int.parse(yearStr);
+
+                  // 연도 2000~2099 제한
+                  if (y < 2000 || y > 2099) {
+                    _showErrorSnackBar("유통기한 연도는 2000년에서 2099년 사이여야 합니다.");
+                    return;
+                  }
+
                   final m = int.parse(monthStr);
                   final d = int.parse(dayStr);
                   final date = DateTime(y, m, d);

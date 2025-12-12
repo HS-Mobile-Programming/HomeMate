@@ -3,11 +3,9 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import '../models/recipe.dart';
+import '../models/recipe_sort_mode.dart';
 import '../services/favorites_service.dart';
 import 'local_recipe_cache.dart';
-
-// 레시피 정렬 모드
-enum RecipeSortMode { nameAsc, nameDesc }
 
 class RecipeService {
   // 캐싱 -> 싱글톤 객체
