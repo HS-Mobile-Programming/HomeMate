@@ -29,6 +29,7 @@
 ```bash
 git clone [https://github.com/your-username/home-mate.git]
 cd home-mate
+```
 
 ### 2. 의존성 패키지 설치 (Dependencies)
 
@@ -44,13 +45,12 @@ AI 레시피 추천 기능을 사용하기 위해 Google Gemini API 키가 필�
 
 1. 참고사항.txt를 확인하여, Google Gemini API를 확인합니다.
 2. `assets/config/api_key.txt` 파일에 API 키를 입력합니다.
-   # assets/config/api_key.txt 파일 내용
-   API_KEY를 입력해주세요.
 3. `assets/config/api_key.txt` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다.
 
 ### 4. 앱 실행 (Run)
 
 > **참고**: 이 프로젝트는 Firebase가 이미 설정되어 있습니다. 자체 Firebase 프로젝트를 사용하려면 `android/app/google-services.json` 및 `ios/Runner/GoogleService-Info.plist` 파일을 교체하세요.
+
 ```bash
 flutter run
 ```
@@ -98,12 +98,12 @@ flutter run
 
 | 구분 | 내용 |
 | --- | --- |
-| Framework | ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white) | Cross-platform UI 개발 |
-| Language | [Dart](https://dart.dev/) | App Logic 구현 |
+| Framework | [Flutter]https://flutter.dev/ (Cross-platform UI 개발) |
+| Language | [Dart](https://dart.dev/) (App Logic 구현) |
 | State Management | `setState` (Native), `StatefulWidget` |
-| Backend | [Firebase](https://firebase.google.com/) |
+| Backend | [Firebase](https://firebase.google.com/) (데이터 베이스) |
 | Online Database | [Cloud Firestore](https://firebase.google.com/docs/firestore) (실시간 동기화) |
-| Local Database | ![Hive](https://img.shields.io/badge/Hive-FF6F00?style=flat) | 로컬 캐싱 및 오프라인 지원 |
+| Local Database | [Hive](https://img.shields.io/badge/Hive-FF6F00?style=flat) (로컬 캐싱 및 오프라인 지원) |
 | Authentication | [Firebase Authentication](https://firebase.google.com/docs/auth) |
 | Storage | [Firebase Storage](https://firebase.google.com/docs/storage) (레시피 이미지) |
 | AI/ML | [Google Gemini AI](https://ai.google.dev/) (레시피 추천) |
