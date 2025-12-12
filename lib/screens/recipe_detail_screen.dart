@@ -12,11 +12,13 @@ class RecipeDetailScreen extends StatefulWidget {
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
-  // 레시피 즐겨찾기 토글을 담당하는 서비스 인스턴스
   final RecipeService _recipeService = RecipeService();
 
-  // 현재 레시피의 즐겨찾기 여부 상태
+  /// 현재 레시피의 즐겨찾기 여부 상태
   late bool _isFavorite;
+
+  /// AI로 생성된 레시피인지 확인합니다 (ID가 'ai-generated-'로 시작하는지 체크)
+  bool get _isAiGenerated => widget.recipe.id.startsWith('ai-generated-');
 
   @override
   void initState() {
@@ -24,7 +26,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _isFavorite = widget.recipe.isFavorite;
   }
 
-  // 즐겨찾기 상태를 토글하고 스낵바로 피드백을 표시하는 메서드
+  /// 즐겨찾기 상태를 토글하고 스낵바로 피드백을 표시합니다
   Future<void> _toggleFavorite() async {
     await _recipeService.toggleFavorite(widget.recipe);
     setState(() {
@@ -44,7 +46,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // 레시피 제목을 표시하는 상단 앱바
         title: Text(widget.recipe.name),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -54,7 +55,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 레시피 대표 이미지를 전체 폭으로 표시하는 영역
             SizedBox(
               height: 250,
               child: RecipeImage(
@@ -64,7 +64,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ),
             ),
 
-            // 레시피 제목, 설명, 즐겨찾기 버튼, 태그를 포함하는 정보 영역
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -82,14 +81,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: _toggleFavorite,
-                        iconSize: 40,
-                        icon: Icon(
-                          _isFavorite ? Icons.star : Icons.star_border,
-                          color: _isFavorite ? Colors.amber : Colors.grey,
+                      if (!_isAiGenerated)
+                        IconButton(
+                          onPressed: _toggleFavorite,
+                          iconSize: 40,
+                          icon: Icon(
+                            _isFavorite ? Icons.star : Icons.star_border,
+                            color: _isFavorite ? Colors.amber : Colors.grey,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -99,7 +99,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 맛 관련 태그를 칩 형태로 나열하는 영역
                   Wrap(
                     spacing: 8,
                     children: widget.recipe.tasteTags
@@ -117,7 +116,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
             const Divider(height: 1, thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // 조리 시간, 난이도 등 기본 정보를 보여주는 영역
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -138,7 +136,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             const Divider(height: 1, thickness: 1),
 
-            // 재료 목록을 줄바꿈으로 표시하는 영역
             _buildInfoSection(
               "재료",
               widget.recipe.ingredients
@@ -148,7 +145,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             const Divider(height: 1, thickness: 1),
 
-            // 조리 단계를 순서대로 보여주는 영역
             _buildInfoSection(
               "조리 방법",
               widget.recipe.steps.isNotEmpty
@@ -162,7 +158,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  // 아이콘과 레이블, 값을 세로로 정렬해 보여주는 정보 위젯
+  /// 아이콘과 레이블, 값을 세로로 정렬해 보여주는 정보 위젯
   Widget _buildIconInfo(IconData icon, String label, String value) {
     return Column(
       children: [
@@ -177,7 +173,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  // 제목과 본문을 묶어 섹션 형태로 보여주는 위젯
+  /// 제목과 본문을 묶어 섹션 형태로 보여주는 위젯
   Widget _buildInfoSection(String title, String content) {
     return Container(
       color: Colors.white,

@@ -1,4 +1,5 @@
-// AI 기반 레시피 추천 서비스: Gemini AI를 활용한 사용자 선호 태그 및 냉장고 재료 기반 맞춤형 레시피 추천
+/// AI 기반 레시피 추천 서비스
+/// Gemini AI를 활용하여 사용자 선호 태그 및 냉장고 재료를 기반으로 맞춤형 레시피를 추천합니다
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -9,23 +10,20 @@ import '../services/refrigerator_service.dart';
 import '../models/recipe_sort_mode.dart';
 
 class RecommendationService {
-  // Gemini API 키 (asset 파일에서 로드)
+  /// Gemini API 키 (asset 파일에서 로드)
   static String? _apiKey;
   static const String _apiKeyAssetPath = 'assets/config/api_key.txt';
 
-  // 레시피 서비스 (전체 레시피 데이터 조회용)
   final RecipeService _recipeService = RecipeService();
-  // 냉장고 재료 서비스 (현재 보유 재료 조회용)
   final RefrigeratorService _refrigeratorService = RefrigeratorService();
 
-  // API 키 로드 (최초 1회만 로드)
+  /// API 키를 로드합니다 (최초 1회만 로드)
   static Future<String> _loadApiKey() async {
     if (_apiKey != null) {
       return _apiKey!;
     }
 
     try {
-      // [주의] pubspec.yaml에 assets/config/ 폴더가 등록되어 있어야 합니다.
       final _loadedKey = await rootBundle.loadString(_apiKeyAssetPath);
       _apiKey = _loadedKey.trim();
       if (_apiKey!.isEmpty) {
@@ -40,9 +38,7 @@ class RecommendationService {
     }
   }
 
-  // ------------------------------------------------------------------------
-  // 1. 기존 레시피 중에서 추천 (태그 + 냉장고 재료 반영)
-  // ------------------------------------------------------------------------
+  /// 기존 레시피 중에서 추천합니다 (태그 + 냉장고 재료 반영)
   Future<List<Recipe>> getRecommendations({List<String>? selectedTags}) async {
     final List<String> _sortedTags;
     if (selectedTags != null && selectedTags.isNotEmpty) {
@@ -73,7 +69,7 @@ class RecommendationService {
       debugPrint('[RecommendationService] 냉장고 재료 조회 오류: $e');
     }
 
-    // 프롬프트 구성: 태그 정보
+    // 태그 정보로 프롬프트 구성
     String _tagInfo = "";
     if (_sortedTags.isNotEmpty) {
       _tagInfo = """
@@ -98,7 +94,7 @@ class RecommendationService {
       _tagInfo = "사용자가 특별한 선호 태그를 설정하지 않았으므로, 다양한 레시피를 추천해줘.";
     }
 
-    // 프롬프트 구성: 냉장고 재료 정보
+    // 냉장고 재료 정보로 프롬프트 구성
     String _refrigeratorInfo = "";
     if (_refrigeratorIngredients.isNotEmpty) {
       _refrigeratorInfo = """
@@ -153,15 +149,18 @@ class RecommendationService {
       return _recommendedRecipes;
     } catch (e) {
       debugPrint("AI 추천 호출 오류: $e");
+      // 할당량 초과 오류를 재전파 (사용자에게 알리기 위해)
+      if (e.toString().contains('quota') || 
+          e.toString().contains('exceeded') ||
+          e.toString().contains('rate-limit')) {
+        rethrow;
+      }
       return [];
     }
   }
 
-  // ------------------------------------------------------------------------
-  // 2. [복구됨] 검색어(재료)를 기반으로 Gemini에게 '새로운' 레시피 3개 생성 요청
-  // ------------------------------------------------------------------------
+  /// 검색어(재료)를 기반으로 Gemini에게 새로운 레시피 3개를 생성 요청합니다
   Future<List<Recipe>> getAiRecipesFromKeyword(String keyword) async {
-    // API 키 로드
     final apiKey = await _loadApiKey();
     if (apiKey.isEmpty) {
       debugPrint('[RecommendationService] API 키가 없어 AI 검색을 수행할 수 없습니다.');
@@ -170,7 +169,6 @@ class RecommendationService {
 
     final _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
 
-    // JSON 포맷을 강제하는 프롬프트
     final _prompt = """
     '$keyword'를 주재료로 하는 간단하고 맛있는 레시피 3개를 창작해서 추천해줘.
     
@@ -197,7 +195,6 @@ class RecommendationService {
 
       if (_responseText == null) return [];
 
-      // 혹시 모를 마크다운 제거
       _responseText = _responseText.replaceAll('```json', '').replaceAll('```', '').trim();
 
       final List<dynamic> _jsonList = jsonDecode(_responseText);
@@ -217,7 +214,7 @@ class RecommendationService {
               .toList(),
           steps: List<String>.from(item['steps'] ?? []),
           tasteTags: List<String>.from(item['tasteTags'] ?? []),
-          imageName: '', // AI 레시피는 이미지가 없음 (기본 아이콘 표시됨)
+          imageName: '',
           isFavorite: false,
         ));
       }
@@ -225,13 +222,17 @@ class RecommendationService {
       return _aiRecipes;
     } catch (e) {
       debugPrint("AI 검색 생성 오류: $e");
+      // 할당량 초과 오류를 재전파 (사용자에게 알리기 위해)
+      if (e.toString().contains('quota') || 
+          e.toString().contains('exceeded') ||
+          e.toString().contains('rate-limit')) {
+        rethrow;
+      }
       return [];
     }
   }
 
-  // ------------------------------------------------------------------------
-  // 3. [복구됨] RecipeService의 정렬 메서드 재사용 (화면에서 호출함)
-  // ------------------------------------------------------------------------
+  /// RecipeService의 정렬 메서드를 재사용합니다 (화면에서 호출)
   List<Recipe> sortRecipes(List<Recipe> _recipes, RecipeSortMode _mode) {
     return _recipeService.sortRecipes(_recipes, _mode);
   }

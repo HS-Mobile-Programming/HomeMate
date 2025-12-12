@@ -56,9 +56,23 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("추천을 불러오는데 실패했습니다.")));
+        final errorMessage = e.toString();
+        // 할당량 초과 오류 감지
+        if (errorMessage.contains('quota') || 
+            errorMessage.contains('exceeded') ||
+            errorMessage.contains('rate-limit')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("일일 AI 사용 한도를 초과했습니다. 내일 다시 시도해주세요."),
+              duration: Duration(seconds: 4),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("추천을 불러오는데 실패했습니다.")),
+          );
+        }
       }
     }
   }

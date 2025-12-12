@@ -1,4 +1,4 @@
-// 레시피 검색·정렬 목록 화면
+/// 레시피 검색 및 정렬 목록 화면
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/recommendation_service.dart';
@@ -16,19 +16,18 @@ class RecipeScreen extends StatefulWidget {
 }
 
 class _RecipeScreenState extends State<RecipeScreen> {
-  // 레시피 서비스
   final RecipeService _recipeService = RecipeService();
   final RecommendationService _recommendationService = RecommendationService();
 
-  // 검색·정렬 결과 목록
+  /// 검색 및 정렬 결과 목록
   List<Recipe> _foundRecipes = [];
-  // 정렬 모드 상태
+  /// 정렬 모드 상태
   RecipeSortMode _sortMode = RecipeSortMode.nameAsc;
-  // 검색어 상태
+  /// 검색어 상태
   String _searchKeyword = "";
-  // 로딩 상태
+  /// 로딩 상태
   bool _isLoading = false;
-  // ai 로딩 상태
+  /// AI 로딩 상태
   bool _isAiLoading = false;
 
   @override
@@ -37,7 +36,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _refreshList();
   }
 
-  // 검색·정렬 결과 새로고침
+  /// 검색 및 정렬 결과를 새로고침합니다
   Future<void> _refreshList() async {
     setState(() => _isLoading = true);
     final recipes = await _recipeService.getRecipes(keyword: _searchKeyword);
@@ -51,7 +50,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     }
   }
 
-  // ai 검색
+  /// AI 검색을 수행합니다
   Future<void> _onAiSearchPressed() async {
     if (_searchKeyword.isEmpty) return;
 
@@ -60,13 +59,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
     });
 
     try {
-      // AI에게 레시피 생성 요청
       final aiRecipes = await _recommendationService.getAiRecipesFromKeyword(_searchKeyword);
 
       if (mounted) {
         if (aiRecipes.isNotEmpty) {
           setState(() {
-            _foundRecipes = aiRecipes; // 결과 목록을 AI 결과로 교체
+            _foundRecipes = aiRecipes;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("AI가 새로운 레시피를 만들었습니다! 🤖")),
@@ -79,9 +77,25 @@ class _RecipeScreenState extends State<RecipeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("오류가 발생했습니다.")),
-        );
+        final errorMessage = e.toString();
+        if (errorMessage.contains('quota') || 
+            errorMessage.contains('exceeded') ||
+            errorMessage.contains('rate-limit')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("일일 AI 사용 한도를 초과했습니다. 내일 다시 시도해주세요."),
+              duration: Duration(seconds: 4),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("오류가 발생했습니다: ${e.toString()}"),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -92,7 +106,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     }
   }
 
-  // 검색어 변경 시 갱신
+  /// 검색어가 변경될 때 호출됩니다
   void _onSearchChanged(String keyword) {
     if (RegExp(r'[^가-힣ㄱ-ㅎㅏ-ㅣ\s]').hasMatch(keyword)) {
       Fluttertoast.showToast(
@@ -110,7 +124,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _refreshList();
   }
 
-  // 정렬 모드 전환 후 갱신
+  /// 정렬 모드를 전환하고 목록을 갱신합니다
   void _onSortPressed() {
     setState(() {
       _sortMode = _sortMode == RecipeSortMode.nameAsc
@@ -123,7 +137,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     });
   }
 
-  // 정렬 버튼 UI
+  /// 정렬 버튼의 UI를 구성합니다
   Widget _buildSortButtonChild() {
     final icon = Icons.swap_vert;
     final label = _sortMode == RecipeSortMode.nameAsc ? "이름 (가-힣)" : "이름 (힣-가)";
