@@ -97,4 +97,10 @@ class FavoritesService {
       return [];
     }
   }
+
+  // 특정 레시피가 즐겨찾기에 포함되어 있는지 확인
+  Future<bool> isFavorite(String recipeId) async {
+    final favoriteList = await getFavoriteList();
+    return favoriteList.contains(recipeId);
+  }
 }

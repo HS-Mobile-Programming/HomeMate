@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../services/favorites_service.dart';
 import '../widgets/recipe_image.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -13,9 +14,11 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeService _recipeService = RecipeService();
+  final FavoritesService _favoritesService = FavoritesService();
 
   // 현재 레시피의 즐겨찾기 여부 상태
   late bool _isFavorite;
+  bool _isUpdating = false;
 
   // AI로 생성된 레시피인지 확인합니다 (ID가 'ai-generated-'로 시작하는지 체크)
   bool get _isAiGenerated => widget.recipe.id.startsWith('ai-generated-');
@@ -24,6 +27,31 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   void initState() {
     super.initState();
     _isFavorite = widget.recipe.isFavorite;
+    _updateFavoriteStatus();
+  }
+
+  // 즐겨찾기 상태를 최신 정보로 업데이트합니다
+  Future<void> _updateFavoriteStatus() async {
+    if (_isUpdating) return;
+    _isUpdating = true;
+    try {
+      final isFavorite = await _favoritesService.isFavorite(widget.recipe.id);
+      if (mounted && _isFavorite != isFavorite) {
+        setState(() {
+          _isFavorite = isFavorite;
+          widget.recipe.isFavorite = isFavorite;
+        });
+      }
+    } finally {
+      _isUpdating = false;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 표시될 때 즐겨찾기 상태를 업데이트
+    _updateFavoriteStatus();
   }
 
   // 즐겨찾기 상태를 토글하고 스낵바로 피드백을 표시합니다
