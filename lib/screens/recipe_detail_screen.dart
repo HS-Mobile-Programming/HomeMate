@@ -14,10 +14,10 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final RecipeService _recipeService = RecipeService();
 
-  /// 현재 레시피의 즐겨찾기 여부 상태
+  // 현재 레시피의 즐겨찾기 여부 상태
   late bool _isFavorite;
 
-  /// AI로 생성된 레시피인지 확인합니다 (ID가 'ai-generated-'로 시작하는지 체크)
+  // AI로 생성된 레시피인지 확인합니다 (ID가 'ai-generated-'로 시작하는지 체크)
   bool get _isAiGenerated => widget.recipe.id.startsWith('ai-generated-');
 
   @override
@@ -26,7 +26,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _isFavorite = widget.recipe.isFavorite;
   }
 
-  /// 즐겨찾기 상태를 토글하고 스낵바로 피드백을 표시합니다
+  // 즐겨찾기 상태를 토글하고 스낵바로 피드백을 표시합니다
   Future<void> _toggleFavorite() async {
     await _recipeService.toggleFavorite(widget.recipe);
     setState(() {
@@ -35,7 +35,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isFavorite ? "즐겨찾기 등록 ⭐" : "즐겨찾기 해제"),
+          content: Text(_isFavorite ? "즐겨찾기 등록" : "즐겨찾기 해제"),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -158,7 +158,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// 아이콘과 레이블, 값을 세로로 정렬해 보여주는 정보 위젯
+  // 아이콘과 레이블, 값을 세로로 정렬해 보여주는 정보 위젯
   Widget _buildIconInfo(IconData icon, String label, String value) {
     return Column(
       children: [
@@ -173,7 +173,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// 제목과 본문을 묶어 섹션 형태로 보여주는 위젯
+  // 제목과 본문을 묶어 섹션 형태로 보여주는 위젯
   Widget _buildInfoSection(String title, String content) {
     return Container(
       color: Colors.white,

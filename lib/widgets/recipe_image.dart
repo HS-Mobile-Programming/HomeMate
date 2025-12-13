@@ -1,4 +1,5 @@
-// 레시피 이미지 위젯: Firebase Storage에서 레시피 이미지 비동기 로드 및 표시
+// 레시피 이미지 위젯
+// Firebase Storage에서 레시피 이미지 비동기 로드 및 표시
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 

@@ -1,5 +1,5 @@
-/// 로그인 후 표시되는 메인 화면
-/// 하단 네비게이션 바를 통해 5개의 탭 화면을 전환합니다
+// 로그인 후 표시되는 메인 화면
+// 하단 네비게이션 바를 통해 5개의 탭 화면을 전환합니다
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/refrigerator_screen.dart';
@@ -15,10 +15,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  /// 현재 선택된 탭 인덱스
+  // 현재 선택된 탭 인덱스
   int _currentIndex = 0;
 
-  /// 탭별 화면 위젯 목록 (홈, 냉장고, 레시피, 추천, 마이페이지)
+  // 탭별 화면 위젯 목록
+  // 홈, 냉장고, 레시피, 추천, 마이페이지
   final List<Widget> _screens = [
     const HomeScreen(),
     const RefrigeratorScreen(),

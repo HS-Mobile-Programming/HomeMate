@@ -123,7 +123,6 @@ lib/
 ├── firebase_options.dart      # Firebase 환경 설정 파일
 ├── data/                      # 정적 데이터 및 상수
 │   ├── help_data.dart         # 도움말 텍스트 데이터
-│   ├── ingredient_data.dart   # 초기 식재료 더미 데이터
 │   └── tos_data.dart          # 이용약관 텍스트 데이터
 ├── models/                    # 데이터 모델 (DTO)
 │   ├── ingredient.dart        # 냉장고 식재료 모델
@@ -131,8 +130,6 @@ lib/
 │   ├── recipe.dart            # 레시피 정보 모델
 │   ├── recipe_sort_mode.dart  # 레시피 정렬 모드 (Enum)
 │   └── tag_model.dart         # 선호도 태그 모델
-├── repositories/              # 데이터 저장소 패턴 (Repository Pattern)
-│   └── ingredient_dict_repository.dart # 재료 사전 데이터 관리 (Firestore <-> Local)
 ├── screens/                   # UI 화면 (Pages)
 │   ├── loading_screen.dart    # 앱 시작 스플래시 및 자동 로그인 체크
 │   ├── login_screen.dart      # 로그인 화면

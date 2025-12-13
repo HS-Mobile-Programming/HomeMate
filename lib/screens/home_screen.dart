@@ -63,14 +63,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      // 1. 알림 설정값(일수)을 가져옵니다. (설정이 없으면 기본값 3일)
+      // 1. 알림 설정값을 가져옵니다. (설정이 없으면 기본값 3일)
       final settings = await NotificationService.instance.getNotificationSettingsFromFirestore();
       final int notifyDays = settings['days'] ?? 3;
 
       // 2. 전체 재료 가져오기
       final allIngredients = await _refrigeratorService.getAllIngredients();
 
-      // 3. 오늘 날짜 구하기 (시간 제외)
+      // 3. 오늘 날짜 구하기
       final today = DateTime.now();
       final todayOnly = DateTime(today.year, today.month, today.day);
 
@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return remainingDays <= notifyDays;
       }).toList();
 
-      // 5. 정렬 (유통기한 급한 순서대로)
+      // 5. 정렬 (유통기한이 빠른 순서대로)
       final sortedIngredients = _refrigeratorService.sortList(
         filtered,
         SortMode.expiryAsc,

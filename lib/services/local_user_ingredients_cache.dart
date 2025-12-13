@@ -1,4 +1,5 @@
-// 사용자 재료 목록의 로컬 캐시 관리: Hive 박스를 사용한 오프라인 데이터 저장소
+// 사용자 재료 목록의 로컬 캐시 관리
+// Hive 박스를 사용한 오프라인 데이터 저장소
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -8,7 +9,8 @@ class LocalUserIngredientsCache {
   // Hive 박스 이름 상수
   static const String userBoxName = 'user_data_box';
 
-  // Hive 박스 참조 반환 (열려 있지 않으면 null)
+  // Hive 박스 참조 반환
+  // 열려 있지 않으면 null
   Box? get _boxOrNull =>
       Hive.isBoxOpen(userBoxName) ? Hive.box(userBoxName) : null;
 

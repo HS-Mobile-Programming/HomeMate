@@ -1,4 +1,5 @@
-// 커스텀 텍스트 입력 필드: 로그인 및 회원가입 화면용 통일된 스타일의 입력 필드 위젯
+// 커스텀 텍스트 입력 필드
+// 로그인 및 회원가입 화면용 통일된 스타일의 입력 필드 위젯
 import 'package:flutter/material.dart';
 
 class CustomTextField extends StatelessWidget {

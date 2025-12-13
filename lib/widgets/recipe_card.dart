@@ -1,10 +1,10 @@
-/// 레시피 목록 화면에서 사용되는 개별 레시피 카드 위젯
+// 레시피 목록 화면에서 사용되는 개별 레시피 카드 위젯
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
-  /// 표시할 레시피 데이터
+  // 표시할 레시피 데이터
   final Recipe recipe;
 
   const RecipeCard({super.key, required this.recipe});
@@ -70,9 +70,9 @@ class RecipeCard extends StatelessWidget {
   }
 }
 
-/// Firebase Storage에서 레시피 이미지를 비동기로 로드하는 위젯
+// Firebase Storage에서 레시피 이미지를 비동기로 로드하는 위젯
 class _RecipeImage extends StatelessWidget {
-  /// Firebase Storage 이미지 파일명
+  // Firebase Storage 이미지 파일명
   final String imageName;
 
   const _RecipeImage({required this.imageName});

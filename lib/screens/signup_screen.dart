@@ -33,7 +33,8 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  // 회원가입 버튼 처리 흐름: 약관 확인 → 입력 검증 → 서비스 호출 → 성공 알림 및 복귀
+  // 회원가입 버튼 처리 흐름
+  // 약관 확인 → 입력 검증 → 서비스 호출 → 성공 알림 및 복귀
   Future<void> _onSignUpPressed() async {
     if (!isAgreed) {
       ScaffoldMessenger.of(

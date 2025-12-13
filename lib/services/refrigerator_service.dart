@@ -1,4 +1,5 @@
-// 냉장고 재료 관리 및 동기화 서비스: Firestore와 로컬 캐시 간 재료 CRUD 및 양방향 동기화, 캘린더 마커 지원
+// 냉장고 재료 관리 및 동기화 서비스
+// Firestore와 로컬 캐시 간 재료 CRUD 및 양방향 동기화, 캘린더 마커 지원
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -21,7 +22,8 @@ class RefrigeratorService {
   // 로컬 재료 캐시
   final LocalUserIngredientsCache _localCache = LocalUserIngredientsCache();
 
-  // 메모리 캐시 (캘린더 마커 등 동기 접근용)
+  // 메모리 캐시
+  // 캘린더 마커 등 동기 접근용
   List<Ingredient> _cachedIngredients = [];
 
   // 현재 로그인 사용자 uid
@@ -37,7 +39,8 @@ class RefrigeratorService {
   CollectionReference<Map<String, dynamic>> get _ingredientCollection =>
       _firestore.collection('users').doc(_uid).collection('ingredients');
 
-  // 모든 재료 조회 (로컬 캐시 우선, 실패 시 Firestore 동기화)
+  // 모든 재료 조회
+  // 로컬 캐시 우선, 실패 시 Firestore 동기화
   Future<List<Ingredient>> getAllIngredients() async {
     final _uid = this._uid;
 
@@ -48,7 +51,7 @@ class RefrigeratorService {
         return _local;
       }
     } catch (e) {
-      debugPrint('[RefrigeratorService] 로컬 로드 오류: $e');
+      debugPrint('로컬 로드 오류: $e');
     }
 
     try {
@@ -67,7 +70,7 @@ class RefrigeratorService {
       await _localCache.saveIngredientsToLocalCache(_uid, _ingredients);
       return _ingredients;
     } catch (e) {
-      debugPrint('[RefrigeratorService] Firestore 로드 오류: $e');
+      debugPrint('Firestore 로드 오류: $e');
       return _cachedIngredients;
     }
   }
@@ -91,11 +94,12 @@ class RefrigeratorService {
         });
       }
     } catch (e) {
-      debugPrint('[RefrigeratorService] 동기화 오류: $e');
+      debugPrint('동기화 오류: $e');
     }
   }
 
-  // 재료 추가 (로컬 저장 후 백그라운드 동기화)
+  // 재료 추가
+  // 로컬 저장 후 백그라운드 동기화
   Future<List<Ingredient>> addIngredient({
     required String name,
     required int quantity,
@@ -137,7 +141,8 @@ class RefrigeratorService {
     return _cachedIngredients;
   }
 
-  // 재료 수정 (로컬 저장 후 백그라운드 동기화)
+  // 재료 수정
+  // 로컬 저장 후 백그라운드 동기화
   Future<List<Ingredient>> updateIngredient(
     String _id, {
     required String name,
@@ -169,7 +174,8 @@ class RefrigeratorService {
     return _cachedIngredients;
   }
 
-  // 재료 삭제 (로컬 저장 후 백그라운드 동기화)
+  // 재료 삭제
+  // 로컬 저장 후 백그라운드 동기화
   Future<List<Ingredient>> deleteIngredient(String _id) async {
     final _uid = this._uid;
 
@@ -187,7 +193,8 @@ class RefrigeratorService {
     return _cachedIngredients;
   }
 
-  // 유통기한 문자열 파싱 (yyyy.MM.dd 형식)
+  // 유통기한 문자열 파싱
+  // yyyy.MM.dd 형식
   DateTime? parseDate(String _dateStr) {
     if (_dateStr.isEmpty) return null;
 

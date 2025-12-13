@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+'); //@와 .을 포함한 이메일 형식 확인
     if (!emailRegex.hasMatch(email)) {
       setState(() {
         _errorText = "이메일 형식이 올바르지 않습니다.";

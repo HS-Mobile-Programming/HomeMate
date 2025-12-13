@@ -1,13 +1,15 @@
-// 즐겨찾기 로컬 캐시: Hive를 사용한 사용자별 즐겨찾기 레시피 ID 목록 저장 및 조회
+// 즐겨찾기 로컬 캐시
+// Hive를 사용한 사용자별 즐겨찾기 레시피 ID 목록 저장 및 조회
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalFavoritesCache {
-  // Hive 박스 이름 상수
+  // Hive 박스 이름
   static const String userBoxName = 'user_data_box';
 
-  // Hive 박스 참조 (열려있지 않으면 null)
+  // Hive 박스 참조
+  // 열려있지 않으면 null
   Box? get _localBox =>
       Hive.isBoxOpen(userBoxName) ? Hive.box(userBoxName) : null;
 
@@ -19,14 +21,14 @@ class LocalFavoritesCache {
     try {
       final _box = _localBox;
       if (_box == null) {
-        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 저장하지 못했습니다.');
+        debugPrint('Hive 박스가 열려있지 않아 저장하지 못했습니다.');
         return;
       }
 
       final _jsonString = jsonEncode(_recipeIds);
       await _box.put('favorites_$_uid', _jsonString);
     } catch (e) {
-      debugPrint('[LocalFavoritesCache] 즐겨찾기 목록 저장 중 오류 발생: $e');
+      debugPrint('즐겨찾기 목록 저장 중 오류 발생: $e');
     }
   }
 
@@ -35,7 +37,7 @@ class LocalFavoritesCache {
     try {
       final _box = _localBox;
       if (_box == null) {
-        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 조회하지 못했습니다.');
+        debugPrint('Hive 박스가 열려있지 않아 조회하지 못했습니다.');
         return [];
       }
 
@@ -48,23 +50,24 @@ class LocalFavoritesCache {
       return _decoded.map((_item) => _item.toString()).toList();
     }
     catch (e) {
-      debugPrint('[LocalFavoritesCache] 즐겨찾기 목록 로드/파싱 실패: $e');
+      debugPrint('즐겨찾기 목록 로드/파싱 실패: $e');
       return [];
     }
   }
 
-  // 로컬 캐시에서 즐겨찾기 목록 삭제 (로그아웃 시 사용)
+  // 로컬 캐시에서 즐겨찾기 목록 삭제
+  // 로그아웃 시 사용
   Future<void> clearFavoritesFromLocalCache(String _uid) async {
     try {
       final _box = _localBox;
       if (_box == null) {
-        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 삭제하지 못했습니다.');
+        debugPrint('Hive 박스가 열려있지 않아 삭제하지 못했습니다.');
         return;
       }
       await _box.delete('favorites_$_uid');
     }
     catch (e) {
-      debugPrint('[LocalFavoritesCache] 로컬 즐겨찾기 데이터 삭제 실패: $e');
+      debugPrint('로컬 즐겨찾기 데이터 삭제 실패: $e');
     }
   }
 }

@@ -1,5 +1,5 @@
-/// AI 기반 레시피 추천 서비스
-/// Gemini AI를 활용하여 사용자 선호 태그 및 냉장고 재료를 기반으로 맞춤형 레시피를 추천합니다
+// AI 기반 레시피 추천 서비스
+// Gemini AI를 활용하여 사용자 선호 태그 및 냉장고 재료를 기반으로 맞춤형 레시피를 추천합니다
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,14 +10,16 @@ import '../services/refrigerator_service.dart';
 import '../models/recipe_sort_mode.dart';
 
 class RecommendationService {
-  /// Gemini API 키 (asset 파일에서 로드)
+  // Gemini API 키
+  // asset 파일에서 로드
   static String? _apiKey;
   static const String _apiKeyAssetPath = 'assets/config/api_key.txt';
 
   final RecipeService _recipeService = RecipeService();
   final RefrigeratorService _refrigeratorService = RefrigeratorService();
 
-  /// API 키를 로드합니다 (최초 1회만 로드)
+  // API 키를 로드합니다
+  // 최초 1회만 로드
   static Future<String> _loadApiKey() async {
     if (_apiKey != null) {
       return _apiKey!;
@@ -27,18 +29,19 @@ class RecommendationService {
       final _loadedKey = await rootBundle.loadString(_apiKeyAssetPath);
       _apiKey = _loadedKey.trim();
       if (_apiKey!.isEmpty) {
-        debugPrint('[RecommendationService] API 키가 비어있습니다. assets/config/api_key.txt 파일을 확인해주세요.');
+        debugPrint('API 키가 비어있습니다. assets/config/api_key.txt 파일을 확인해주세요.');
       }
       return _apiKey!;
     } catch (e) {
-      debugPrint('[RecommendationService] API 키 로드 오류: $e');
-      debugPrint('[RecommendationService] assets/config/api_key.txt 파일이 존재하는지 확인해주세요.');
+      debugPrint('API 키 로드 오류: $e');
+      debugPrint('assets/config/api_key.txt 파일이 존재하는지 확인해주세요.');
       _apiKey = '';
       return '';
     }
   }
 
-  /// 기존 레시피 중에서 추천합니다 (태그 + 냉장고 재료 반영)
+  // 기존 레시피 중에서 추천합니다
+  // 태그 + 냉장고 재료 반영
   Future<List<Recipe>> getRecommendations({List<String>? selectedTags}) async {
     final List<String> _sortedTags;
     if (selectedTags != null && selectedTags.isNotEmpty) {
@@ -50,7 +53,7 @@ class RecommendationService {
     // API 키 로드
     final apiKey = await _loadApiKey();
     if (apiKey.isEmpty) {
-      debugPrint('[RecommendationService] API 키가 없어 추천을 수행할 수 없습니다.');
+      debugPrint('API 키가 없어 추천을 수행할 수 없습니다.');
       return [];
     }
 
@@ -66,7 +69,7 @@ class RecommendationService {
       final _ingredients = await _refrigeratorService.getAllIngredients();
       _refrigeratorIngredients = _ingredients.map((_ing) => _ing.name).toList();
     } catch (e) {
-      debugPrint('[RecommendationService] 냉장고 재료 조회 오류: $e');
+      debugPrint('냉장고 재료 조회 오류: $e');
     }
 
     // 태그 정보로 프롬프트 구성
@@ -159,11 +162,11 @@ class RecommendationService {
     }
   }
 
-  /// 검색어(재료)를 기반으로 Gemini에게 새로운 레시피 3개를 생성 요청합니다
+  // 검색어를 기반으로 Gemini에게 새로운 레시피 3개를 생성 요청합니다
   Future<List<Recipe>> getAiRecipesFromKeyword(String keyword) async {
     final apiKey = await _loadApiKey();
     if (apiKey.isEmpty) {
-      debugPrint('[RecommendationService] API 키가 없어 AI 검색을 수행할 수 없습니다.');
+      debugPrint('API 키가 없어 AI 검색을 수행할 수 없습니다.');
       return [];
     }
 
@@ -222,7 +225,7 @@ class RecommendationService {
       return _aiRecipes;
     } catch (e) {
       debugPrint("AI 검색 생성 오류: $e");
-      // 할당량 초과 오류를 재전파 (사용자에게 알리기 위해)
+      // 할당량 초과 오류를 재전송
       if (e.toString().contains('quota') || 
           e.toString().contains('exceeded') ||
           e.toString().contains('rate-limit')) {
@@ -232,7 +235,7 @@ class RecommendationService {
     }
   }
 
-  /// RecipeService의 정렬 메서드를 재사용합니다 (화면에서 호출)
+  // RecipeService의 정렬 메서드를 재사용
   List<Recipe> sortRecipes(List<Recipe> _recipes, RecipeSortMode _mode) {
     return _recipeService.sortRecipes(_recipes, _mode);
   }

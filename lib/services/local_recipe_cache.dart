@@ -1,4 +1,5 @@
-// 레시피 로컬 캐시: Hive를 사용한 레시피 목록 저장 및 동기화 상태 관리
+// 레시피 로컬 캐시
+// Hive를 사용한 레시피 목록 저장 및 동기화 상태 관리
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/recipe.dart';

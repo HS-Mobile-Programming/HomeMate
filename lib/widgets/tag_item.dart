@@ -1,4 +1,5 @@
-// 맛 태그 선택 아이템 위젯: 선호도 설정 화면의 개별 태그 UI 및 선택 상태 표시
+// 맛 태그 선택 아이템 위젯
+// 선호도 설정 화면의 개별 태그 UI 및 선택 상태 표시
 import 'package:flutter/material.dart';
 import '../models/tag_model.dart';
 

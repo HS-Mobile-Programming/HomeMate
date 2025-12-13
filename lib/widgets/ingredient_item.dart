@@ -1,4 +1,5 @@
-// 재료 항목 위젯: 냉장고 및 홈 화면의 재료 목록 개별 항목 UI, 유통기한 D-day 계산 및 시각적 경고 표시
+// 재료 항목 위젯
+// 냉장고 및 홈 화면의 재료 목록 개별 항목 UI, 유통기한 D-day 계산 및 시각적 경고 표시
 import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 

@@ -1,4 +1,5 @@
-// 재료 유통기한 알림 서비스: 로컬 알림 플러그인과 Firestore 알림 설정을 통한 유통기한 푸시 알림 관리
+// 재료 유통기한 알림 서비스
+// 로컬 알림 플러그인과 Firestore 알림 설정을 통한 유통기한 푸시 알림 관리
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,7 +40,8 @@ class NotificationService {
   DocumentReference<Map<String, dynamic>> get _userDocument =>
       _firestore.collection('users').doc(_uid);
 
-  // 알림 서비스 초기화 (중복 호출 방지)
+  // 알림 서비스 초기화
+  // 중복 호출 방지
   Future<void> initialize() async {
     if (_isInitialized) return;
     if (_initFuture != null) return _initFuture;
@@ -48,7 +50,8 @@ class NotificationService {
     _initFuture = null;
   }
 
-  // 내부 초기화 로직: 플러그인 설정 및 권한 요청
+  // 내부 초기화 로직
+  // 플러그인 설정 및 권한 요청
   Future<void> _initializeInternal() async {
     try {
       const _androidSettings = AndroidInitializationSettings(

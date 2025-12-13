@@ -1,11 +1,12 @@
-// 재료 사전 로컬 캐시: Hive를 사용한 재료 사전 목록 저장 및 동기화 상태 관리
+// 재료 사전 로컬 캐시
+// Hive를 사용한 재료 사전 목록 저장 및 동기화 상태 관리
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/ingredient_dictionary.dart';
 
 class LocalIngredientDictCache {
-  // Hive 박스 이름 상수
+  // Hive 박스 이름
   static const String DICT_BOX_NAME = 'ingredient_dict_box';
   static const String META_BOX_NAME = 'meta_box';
 
@@ -53,7 +54,7 @@ class LocalIngredientDictCache {
     try {
       final _box = _dictBox;
       if (_box == null) {
-        debugPrint('[LocalIngredientDictCache] Hive 박스가 열려있지 않아 조회하지 못했습니다.');
+        debugPrint('Hive 박스가 열려있지 않아 조회하지 못했습니다.');
         return [];
       }
 

@@ -1,4 +1,5 @@
-// 계정 인증·프로필 저장을 담당하는 서비스: Firebase Auth 세션 관리, Firestore 사용자 문서 CRUD
+// 계정 인증·프로필 저장을 담당하는 서비스
+// Firebase Auth 세션 관리, Firestore 사용자 문서 CRUD
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -45,7 +46,9 @@ class AccountService {
     }
   }
 
-  // 회원가입: Auth 계정 생성 후 Firestore 사용자 문서 생성
+  // 회원가입
+  // Auth 계정 생성 후 Firestore 사용자 문서 생성
+  // 생성 시 아이디 중복 체크
   Future<void> signUp({
     required String email,
     required String password,
@@ -101,14 +104,15 @@ class AccountService {
         }
       }
       catch (e) {
-        debugPrint('[AccountService] 로그아웃 중 FCM 토큰 삭제 실패: $e');
+        debugPrint('로그아웃 중 FCM 토큰 삭제 실패: $e');
       }
     }
 
     await _firebaseAuth.signOut();
   }
 
-  // 계정 탈퇴: 재인증 → Firestore 데이터 삭제 → Auth 계정 삭제
+  // 계정 탈퇴
+  // 재인증 → Firestore 데이터 삭제 → Auth 계정 삭제
   Future<void> deleteAccount(String password) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
@@ -136,7 +140,7 @@ class AccountService {
     await user.delete();
   }
 
-  // Firestore에서 사용자 이름 로드 (기존 getName 호환 유지)
+  // Firestore에서 사용자 이름 로드
   Future<String> loadUserNameFromFirestore() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
@@ -156,8 +160,6 @@ class AccountService {
 
   // 기존 호출 호환용
   Future<String> getName() => loadUserNameFromFirestore();
-
-  // ----------------- Firestore 헬퍼 -----------------
 
   // Firestore 사용자 문서 생성
   Future<void> _createUserDocumentInFirestore({
@@ -199,11 +201,11 @@ class AccountService {
       );
     }
     catch (e) {
-      debugPrint('[AccountService] FCM 토큰 동기화 실패: $e');
+      debugPrint('FCM 토큰 동기화 실패: $e');
     }
   }
 
-  // Firestore에 저장된 사용자 데이터(문서+하위 컬렉션) 삭제
+  // Firestore에 저장된 사용자 데이터 삭제
   Future<void> _deleteUserDataFromFirestore(String uid) async {
     final userDoc = _firestore.collection('users').doc(uid);
     final batch = _firestore.batch();

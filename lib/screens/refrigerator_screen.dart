@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../models/ingredient.dart';
-import '../services/notification_service.dart';
 import '../services/refrigerator_service.dart';
 import '../widgets/ingredient_item.dart';
 
@@ -43,7 +42,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
     super.dispose();
   }
 
-  // 목록 새로고침(조회→검색/날짜 필터→정렬)
+  // 목록 새로고침
   Future<void> _refreshList() async {
     final allData = await _refrigeratorService.getAllIngredients();
     if (!mounted) return;
