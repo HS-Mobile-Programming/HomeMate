@@ -98,7 +98,7 @@ flutter run
 
 | 구분 | 내용 |
 | --- | --- |
-| Framework | [Flutter]https://flutter.dev/ (Cross-platform UI 개발) |
+| Framework | [Flutter](https://flutter.dev/) (Cross-platform UI 개발) |
 | Language | [Dart](https://dart.dev/) (App Logic 구현) |
 | State Management | `setState` (Native), `StatefulWidget` |
 | Backend | [Firebase](https://firebase.google.com/) (데이터 베이스) |
@@ -171,7 +171,7 @@ functions/
 ├── package.json               # Node.js 프로젝트 의존성 설정
 ├── package-lock.json          # 의존성 버전 잠금 파일
 └── .eslintrc.js               # 코드 스타일(Lint) 설정
-└── .....
+└── .....			     # 기타
 ```
 
 ### ⚙️ Project Configs
@@ -180,7 +180,7 @@ root/
 ├── firebase.json              # Firebase 프로젝트 구성 설정 (Hosting, Functions 등)
 ├── .firebaserc                # Firebase 프로젝트 타겟 설정
 └── .gitignore                 # Git 제외 파일 목록
-└── .....
+└── .....			       # 기타
 ```
 
 ## 📝 개발 현황
