@@ -1,5 +1,6 @@
 // 사용자 재료 목록의 로컬 캐시 관리: Hive 박스를 사용한 오프라인 데이터 저장소
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/ingredient.dart';
 
@@ -37,7 +38,7 @@ class LocalUserIngredientsCache {
       await _localBox.put('ingredients_$_uid', _jsonString);
     }
     catch (e) {
-
+      debugPrint('재료 목록 저장 중 오류 발생: $e');
     }
   }
 
@@ -65,7 +66,8 @@ class LocalUserIngredientsCache {
               expiryTime: _item['expiryTime'] as String? ?? '',
             ),
           );
-        } else if (_item is Map) {
+        }
+        else if (_item is Map) {
           final _map = Map<String, dynamic>.from(_item);
           _ingredients.add(
             Ingredient(
@@ -79,7 +81,9 @@ class LocalUserIngredientsCache {
       }
 
       return _ingredients;
-    } catch (e) {
+    }
+    catch (e) {
+      debugPrint('재료 목록 로드/파싱 실패: $e');
       return [];
     }
   }
@@ -90,6 +94,9 @@ class LocalUserIngredientsCache {
       final _localBox = _boxOrNull;
       if (_localBox == null) return;
       await _localBox.delete('ingredients_$_uid');
-    } catch (e) {}
+    }
+    catch (e) {
+      debugPrint('로컬 데이터 삭제 실패: $e');
+    }
   }
 }

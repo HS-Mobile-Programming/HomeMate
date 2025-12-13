@@ -2,6 +2,7 @@
 /// 로컬 캐시와 Firestore 간 즐겨찾기 레시피 ID를 동기화하고 CRUD 작업을 수행합니다
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'local_favorites_cache.dart';
 
 class FavoritesService {
@@ -35,7 +36,9 @@ class FavoritesService {
   /// 즐겨찾기를 추가합니다 (로컬 캐시 반영 후 Firestore 동기화 시도)
   Future<void> addFavorite(String _recipeId) async {
     final _user = _auth.currentUser;
-    if (_user == null) return;
+    if (_user == null) {
+      return;
+    }
     final _uid = _user.uid;
 
     final _current = _localCache.loadFavoritesFromLocalCache(_uid);
@@ -46,7 +49,10 @@ class FavoritesService {
 
     try {
       await _saveFavoriteToFirestore(_recipeId);
-    } catch (_) {}
+    }
+    catch (e) {
+      debugPrint('Firestore 즐겨찾기 추가 실패 (ID: $_recipeId): $e');
+    }
   }
 
   /// 즐겨찾기를 제거합니다 (로컬 캐시 반영 후 Firestore 동기화 시도)
@@ -61,7 +67,10 @@ class FavoritesService {
 
     try {
       await _deleteFavoriteFromFirestore(_recipeId);
-    } catch (_) {}
+    }
+    catch (e) {
+      debugPrint('Firestore 즐겨찾기 삭제 실패 (ID: $_recipeId): $e');
+    }
   }
 
   /// 즐겨찾기 목록을 조회합니다 (로컬 우선, 비어있으면 Firestore 로드 후 저장)
@@ -74,13 +83,13 @@ class FavoritesService {
     if (_list.isNotEmpty) {
       return _list;
     }
-
     try {
       _list = await _loadFavoritesFromFirestore();
       await _localCache.saveFavoritesToLocalCache(_uid, _list);
       return _list;
     }
-    catch (_) {
+    catch (e) {
+      debugPrint('즐겨찾기 목록 로드 실패: $e');
       return [];
     }
   }

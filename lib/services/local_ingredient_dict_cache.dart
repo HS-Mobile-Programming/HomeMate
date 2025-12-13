@@ -1,5 +1,6 @@
 // 재료 사전 로컬 캐시: Hive를 사용한 재료 사전 목록 저장 및 동기화 상태 관리
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/ingredient_dictionary.dart';
 
@@ -26,7 +27,10 @@ class LocalIngredientDictCache {
     try {
       final _box = _dictBox;
       final _meta = _metaBox;
-      if (_box == null || _meta == null) return;
+      if (_box == null || _meta == null) {
+        debugPrint('Hive 박스가 열려있지 않아 저장하지 못했습니다.');
+        return;
+      }
 
       final _list = _items.map((_item) => _item.toMap()).toList();
       final _jsonString = jsonEncode(_list);
@@ -36,7 +40,9 @@ class LocalIngredientDictCache {
         'ingredient_dict_last_sync',
         DateTime.now().toIso8601String(),
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('재료 사전 저장 중 오류 발생: $e');
+    }
   }
 
   // 로컬 캐시에서 재료 사전 목록 조회
@@ -46,13 +52,20 @@ class LocalIngredientDictCache {
   List<IngredientDictionary> loadAllFromCache() {
     try {
       final _box = _dictBox;
-      if (_box == null) return [];
+      if (_box == null) {
+        debugPrint('[LocalIngredientDictCache] Hive 박스가 열려있지 않아 조회하지 못했습니다.');
+        return [];
+      }
 
       final _raw = _box.get('ingredient_dict_json');
-      if (_raw is! String) return [];
+      if (_raw is! String) {
+        return [];
+      }
 
       final _decoded = jsonDecode(_raw);
-      if (_decoded is! List) return [];
+      if (_decoded is! List) {
+        return [];
+      }
 
       final List<IngredientDictionary> _result = [];
       for (final _item in _decoded) {
@@ -60,7 +73,8 @@ class LocalIngredientDictCache {
           _result.add(
             IngredientDictionary.fromJson(_item, _item['id'] as String? ?? ''),
           );
-        } else if (_item is Map) {
+        }
+        else if (_item is Map) {
           final _map = Map<String, dynamic>.from(_item);
           _result.add(
             IngredientDictionary.fromJson(_map, _map['id'] as String? ?? ''),
@@ -68,7 +82,9 @@ class LocalIngredientDictCache {
         }
       }
       return _result;
-    } catch (_) {
+    }
+    catch (e) {
+      debugPrint('재료 사전 로드/파싱 실패: $e');
       return [];
     }
   }
@@ -91,7 +107,9 @@ class LocalIngredientDictCache {
       return _lastSync.year == _now.year &&
           _lastSync.month == _now.month &&
           _lastSync.day == _now.day;
-    } catch (_) {
+    }
+    catch (e) {
+      debugPrint('동기화 상태 확인 중 오류: $e');
       return false;
     }
   }

@@ -77,7 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // 4. 필터링: (남은 일수 <= 설정한 일수) 인 재료만 골라내기
       var filtered = allIngredients.where((ingredient) {
         final expiryDate = _refrigeratorService.parseDate(ingredient.expiryTime);
-        if (expiryDate == null) return false;
+        if (expiryDate == null) {
+          return false;
+        }
 
         final expiryOnly = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
         final remainingDays = expiryOnly.difference(todayOnly).inDays;
@@ -92,7 +94,10 @@ class _HomeScreenState extends State<HomeScreen> {
         SortMode.expiryAsc,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _expiringSoonIngredients = sortedIngredients.take(5).toList();
         _isLoading = false;
@@ -155,8 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? const SizedBox(
             height: 200,
             child: Center(child: CircularProgressIndicator()),
-          )
-              : SizedBox(
+          ) : SizedBox(
             height: 200,
             child: PageView.builder(
               controller: _pageController, // 위에서 만든 페이지 컨트롤러 연결

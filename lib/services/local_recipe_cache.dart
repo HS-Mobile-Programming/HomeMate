@@ -28,7 +28,8 @@ class LocalRecipeCache {
 
       await _box.put('recipes_json', _jsonString);
       await _meta.put('recipes_last_sync', DateTime.now().toIso8601String());
-    } catch (_) {}
+    }
+    catch (_) {}
   }
 
   // 로컬 캐시에서 레시피 목록 조회
@@ -38,24 +39,30 @@ class LocalRecipeCache {
       if (_box == null) return [];
 
       final _raw = _box.get('recipes_json');
-      if (_raw is! String) return [];
+      if (_raw is! String) {
+        return [];
+      }
 
       final _decoded = jsonDecode(_raw);
-      if (_decoded is! List) return [];
+      if (_decoded is! List) {
+        return [];
+      }
 
       final List<Recipe> _result = [];
       for (final _item in _decoded) {
         if (_item is Map<String, dynamic>) {
           final _id = _item['id'] as String? ?? '';
           _result.add(Recipe.fromJson(_item, _id));
-        } else if (_item is Map) {
+        }
+        else if (_item is Map) {
           final _map = Map<String, dynamic>.from(_item);
           final _id = _map['id'] as String? ?? '';
           _result.add(Recipe.fromJson(_map, _id));
         }
       }
       return _result;
-    } catch (_) {
+    }
+    catch (_) {
       return [];
     }
   }
@@ -75,7 +82,8 @@ class LocalRecipeCache {
       return _lastSync.year == _now.year &&
           _lastSync.month == _now.month &&
           _lastSync.day == _now.day;
-    } catch (_) {
+    }
+    catch (_) {
       return false;
     }
   }

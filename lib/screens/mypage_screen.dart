@@ -66,7 +66,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
       ),
     );
 
-    if (confirm != true) { return; }
+    if (confirm != true) {
+      return;
+    }
 
     final password = await showDialog<String>(
       context: context,
@@ -91,9 +93,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             TextButton(
               onPressed: () =>
                   Navigator.of(context).pop(passwordController.text),
-              child: const Text(
-                '확인',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              child: const Text('확인', style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -101,11 +101,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
       },
     );
 
-    if (password == null || password.isEmpty) { return; }
+    if (password == null || password.isEmpty) {
+      return;
+    }
 
     try {
       await AccountService.instance.deleteAccount(password);
-      if (!mounted) { return; }
+      if (!mounted) {
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -120,7 +124,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
       );
     }
     on AuthException catch (e) {
-      if (!mounted) { return; }
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
@@ -129,7 +135,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
       );
     }
     catch (_) {
-      if (!mounted) { return; }
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('계정 삭제 중 알 수 없는 오류가 발생했습니다.'),
@@ -224,7 +232,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
     bool isPushOn = settings['isPushOn'] as bool;
     int days = settings['days'] as int;
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     await showDialog(
       context: context,
@@ -264,7 +274,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       IconButton(
                         icon: const Icon(Icons.remove),
                         onPressed: () => setState(() {
-                          if (days > 1) days--;
+                          if (days > 1) {
+                            days--;
+                          }
                         }),
                       ),
                       Text(
@@ -306,9 +318,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       ),
                     );
                   },
-                  child: Text(
-                    "확인",
-                    style: TextStyle(color: colorScheme.primary),
+                  child: Text("확인", style: TextStyle(color: colorScheme.primary),
                   ),
                 ),
               ],

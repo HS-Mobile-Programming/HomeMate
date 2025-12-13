@@ -372,8 +372,8 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
                 try {
                   await NotificationService.instance.checkExpiringIngredients();
-                } catch (_) {
-                  // 알림 체크 실패는 무시
+                } catch (e) {
+                  debugPrint('Firestore 동기화 중 오류 발생: $e');
                 }
               },
               child: Text(
@@ -624,7 +624,7 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
 
             const Divider(height: 10),
 
-            // -- 2. 스크롤 영역 --
+            // 스크롤 영역
             Expanded(
               child: ListView.builder(
                 itemCount: filteredIngredients.length,

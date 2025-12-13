@@ -75,7 +75,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
           );
         }
       }
-    } catch (e) {
+    }
+    catch (e) {
       if (mounted) {
         final errorMessage = e.toString();
         if (errorMessage.contains('quota') || 
@@ -88,7 +89,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
               backgroundColor: Colors.orange,
             ),
           );
-        } else {
+        }
+        else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("오류가 발생했습니다: ${e.toString()}"),
@@ -97,7 +99,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
           );
         }
       }
-    } finally {
+    }
+    finally {
       if (mounted) {
         setState(() {
           _isAiLoading = false;
@@ -249,7 +252,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start, // [수정] 왼쪽 정렬
+                        crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
                         children: [
                           Row(
                             children: const [
@@ -284,7 +287,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start, // [수정] 왼쪽 정렬
+                        crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
                         children: [
                           Row(
                             children: [

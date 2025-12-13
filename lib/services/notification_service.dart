@@ -114,7 +114,8 @@ class NotificationService {
         };
       }
       return {'isPushOn': true, 'days': 3};
-    } catch (e) {
+    }
+    catch (e) {
       return {'isPushOn': true, 'days': 3};
     }
   }

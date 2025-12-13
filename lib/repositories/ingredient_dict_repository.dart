@@ -35,24 +35,20 @@ class IngredientDictionaryRepository {
                 _doc.data(),
                 _doc.id,
               ),
-            )
-            .toList();
-
+            ).toList();
         await _localCache.saveAll(_fetched);
         _dictionaries = _fetched;
       }
       catch (e) {
-        debugPrint('[IngredientDictionaryRepository] Firestore 동기화 오류: $e');
+        debugPrint('Firestore 동기화 오류: $e');
       }
     }
-
     return _dictionaries;
   }
 
   // 특정 ID의 재료 사전 조회 (로컬 캐시 우선, 실패 시 Firestore 조회)
-  Future<IngredientDictionary?> fetchDictionaryByIdFromCache(
-    String _dictionaryId,
-  ) async {
+  Future<IngredientDictionary?> fetchDictionaryByIdFromCache(String _dictionaryId,)
+  async {
     try {
       final _all = _localCache.getAll();
       final _local = _all.firstWhere(
@@ -69,10 +65,10 @@ class IngredientDictionaryRepository {
 
     try {
       final _doc = await _firestore
-          .collection('ingredients')
-          .doc(_dictionaryId)
-          .get();
-      if (!_doc.exists) return null;
+          .collection('ingredients').doc(_dictionaryId).get();
+      if (!_doc.exists) {
+        return null;
+      }
       final _data = _doc.data()!;
       return IngredientDictionary.fromFirestoreDocument(_data, _doc.id);
     }

@@ -53,7 +53,8 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    }
+    catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         final errorMessage = e.toString();
@@ -68,7 +69,8 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               backgroundColor: Colors.orange,
             ),
           );
-        } else {
+        }
+        else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("추천을 불러오는데 실패했습니다.")),
           );

@@ -99,8 +99,9 @@ class AccountService {
             SetOptions(merge: true),
           );
         }
-      } catch (_) {
-        // 로그아웃 방지 무시
+      }
+      catch (e) {
+        debugPrint('[AccountService] 로그아웃 중 FCM 토큰 삭제 실패: $e');
       }
     }
 
@@ -110,8 +111,12 @@ class AccountService {
   // 계정 탈퇴: 재인증 → Firestore 데이터 삭제 → Auth 계정 삭제
   Future<void> deleteAccount(String password) async {
     final user = _firebaseAuth.currentUser;
-    if (user == null) throw AuthException('로그인된 사용자가 없습니다.');
-    if (user.email == null) throw AuthException('이메일 로그인 계정이 아닙니다.');
+    if (user == null) {
+      throw AuthException('로그인된 사용자가 없습니다.');
+    }
+    if (user.email == null) {
+      throw AuthException('이메일 로그인 계정이 아닙니다.');
+    }
 
     try {
       final credential = EmailAuthProvider.credential(
@@ -127,7 +132,6 @@ class AccountService {
     catch (_) {
       throw AuthException('알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-
     await _deleteUserDataFromFirestore(user.uid);
     await user.delete();
   }
@@ -171,14 +175,20 @@ class AccountService {
   // 로그인 사용자의 FCM 토큰을 Firestore users/{uid} 문서에 저장 및 갱신
   Future<void> _syncFcmTokenToUserDocument() async {
     final user = _firebaseAuth.currentUser;
-    if (user == null) return;
-    if (kIsWeb) return;
+    if (user == null) {
+      return;
+    }
+    if (kIsWeb) {
+      return;
+    }
 
     try {
       await FirebaseMessaging.instance.requestPermission();
 
       final token = await FirebaseMessaging.instance.getToken();
-      if (token == null || token.isEmpty) return;
+      if (token == null || token.isEmpty) {
+        return;
+      }
 
       await _firestore.collection('users').doc(user.uid).set(
         {
@@ -187,8 +197,9 @@ class AccountService {
         },
         SetOptions(merge: true),
       );
-    } catch (_) {
-      // 토큰 저장 실패로 인한 로그인/회원가입 방지 무시
+    }
+    catch (e) {
+      debugPrint('[AccountService] FCM 토큰 동기화 실패: $e');
     }
   }
 

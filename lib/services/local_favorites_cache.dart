@@ -1,5 +1,6 @@
 // 즐겨찾기 로컬 캐시: Hive를 사용한 사용자별 즐겨찾기 레시피 ID 목록 저장 및 조회
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalFavoritesCache {
@@ -12,23 +13,31 @@ class LocalFavoritesCache {
 
   // 즐겨찾기 목록을 로컬 캐시에 저장
   Future<void> saveFavoritesToLocalCache(
-    String _uid,
-    List<String> _recipeIds,
-  ) async {
+      String _uid,
+      List<String> _recipeIds,
+      ) async {
     try {
       final _box = _localBox;
-      if (_box == null) return;
+      if (_box == null) {
+        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 저장하지 못했습니다.');
+        return;
+      }
 
       final _jsonString = jsonEncode(_recipeIds);
       await _box.put('favorites_$_uid', _jsonString);
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('[LocalFavoritesCache] 즐겨찾기 목록 저장 중 오류 발생: $e');
+    }
   }
 
   // 로컬 캐시에서 즐겨찾기 목록 조회
   List<String> loadFavoritesFromLocalCache(String _uid) {
     try {
       final _box = _localBox;
-      if (_box == null) return [];
+      if (_box == null) {
+        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 조회하지 못했습니다.');
+        return [];
+      }
 
       final _raw = _box.get('favorites_$_uid');
       if (_raw is! String) return [];
@@ -37,7 +46,9 @@ class LocalFavoritesCache {
       if (_decoded is! List) return [];
 
       return _decoded.map((_item) => _item.toString()).toList();
-    } catch (e) {
+    }
+    catch (e) {
+      debugPrint('[LocalFavoritesCache] 즐겨찾기 목록 로드/파싱 실패: $e');
       return [];
     }
   }
@@ -46,8 +57,14 @@ class LocalFavoritesCache {
   Future<void> clearFavoritesFromLocalCache(String _uid) async {
     try {
       final _box = _localBox;
-      if (_box == null) return;
+      if (_box == null) {
+        debugPrint('[LocalFavoritesCache] Hive 박스가 열려있지 않아 삭제하지 못했습니다.');
+        return;
+      }
       await _box.delete('favorites_$_uid');
-    } catch (e) {}
+    }
+    catch (e) {
+      debugPrint('[LocalFavoritesCache] 로컬 즐겨찾기 데이터 삭제 실패: $e');
+    }
   }
 }

@@ -81,7 +81,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               itemCount: _favoriteRecipes.length,
               itemBuilder: (context, index) {
                 final recipe = _favoriteRecipes[index];
-
                 // 레시피 카드 탭 시 상세 화면으로 이동 후 돌아오면 목록 갱신
                 return GestureDetector(
                   onTap: () {
