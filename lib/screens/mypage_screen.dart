@@ -200,30 +200,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // 알림 테스트
-  Future<void> _testNotification() async {
-    try {
-      await NotificationService.instance.checkExpiringIngredients();
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("알림 테스트가 실행되었습니다. 유통기한이 임박한 재료가 있으면 알림이 표시됩니다."),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("알림 테스트 오류: $e"),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   // 알림 설정 다이얼로그
   Future<void> _showNotificationDialog() async {
     final colorScheme = Theme.of(context).colorScheme;
@@ -416,11 +392,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   title: const Text("알림 설정"),
                   onTap: _showNotificationDialog,
                 ),
-                //ListTile(
-                //  leading: const Icon(Icons.notifications, color: Colors.blue),
-                //  title: const Text("알림 테스트"),
-                //  onTap: _testNotification,
-                //),
               ],
             ),
           ),

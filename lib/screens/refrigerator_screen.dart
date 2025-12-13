@@ -369,12 +369,6 @@ class _RefrigeratorScreenState extends State<RefrigeratorScreen> {
                     _sortMode,
                   );
                 });
-
-                try {
-                  await NotificationService.instance.checkExpiringIngredients();
-                } catch (e) {
-                  debugPrint('Firestore 동기화 중 오류 발생: $e');
-                }
               },
               child: Text(
                 isEditMode ? "수정" : "추가",
