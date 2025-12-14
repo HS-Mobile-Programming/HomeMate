@@ -43,7 +43,7 @@ flutter pub get
 
 AI 레시피 추천 기능을 사용하기 위해 Google Gemini API 키가 필요합니다.
 
-1. 참고사항.txt를 확인하여, Google Gemini API를 확인합니다.
+1. 첨부된 API_Key 를 확인합니다.
 2. `assets/config/api_key.txt` 파일에 API 키를 입력합니다.
 3. `assets/config/api_key.txt` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다.
 
